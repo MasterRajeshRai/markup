@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const fallbackMenus = [
+export const fallbackMenus = [
   {
     id: 'menu_header',
     name: 'Main Header Navigation',

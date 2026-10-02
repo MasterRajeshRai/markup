@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Compass, Plus, Trash2, ArrowRight, AlertCircle } from 'lucide-react';
+import { Compass, Plus, Trash2, ArrowRight, AlertCircle, Edit } from 'lucide-react';
 import { ModuleGuard } from '@/components/module-guard';
 
 interface RedirectItem {
@@ -24,6 +24,7 @@ export default function RedirectsPage() {
 
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState('');
   const [destinationUrl, setDestinationUrl] = useState('');
   const [statusCode, setStatusCode] = useState('301');
@@ -45,12 +46,36 @@ export default function RedirectsPage() {
     fetchRedirects();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setSourceUrl('');
+    setDestinationUrl('');
+    setStatusCode('301');
+    setNotes('');
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (r: RedirectItem) => {
+    setEditingId(r.id);
+    setSourceUrl(r.sourceUrl);
+    setDestinationUrl(r.destinationUrl);
+    setStatusCode(String(r.statusCode));
+    setNotes(r.notes || '');
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const res = await fetch('/api/v1/redirects', {
-      method: 'POST',
+    const isEdit = Boolean(editingId);
+    const url = isEdit ? `/api/v1/redirects/${editingId}` : '/api/v1/redirects';
+    const method = isEdit ? 'PATCH' : 'POST';
+
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sourceUrl,
@@ -62,11 +87,12 @@ export default function RedirectsPage() {
 
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error || 'Failed to create redirect');
+      setError(data.error || `Failed to ${isEdit ? 'update' : 'create'} redirect`);
       return;
     }
 
     setIsModalOpen(false);
+    setEditingId(null);
     setSourceUrl('');
     setDestinationUrl('');
     setNotes('');
@@ -89,7 +115,7 @@ export default function RedirectsPage() {
             Manage 301 and 302 URL redirects with automated loop and cycle detection.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1.5 shadow-sm">
+        <Button onClick={handleOpenCreate} size="sm" className="gap-1.5 shadow-sm">
           <Plus className="h-4 w-4" />
           <span>New Redirect</span>
         </Button>
@@ -141,14 +167,26 @@ export default function RedirectsPage() {
                       <td className="py-3 px-4 font-mono">{r.hitCount}</td>
                       <td className="py-3 px-4 text-muted-foreground truncate max-w-xs">{r.notes || '—'}</td>
                       <td className="py-3 px-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(r.id)}
-                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenEdit(r)}
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            title="Edit Redirect"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(r.id)}
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            title="Delete Redirect"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -159,15 +197,15 @@ export default function RedirectsPage() {
         </CardContent>
       </Card>
 
-      {/* Modal: New Redirect */}
+      {/* Modal: New / Edit Redirect */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <Card className="w-full max-w-md shadow-2xl">
             <CardHeader>
-              <CardTitle>Create Redirect Rule</CardTitle>
+              <CardTitle>{editingId ? 'Edit Redirect Rule' : 'Create Redirect Rule'}</CardTitle>
               <CardDescription>Setup automatic redirection with loop prevention</CardDescription>
             </CardHeader>
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSave}>
               <CardContent className="space-y-3">
                 {error && (
                   <div className="p-2.5 rounded bg-destructive/15 border border-destructive/30 text-destructive text-xs flex items-center gap-2">
@@ -227,7 +265,7 @@ export default function RedirectsPage() {
                   Cancel
                 </Button>
                 <Button type="submit" size="sm">
-                  Add Redirect
+                  {editingId ? 'Save Changes' : 'Add Redirect'}
                 </Button>
               </div>
             </form>

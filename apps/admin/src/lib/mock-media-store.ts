@@ -316,6 +316,12 @@ export function addMockFolder(folder: { name: string; parentId?: string | null }
   return newFolder;
 }
 
+export function deleteMockFolder(id: string): boolean {
+  const initial = MOCK_FOLDERS.length;
+  MOCK_FOLDERS = MOCK_FOLDERS.filter((f) => f.id !== id);
+  return MOCK_FOLDERS.length < initial;
+}
+
 export function getMockJob(jobId: string): MockJob | null {
   return MOCK_JOBS[jobId] || null;
 }

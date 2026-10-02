@@ -124,3 +124,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ workflow: newWorkflow }, { status: 201 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Workflow id is required' }, { status: 400 });
+    }
+
+    if (id === 'wf_standard_editorial' || id === 'standard-editorial') {
+      return NextResponse.json({ error: 'Standard editorial workflow cannot be deleted' }, { status: 400 });
+    }
+
+    try {
+      const wf = await prisma.workflow.findUnique({ where: { id } });
+      if (wf?.isDefault) {
+        return NextResponse.json({ error: 'Default workflow cannot be deleted' }, { status: 400 });
+      }
+
+      await prisma.workflow.delete({ where: { id } });
+    } catch {
+      // In-memory fallback
+      const idx = fallbackWorkflows.findIndex((w) => w.id === id || w.slug === id);
+      if (idx !== -1) {
+        if (fallbackWorkflows[idx].isDefault) {
+          return NextResponse.json({ error: 'Default workflow cannot be deleted' }, { status: 400 });
+        }
+        fallbackWorkflows.splice(idx, 1);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Workflow deleted successfully' });
+  } catch (err: any) {
+    console.error('[WorkflowsDELETE] Error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to delete workflow' }, { status: 500 });
+  }
+}

@@ -160,3 +160,5 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: err?.message || String(err) || 'Failed to update settings' }, { status: 500 });
   }
 }
+
+export const PUT = PATCH;

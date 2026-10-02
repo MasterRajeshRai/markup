@@ -149,3 +149,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Failed to create form' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, name, slug, description, submitButtonText, successMessage, enableHoneypot, fields, status } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+    }
+
+    const form = MOCK_FORMS.find((f) => f.id === id);
+    if (!form) {
+      return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    }
+
+    if (name) form.name = name;
+    if (slug) form.slug = slug;
+    if (description !== undefined) form.description = description;
+    if (submitButtonText) form.submitButtonText = submitButtonText;
+    if (successMessage) form.successMessage = successMessage;
+    if (enableHoneypot !== undefined) form.enableHoneypot = enableHoneypot;
+    if (Array.isArray(fields)) form.fields = fields;
+    if (status) form.status = status;
+
+    return NextResponse.json({ success: true, form });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to update form' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+    }
+
+    const initialLength = MOCK_FORMS.length;
+    MOCK_FORMS = MOCK_FORMS.filter((f) => f.id !== id);
+
+    if (MOCK_FORMS.length === initialLength) {
+      return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Form deleted successfully' });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to delete form' }, { status: 500 });
+  }
+}
+

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const fallbackRedirects = [
+export const fallbackRedirects: any[] = [
   {
     id: 'redir_1',
     sourceUrl: '/old-blog',

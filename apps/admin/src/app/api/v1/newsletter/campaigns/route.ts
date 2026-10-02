@@ -3,6 +3,7 @@ import {
   getCampaigns,
   saveCampaign,
   sendCampaignBroadcast,
+  deleteCampaign,
 } from '@/lib/newsletter-service';
 
 export async function GET() {
@@ -28,5 +29,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: campaign });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, error: 'Campaign ID is required.' }, { status: 400 });
+
+    const deleted = await deleteCampaign(id);
+    return NextResponse.json({ success: deleted });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

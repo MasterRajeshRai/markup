@@ -22,7 +22,7 @@ interface MockSiteItem {
   };
 }
 
-const inMemorySites: MockSiteItem[] = [
+export const inMemorySites: MockSiteItem[] = [
   {
     id: 'site_default_01',
     name: 'Markup Digital Portal',
@@ -166,5 +166,56 @@ export async function POST(req: NextRequest) {
     }
     console.error('[SitesPOST] Error:', err);
     return NextResponse.json({ error: 'Failed to create site' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const adminSession = await getAdminSession(req);
+    if (adminSession) {
+      const guard = requirePermission(adminSession, 'sites.manage');
+      if (!guard.authorized) return guard.response!;
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Site id is required' }, { status: 400 });
+    }
+
+    if (id === 'site_default_01' || id === 'default') {
+      return NextResponse.json({ error: 'The primary default hub site cannot be deleted' }, { status: 400 });
+    }
+
+    try {
+      const site = await prisma.site.findUnique({ where: { id } });
+      if (site?.isDefault) {
+        return NextResponse.json({ error: 'Default site cannot be deleted' }, { status: 400 });
+      }
+
+      await prisma.site.delete({ where: { id } });
+      await recordAuditLog({
+        actorId: adminSession?.user?.id,
+        action: 'site.delete',
+        entityType: 'Site',
+        entityId: id,
+        req,
+      }).catch(() => {});
+    } catch {
+      // In-memory fallback
+      const idx = inMemorySites.findIndex((s) => s.id === id || s.slug === id);
+      if (idx !== -1) {
+        if (inMemorySites[idx].isDefault) {
+          return NextResponse.json({ error: 'Default site cannot be deleted' }, { status: 400 });
+        }
+        inMemorySites.splice(idx, 1);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Site deleted successfully' });
+  } catch (err: any) {
+    console.error('[SitesDELETE] Error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to delete site' }, { status: 500 });
   }
 }

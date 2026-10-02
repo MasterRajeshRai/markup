@@ -118,13 +118,40 @@ export default function FormsPage() {
   const handleCreateOrUpdateForm = async () => {
     if (!builderForm.name || !builderForm.slug) return;
     try {
+      const method = builderForm.id ? 'PATCH' : 'POST';
       const res = await fetch('/api/v1/forms', {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(builderForm),
       });
       if (res.ok) {
         setIsBuilderOpen(false);
+        fetchForms();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleEditForm = (form: FormItem) => {
+    setBuilderForm({
+      id: form.id,
+      name: form.name,
+      slug: form.slug,
+      description: form.description,
+      submitButtonText: form.submitButtonText,
+      successMessage: form.successMessage,
+      enableHoneypot: form.enableHoneypot,
+      fields: [...form.fields],
+    });
+    setIsBuilderOpen(true);
+  };
+
+  const handleDeleteForm = async (formId: string, formName: string) => {
+    if (!confirm(`Are you sure you want to delete form "${formName}"?`)) return;
+    try {
+      const res = await fetch(`/api/v1/forms?id=${formId}`, { method: 'DELETE' });
+      if (res.ok) {
         fetchForms();
       }
     } catch (e) {
@@ -354,11 +381,31 @@ export default function FormsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setEmbedModalForm(f)}
-                    className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                    className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Get Embed Code"
                   >
                     <Code2 className="h-3.5 w-3.5" />
                     <span>Embed</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleEditForm(f)}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="Edit Form"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteForm(f.id, f.name)}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive cursor-pointer"
+                    title="Delete Form"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </CardContent>

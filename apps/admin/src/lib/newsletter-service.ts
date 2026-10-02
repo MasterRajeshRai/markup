@@ -383,6 +383,18 @@ export async function saveCampaign(campaign: Partial<NewsletterCampaign>): Promi
 }
 
 /**
+ * Deletes a campaign.
+ */
+export async function deleteCampaign(id: string): Promise<boolean> {
+  const idx = MOCK_CAMPAIGNS.findIndex((c) => c.id === id);
+  if (idx >= 0) {
+    MOCK_CAMPAIGNS.splice(idx, 1);
+    return true;
+  }
+  return false;
+}
+
+/**
  * Sends a newsletter broadcast to targeted subscribers via Resend.
  */
 export async function sendCampaignBroadcast(campaignId: string): Promise<{ success: boolean; recipientsCount: number; error?: string }> {

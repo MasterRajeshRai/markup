@@ -26,7 +26,7 @@ interface FallbackUser {
   roles: Array<{ id: string; name: string; slug: string }>;
 }
 
-const fallbackUsers: FallbackUser[] = [
+export const fallbackUsers: FallbackUser[] = [
   {
     id: 'user_admin_01',
     email: 'admin@headless.io',

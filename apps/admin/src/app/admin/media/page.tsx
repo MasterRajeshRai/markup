@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   Upload,
   Folder,
+  Plus,
   Trash2,
   Search,
   File,
@@ -198,6 +199,33 @@ export default function MediaLibraryPage() {
       .then((res) => {
         if (res.data) setFolders(res.data);
       });
+  };
+
+  const handleCreateFolder = async (name: string) => {
+    try {
+      const res = await fetch('/api/v1/media/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) fetchFolders();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteFolder = async (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete folder "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/v1/media/folders?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (selectedFolder === id) setSelectedFolder('');
+        fetchFolders();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const fetchPresets = () => {
@@ -572,15 +600,29 @@ export default function MediaLibraryPage() {
         {/* Left Col: Folders & Filters */}
         <div className="space-y-4">
           <Card>
-            <CardHeader className="p-4 pb-2">
+            <CardHeader className="p-3 pb-2 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-sm">Storage Folders</CardTitle>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 cursor-pointer text-muted-foreground hover:text-foreground"
+                title="Create New Folder"
+                onClick={() => {
+                  const name = prompt('Enter new folder name:');
+                  if (name && name.trim()) {
+                    handleCreateFolder(name.trim());
+                  }
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
             </CardHeader>
             <CardContent className="p-2 space-y-1">
               <Button
                 variant={selectedFolder === '' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedFolder('')}
-                className="w-full justify-between h-8 text-xs font-medium"
+                className="w-full justify-between h-8 text-xs font-medium cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Folder className="h-3.5 w-3.5" />
@@ -589,21 +631,31 @@ export default function MediaLibraryPage() {
               </Button>
 
               {folders.map((f) => (
-                <Button
-                  key={f.id}
-                  variant={selectedFolder === f.id ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setSelectedFolder(f.id)}
-                  className="w-full justify-between h-8 text-xs font-medium"
-                >
-                  <div className="flex items-center gap-2">
-                    <Folder className="h-3.5 w-3.5" />
-                    <span>{f.name}</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0 h-4">
-                    {f._count?.media || 0}
-                  </Badge>
-                </Button>
+                <div key={f.id} className="group flex items-center gap-1">
+                  <Button
+                    variant={selectedFolder === f.id ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedFolder(f.id)}
+                    className="flex-1 justify-between h-8 text-xs font-medium cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Folder className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{f.name}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0 h-4">
+                      {f._count?.media || 0}
+                    </Badge>
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => handleDeleteFolder(e, f.id, f.name)}
+                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive cursor-pointer transition-opacity"
+                    title={`Delete folder ${f.name}`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               ))}
             </CardContent>
           </Card>

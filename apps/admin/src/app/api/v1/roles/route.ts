@@ -22,7 +22,7 @@ interface FallbackRole {
   permissions: string[];
 }
 
-const fallbackRoles: FallbackRole[] = [
+export const fallbackRoles: FallbackRole[] = [
   {
     id: 'role_super_admin',
     name: 'Super Admin',
@@ -167,10 +167,63 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, role }, { status: 201 });
   } catch (err: any) {
-    if (err.code === 'P2002') {
+    if (err?.code === 'P2002') {
       return NextResponse.json({ error: 'A role with this name or slug already exists.' }, { status: 409 });
     }
+    
+    // In-memory fallback
+    const body = await req.json().catch(() => ({}));
+    const { name, slug, description, permissionActions = [] } = body;
+    if (name && slug) {
+      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      const newRole: FallbackRole = {
+        id: `role_${Date.now()}`,
+        name,
+        slug: cleanSlug,
+        description: description || '',
+        isSystem: false,
+        usersCount: 0,
+        permissions: Array.isArray(permissionActions) ? permissionActions : [],
+      };
+      fallbackRoles.push(newRole);
+      return NextResponse.json({ success: true, role: newRole }, { status: 201 });
+    }
+
     console.error('[RolesPOST] Error:', err);
     return NextResponse.json({ error: 'Failed to create role' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const adminSession = await getAdminSession(req);
+    if (adminSession) {
+      const guard = requirePermission(adminSession, 'roles.manage');
+      if (!guard.authorized) return guard.response!;
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'Role id is required' }, { status: 400 });
+
+    try {
+      const role = await prisma.role.findUnique({ where: { id } });
+      if (role?.isSystem) {
+        return NextResponse.json({ error: 'System roles cannot be deleted' }, { status: 400 });
+      }
+      await prisma.role.delete({ where: { id } });
+    } catch {
+      const idx = fallbackRoles.findIndex((r) => r.id === id || r.slug === id);
+      if (idx !== -1) {
+        if (fallbackRoles[idx].isSystem) {
+          return NextResponse.json({ error: 'System roles cannot be deleted' }, { status: 400 });
+        }
+        fallbackRoles.splice(idx, 1);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Role deleted successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Failed to delete role' }, { status: 500 });
   }
 }

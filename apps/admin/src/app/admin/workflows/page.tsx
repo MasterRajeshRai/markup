@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Layers,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { ModuleGuard } from '@/components/module-guard';
 
@@ -105,6 +106,17 @@ export default function WorkflowsPage() {
     }
   };
 
+  const handleDeleteWorkflow = async (id: string, name: string) => {
+    if (!confirm(`Delete workflow "${name}"?`)) return;
+    const res = await fetch(`/api/v1/workflows?id=${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to delete workflow');
+      return;
+    }
+    fetchWorkflows();
+  };
+
   return (
     <ModuleGuard moduleId="workflows">
       <div className="space-y-6">
@@ -175,9 +187,22 @@ export default function WorkflowsPage() {
                       </CardDescription>
                     )}
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {wf.states.length} States • {wf.transitions.length} Transitions
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {wf.states.length} States • {wf.transitions.length} Transitions
+                    </Badge>
+                    {!wf.isDefault && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteWorkflow(wf.id, wf.name)}
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive p-0"
+                        title="Delete Workflow"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
 

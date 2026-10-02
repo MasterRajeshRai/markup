@@ -93,6 +93,18 @@ export default function TaxonomiesPage() {
     setTermName(''); setTermSlug(''); load();
   };
 
+  const deleteTerm = async (id: string, name: string) => {
+    if (!confirm(`Delete term "${name}"?`)) return;
+    await fetch(`/api/v1/taxonomies?termId=${id}&type=term`, { method: 'DELETE' });
+    load();
+  };
+
+  const deleteTaxonomy = async (id: string, name: string) => {
+    if (!confirm(`Delete taxonomy "${name}" and all associated terms?`)) return;
+    await fetch(`/api/v1/taxonomies?taxonomyId=${id}&type=taxonomy`, { method: 'DELETE' });
+    load();
+  };
+
   const activeTax = taxonomies.find(t => t.id === activeTaxId);
   const filtered = (activeTax?.terms ?? []).filter(t => !termSearch || t.name.toLowerCase().includes(termSearch.toLowerCase()));
   const maxEntries = Math.max(...(activeTax?.terms ?? []).map(t => t._count?.entries ?? 0), 1);
@@ -185,9 +197,20 @@ export default function TaxonomiesPage() {
                 </Badge>
               </div>
 
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                <Input value={termSearch} onChange={e => setTermSearch(e.target.value)} placeholder="Filter terms…" className="pl-8 h-8 text-xs w-44" />
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input value={termSearch} onChange={e => setTermSearch(e.target.value)} placeholder="Filter terms…" className="pl-8 h-8 text-xs w-44" />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteTaxonomy(activeTax.id, activeTax.name)}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  title="Delete Taxonomy"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -270,7 +293,11 @@ export default function TaxonomiesPage() {
                         </div>
 
                         {/* Delete */}
-                        <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100">
+                        <button
+                          onClick={() => deleteTerm(term.id, term.name)}
+                          className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Delete Term"
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>

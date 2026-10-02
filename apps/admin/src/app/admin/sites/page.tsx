@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Globe, Plus, Layers, ArrowRight } from 'lucide-react';
+import { Globe, Plus, Layers, ArrowRight, Trash2 } from 'lucide-react';
 import { ModuleGuard } from '@/components/module-guard';
 
 interface SiteItem {
@@ -63,6 +63,17 @@ export default function SitesPage() {
     fetchSites();
   };
 
+  const handleDeleteSite = async (id: string, siteName: string) => {
+    if (!confirm(`Delete site "${siteName}"? This action cannot be undone.`)) return;
+    const res = await fetch(`/api/v1/sites?id=${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to delete site');
+      return;
+    }
+    fetchSites();
+  };
+
   return (
     <ModuleGuard moduleId="multisite">
       <div className="space-y-6">
@@ -92,7 +103,20 @@ export default function SitesPage() {
                   <Badge variant={s.isDefault ? 'default' : 'secondary'} className="text-[10px]">
                     {s.isDefault ? 'Default Hub' : 'Sub-Site'}
                   </Badge>
-                  <span className="font-mono text-[10px] text-muted-foreground">/{s.slug}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] text-muted-foreground">/{s.slug}</span>
+                    {!s.isDefault && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteSite(s.id, s.name)}
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive p-0"
+                        title="Delete Site"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <CardTitle className="text-base mt-2 flex items-center gap-2">
                   <Globe className="h-4 w-4 text-primary" />

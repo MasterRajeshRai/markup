@@ -1,6 +1,6 @@
 import { prisma } from '@headless/database';
 import { resolveSiteContext } from '@/lib/site-context';
-import { getMockFolders, addMockFolder } from '@/lib/mock-media-store';
+import { getMockFolders, addMockFolder, deleteMockFolder } from '@/lib/mock-media-store';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -57,3 +57,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create folder' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Folder ID is required' }, { status: 400 });
+    }
+
+    try {
+      await prisma.mediaFolder.delete({
+        where: { id },
+      });
+      return NextResponse.json({ success: true, message: 'Folder deleted' });
+    } catch {
+      deleteMockFolder(id);
+      return NextResponse.json({ success: true, message: 'Folder deleted' });
+    }
+  } catch (err) {
+    console.error('[MediaFoldersDELETE] Error:', err);
+    return NextResponse.json({ error: 'Failed to delete folder' }, { status: 500 });
+  }
+}
+

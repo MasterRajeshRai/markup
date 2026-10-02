@@ -299,6 +299,16 @@ export default function PagesManagementPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <a
+                              href={`http://localhost:3001/${p.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View on Frontend"
+                            >
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </a>
                             <Link href={`/admin/content/${p.contentType === 'page' ? 'pages' : (p.contentType || 'pages')}/${p.id}`}>
                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Edit in Block Builder">
                                 <Edit className="h-3.5 w-3.5" />

@@ -124,3 +124,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, integrations: inMemoryIntegrations });
   }
 }
+
+export const PUT = POST;
+export const PATCH = POST;

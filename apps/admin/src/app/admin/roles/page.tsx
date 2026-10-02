@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   Shield, Plus, Check, Lock, Users, X, ChevronRight,
-  FileText, Image, Tags, Settings, Key, Globe, BarChart3,
+  FileText, Image, Tags, Settings, Key, Globe, BarChart3, Trash2,
 } from 'lucide-react';
 
 interface RoleItem {
@@ -76,6 +76,17 @@ export default function RolesPage() {
     e.preventDefault();
     await fetch('/api/v1/roles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug, description, permissionActions: selectedPerms }) });
     setShowModal(false); setName(''); setSlug(''); setDescription(''); setSelectedPerms([]); load();
+  };
+
+  const deleteRole = async (id: string, roleName: string) => {
+    if (!confirm(`Delete custom role "${roleName}"?`)) return;
+    const res = await fetch(`/api/v1/roles?id=${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to delete role');
+      return;
+    }
+    load();
   };
 
   const modules = Array.from(new Set(permissions.map(p => p.module)));
@@ -158,6 +169,17 @@ export default function RolesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
+                {!selected.isSystem && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteRole(selected.id, selected.name)}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    title="Delete Custom Role"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
                 <div className="text-right">
                   <div className="text-lg font-bold text-foreground">{hasAll ? '∞' : selected.permissions.length}</div>
                   <div className="text-[10px] text-muted-foreground">permissions</div>

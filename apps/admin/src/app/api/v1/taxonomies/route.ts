@@ -153,3 +153,61 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create taxonomy resource' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const adminSession = await getAdminSession(req);
+    if (adminSession) {
+      const guard = requirePermission(adminSession, 'taxonomy.manage');
+      if (!guard.authorized) return guard.response!;
+    }
+
+    const { searchParams } = new URL(req.url);
+    const termId = searchParams.get('termId');
+    const taxonomyId = searchParams.get('taxonomyId') || searchParams.get('id');
+    const type = searchParams.get('type') || (termId ? 'term' : 'taxonomy');
+
+    if (type === 'term' || termId) {
+      const targetTermId = termId || searchParams.get('id');
+      if (!targetTermId) {
+        return NextResponse.json({ error: 'Term id is required' }, { status: 400 });
+      }
+
+      try {
+        await prisma.taxonomyTerm.delete({
+          where: { id: targetTermId },
+        });
+      } catch {
+        for (const tax of fallbackTaxonomies) {
+          const idx = tax.terms.findIndex((t: any) => t.id === targetTermId);
+          if (idx !== -1) {
+            tax.terms.splice(idx, 1);
+            break;
+          }
+        }
+      }
+
+      return NextResponse.json({ success: true, message: 'Term deleted successfully' });
+    }
+
+    if (!taxonomyId) {
+      return NextResponse.json({ error: 'Taxonomy id is required' }, { status: 400 });
+    }
+
+    try {
+      await prisma.taxonomy.delete({
+        where: { id: taxonomyId },
+      });
+    } catch {
+      const idx = fallbackTaxonomies.findIndex((t: any) => t.id === taxonomyId);
+      if (idx !== -1) {
+        fallbackTaxonomies.splice(idx, 1);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Taxonomy deleted successfully' });
+  } catch (err: any) {
+    console.error('[TaxonomiesDELETE] Error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to delete taxonomy resource' }, { status: 500 });
+  }
+}

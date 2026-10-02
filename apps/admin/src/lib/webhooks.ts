@@ -92,20 +92,24 @@ export async function executeWebhookDelivery(
   const durationMs = Date.now() - startTime;
 
   // Record delivery history
-  await prisma.webhookDelivery.create({
-    data: {
-      webhookId,
-      event,
-      payload: payload as Prisma.InputJsonValue,
-      requestHeaders: headers as Prisma.InputJsonValue,
-      responseStatus,
-      responseBody,
-      durationMs,
-      error: errorMsg,
-      attempt,
-      success,
-    },
-  });
+  try {
+    await prisma.webhookDelivery.create({
+      data: {
+        webhookId,
+        event,
+        payload: payload as Prisma.InputJsonValue,
+        requestHeaders: headers as Prisma.InputJsonValue,
+        responseStatus,
+        responseBody,
+        durationMs,
+        error: errorMsg,
+        attempt,
+        success,
+      },
+    });
+  } catch {
+    // Database offline
+  }
 
   // Retry with exponential backoff if failed and attempts < 3
   if (!success && attempt < 3) {

@@ -17,17 +17,27 @@ export default async function RootLayout({
     { title: 'Home', url: '/' },
     { title: 'Articles', url: '/articles' },
   ];
+  let footerItems = [
+    { title: 'Privacy Policy', url: '/privacy' },
+    { title: 'Terms of Service', url: '/terms' },
+    { title: 'Security', url: '/security' },
+  ];
   let branding: { logoUrl?: string; faviconUrl?: string; primaryColor?: string } = {};
   let siteTitle = 'MARKUP DIGITAL';
 
   try {
-    const [nav, settingsRes] = await Promise.allSettled([
+    const [nav, footerRes, settingsRes] = await Promise.allSettled([
       cmsClient.getNavigation('main-navigation'),
+      cmsClient.getNavigation('footer-navigation'),
       cmsClient.getSettings(),
     ]);
 
     if (nav.status === 'fulfilled' && nav.value?.data?.items) {
       navItems = nav.value.data.items;
+    }
+
+    if (footerRes.status === 'fulfilled' && footerRes.value?.data?.items) {
+      footerItems = footerRes.value.data.items;
     }
 
     if (settingsRes.status === 'fulfilled') {
@@ -64,13 +74,13 @@ export default async function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-6 text-sm font-medium">
-              {navItems.map((item, idx) => (
+              {navItems.map((item: any, idx) => (
                 <Link
                   key={idx}
                   href={item.url}
                   className="text-slate-400 hover:text-white transition-colors"
                 >
-                  {item.title}
+                  {item.title || item.label}
                 </Link>
               ))}
               <a
@@ -92,6 +102,13 @@ export default async function RootLayout({
         <footer className="border-t border-slate-800/80 py-8 px-6 text-center text-xs text-slate-400">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <p>© 2026 Markup Enterprise. Content managed with Markup CMS.</p>
+            <div className="flex items-center gap-6 text-xs text-slate-400">
+              {footerItems.map((item: any, idx) => (
+                <Link key={idx} href={item.url} className="hover:text-slate-200 transition-colors">
+                  {item.title || item.label}
+                </Link>
+              ))}
+            </div>
             <div className="flex items-center gap-4 text-[11px] font-mono">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />

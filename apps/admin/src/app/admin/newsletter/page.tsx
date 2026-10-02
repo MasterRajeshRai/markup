@@ -218,6 +218,16 @@ export default function NewsletterPage() {
     }
   };
 
+  const handleDeleteCampaign = async (id: string, title: string) => {
+    if (!confirm(`Delete campaign "${title}"?`)) return;
+    try {
+      await fetch(`/api/v1/newsletter/campaigns?id=${id}`, { method: 'DELETE' });
+      fetchOverview();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleImport = async () => {
     if (!importText.trim()) return;
     setImporting(true);
@@ -549,17 +559,28 @@ export default function NewsletterPage() {
                       )}
                     </div>
 
-                    {camp.status === 'DRAFT' && (
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleBroadcastCampaign(camp.id)}
-                        disabled={broadcastingId === camp.id}
-                        className="gap-1.5 h-7 text-xs"
+                        variant="ghost"
+                        onClick={() => handleDeleteCampaign(camp.id, camp.title)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        title="Delete campaign"
                       >
-                        <Send className="h-3 w-3" />
-                        <span>{broadcastingId === camp.id ? 'Sending...' : 'Broadcast'}</span>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    )}
+                      {camp.status === 'DRAFT' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleBroadcastCampaign(camp.id)}
+                          disabled={broadcastingId === camp.id}
+                          className="gap-1.5 h-7 text-xs"
+                        >
+                          <Send className="h-3 w-3" />
+                          <span>{broadcastingId === camp.id ? 'Sending...' : 'Broadcast'}</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))}
