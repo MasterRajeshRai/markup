@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
           defaultLocale: site?.defaultLocale || mockState.defaultLocale,
           branding: site?.branding || mockState.branding,
         },
+        branding: site?.branding || mockState.branding,
         settings: formatted,
       });
     } catch {
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
           defaultLocale: mockState.defaultLocale,
           branding: mockState.branding,
         },
+        branding: mockState.branding,
         settings: mockState.settings,
       });
     }
@@ -75,6 +77,7 @@ export async function GET(req: NextRequest) {
         defaultLocale: fallback.defaultLocale,
         branding: fallback.branding,
       },
+      branding: fallback.branding,
       settings: fallback.settings,
     });
   }
@@ -153,6 +156,7 @@ export async function PATCH(req: NextRequest) {
         defaultLocale: updatedMock.defaultLocale,
         branding: updatedMock.branding,
       },
+      branding: updatedMock.branding,
       settings: updatedMock.settings,
     });
   } catch (err: any) {

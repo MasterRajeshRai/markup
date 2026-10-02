@@ -142,6 +142,34 @@ export default function SettingsPage() {
     }
   };
 
+  // Auto-persist branding immediately to backend
+  const autoSaveBranding = async (name: string, logo: string, favicon: string) => {
+    try {
+      await fetch('/api/v1/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          domain,
+          branding: {
+            logoUrl: logo,
+            faviconUrl: favicon,
+            primaryColor,
+          },
+          settings: {
+            site_title: name,
+            site_logo: logo,
+            site_favicon: favicon,
+          },
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to auto-save branding:', err);
+    }
+  };
+
   // Handle Logo Upload
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -169,6 +197,7 @@ export default function SettingsPage() {
       if (uploadedUrl) {
         setLogoUrl(uploadedUrl);
         broadcastBranding(siteName, uploadedUrl, faviconUrl);
+        await autoSaveBranding(siteName, uploadedUrl, faviconUrl);
       } else {
         throw new Error('No public URL returned from upload');
       }
@@ -208,6 +237,7 @@ export default function SettingsPage() {
       if (uploadedUrl) {
         setFaviconUrl(uploadedUrl);
         broadcastBranding(siteName, logoUrl, uploadedUrl);
+        await autoSaveBranding(siteName, logoUrl, uploadedUrl);
       }
     } catch (err: any) {
       console.error('Favicon upload error:', err);
@@ -454,9 +484,10 @@ export default function SettingsPage() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
+                              onClick={async () => {
                                 setLogoUrl('');
                                 broadcastBranding(siteName, '', faviconUrl);
+                                await autoSaveBranding(siteName, '', faviconUrl);
                               }}
                               className="text-xs text-destructive hover:bg-destructive/10 gap-1.5 h-8 cursor-pointer"
                             >
@@ -513,9 +544,10 @@ export default function SettingsPage() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
+                              onClick={async () => {
                                 setFaviconUrl('');
                                 broadcastBranding(siteName, logoUrl, '');
+                                await autoSaveBranding(siteName, logoUrl, '');
                               }}
                               className="text-xs text-destructive hover:bg-destructive/10 gap-1.5 h-8 cursor-pointer"
                             >

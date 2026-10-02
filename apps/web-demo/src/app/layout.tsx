@@ -41,8 +41,23 @@ export default async function RootLayout({
     }
 
     if (settingsRes.status === 'fulfilled') {
-      if (settingsRes.value?.branding) branding = settingsRes.value.branding;
-      if (settingsRes.value?.settings?.site_title) siteTitle = settingsRes.value.settings.site_title;
+      const data = settingsRes.value as any;
+      if (data?.site?.branding) {
+        branding = data.site.branding;
+      } else if (data?.branding && (data.branding.logoUrl || data.branding.faviconUrl)) {
+        branding = data.branding;
+      } else if (data?.settings?.site_logo) {
+        branding = {
+          logoUrl: data.settings.site_logo,
+          faviconUrl: data.settings.site_favicon,
+        };
+      }
+
+      if (data?.site?.name) {
+        siteTitle = data.site.name;
+      } else if (data?.settings?.site_title) {
+        siteTitle = data.settings.site_title;
+      }
     }
   } catch {
     // Fallback if CMS API is not active yet

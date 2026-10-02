@@ -112,6 +112,33 @@ export default function EditorialCalendarPage() {
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'calendar' | 'timeline'>('calendar');
 
+  useEffect(() => {
+    fetch('/api/v1/content?limit=100')
+      .then((r) => r.json())
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const liveEvents: CalendarEvent[] = res.data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            slug: item.slug,
+            typeSlug: item.contentType || item.typeSlug || 'articles',
+            typeName: item.contentType === 'pages' ? 'Pages' : 'Articles',
+            status: item.status || 'DRAFT',
+            date: item.scheduledPublishAt || item.publishedAt || item.updatedAt || item.createdAt || new Date().toISOString(),
+            author: item.author?.name || 'Editorial Staff',
+            seoScore: item.seoScore || 85,
+          }));
+
+          const liveIds = new Set(liveEvents.map((e) => e.id));
+          const uniqueInitial = INITIAL_EVENTS.filter((e) => !liveIds.has(e.id));
+          setEvents([...liveEvents, ...uniqueInitial]);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load editorial calendar content entries:', err);
+      });
+  }, []);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 

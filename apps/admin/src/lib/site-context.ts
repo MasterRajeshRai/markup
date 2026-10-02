@@ -33,39 +33,47 @@ export async function resolveSiteContext(req?: NextRequest | Request): Promise<S
   }
 
   try {
-    // 1. By slug or ID
-    if (siteSlug) {
-      const site = await prisma.site.findFirst({
-        where: {
-          OR: [{ slug: siteSlug }, { id: siteSlug }],
-        },
+    const resolvePromise = async () => {
+      // 1. By slug or ID
+      if (siteSlug) {
+        const site = await prisma.site.findFirst({
+          where: {
+            OR: [{ slug: siteSlug }, { id: siteSlug }],
+          },
+        });
+        if (site) return site;
+      }
+
+      // 2. By domain
+      if (host) {
+        const cleanHost = host.split(':')[0]; // strip port
+        const site = await prisma.site.findFirst({
+          where: {
+            OR: [{ domain: host }, { domain: cleanHost }],
+          },
+        });
+        if (site) return site;
+      }
+
+      // 3. Fallback to default site
+      let defaultSite = await prisma.site.findFirst({
+        where: { isDefault: true },
       });
-      if (site) return site;
-    }
 
-    // 2. By domain
-    if (host) {
-      const cleanHost = host.split(':')[0]; // strip port
-      const site = await prisma.site.findFirst({
-        where: {
-          OR: [{ domain: host }, { domain: cleanHost }],
-        },
-      });
-      if (site) return site;
-    }
+      if (!defaultSite) {
+        defaultSite = await prisma.site.findFirst({
+          orderBy: { createdAt: 'asc' },
+        });
+      }
 
-    // 3. Fallback to default site
-    let defaultSite = await prisma.site.findFirst({
-      where: { isDefault: true },
-    });
+      return defaultSite || DEFAULT_SITE;
+    };
 
-    if (!defaultSite) {
-      defaultSite = await prisma.site.findFirst({
-        orderBy: { createdAt: 'asc' },
-      });
-    }
+    const timeoutPromise = new Promise<Site>((_, reject) =>
+      setTimeout(() => reject(new Error('Site Context DB Timeout')), 800)
+    );
 
-    return defaultSite || DEFAULT_SITE;
+    return await Promise.race([resolvePromise(), timeoutPromise]);
   } catch (err: any) {
     // Graceful offline fallback: allows local execution without requiring a live Postgres daemon
     return DEFAULT_SITE;

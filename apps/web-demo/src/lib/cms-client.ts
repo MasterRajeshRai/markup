@@ -237,12 +237,13 @@ export const cmsClient = {
   async getSettings() {
     try {
       const res = await fetchCmsApi<{
+        site?: { name?: string; domain?: string; branding?: { logoUrl?: string; faviconUrl?: string; primaryColor?: string } };
         branding?: { logoUrl?: string; faviconUrl?: string; primaryColor?: string };
         settings?: Record<string, any>;
       }>('/settings');
       return res;
     } catch {
-      return { branding: {}, settings: {} };
+      return { site: {}, branding: {}, settings: {} };
     }
   },
 };
