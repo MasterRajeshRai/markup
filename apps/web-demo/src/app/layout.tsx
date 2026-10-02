@@ -17,11 +17,22 @@ export default async function RootLayout({
     { title: 'Home', url: '/' },
     { title: 'Articles', url: '/articles' },
   ];
+  let branding: { logoUrl?: string; faviconUrl?: string; primaryColor?: string } = {};
+  let siteTitle = 'MARKUP DIGITAL';
 
   try {
-    const nav = await cmsClient.getNavigation('main-navigation');
-    if (nav.data?.items) {
-      navItems = nav.data.items;
+    const [nav, settingsRes] = await Promise.allSettled([
+      cmsClient.getNavigation('main-navigation'),
+      cmsClient.getSettings(),
+    ]);
+
+    if (nav.status === 'fulfilled' && nav.value?.data?.items) {
+      navItems = nav.value.data.items;
+    }
+
+    if (settingsRes.status === 'fulfilled') {
+      if (settingsRes.value?.branding) branding = settingsRes.value.branding;
+      if (settingsRes.value?.settings?.site_title) siteTitle = settingsRes.value.settings.site_title;
     }
   } catch {
     // Fallback if CMS API is not active yet
@@ -33,11 +44,20 @@ export default async function RootLayout({
         {/* Navigation Bar */}
         <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
-                M
-              </div>
-              <span className="font-bold text-sm tracking-tight text-white">MARKUP DIGITAL</span>
+            <Link href="/" className="flex items-center gap-2.5">
+              {branding.logoUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={branding.logoUrl}
+                  alt={siteTitle}
+                  className="h-8 max-w-[140px] object-contain rounded"
+                />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
+                  M
+                </div>
+              )}
+              <span className="font-bold text-sm tracking-tight text-white uppercase">{siteTitle}</span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 Headless Client
               </span>

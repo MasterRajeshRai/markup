@@ -17,6 +17,8 @@ import {
   Sparkles,
   ChevronDown,
   LayoutGrid,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface BlockEditorProps {
@@ -27,6 +29,7 @@ interface BlockEditorProps {
 export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
+  const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null);
 
   const openPicker = (index?: number) => {
     setInsertIndex(index !== undefined ? index : blocks.length);
@@ -54,6 +57,37 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
       return b;
     });
     onChange(updated);
+  };
+
+  const handleUploadBlockImage = async (blockId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBlockId(blockId);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('seoName', file.name.replace(/\.[^/.]+$/, ''));
+
+      const res = await fetch('/api/v1/media/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      const uploadedUrl = data.assets?.[0]?.publicUrl || data.assets?.[0]?.variants?.[0]?.publicUrl;
+      if (uploadedUrl) {
+        handleUpdateBlockData(blockId, 'url', uploadedUrl);
+        const curr = blocks.find((b) => b.id === blockId);
+        if (!curr?.data.alt) {
+          handleUpdateBlockData(blockId, 'alt', file.name.replace(/\.[^/.]+$/, ''));
+        }
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    } finally {
+      setUploadingBlockId(null);
+    }
   };
 
   const handleMove = (index: number, direction: 'up' | 'down') => {
@@ -471,26 +505,97 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
 
                 {/* 9. IMAGE */}
                 {block.type === 'image' && (
-                  <div className="space-y-2">
-                    <Input
-                      value={String(block.data.url || '')}
-                      onChange={(e) => handleUpdateBlockData(block.id, 'url', e.target.value)}
-                      placeholder="Image URL (https://... or /uploads/...)"
-                      className="h-8 text-xs font-mono"
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      id={`img_input_${block.id}`}
+                      accept="image/*"
+                      onChange={(e) => handleUploadBlockImage(block.id, e)}
+                      className="hidden"
                     />
-                    <div className="grid grid-cols-2 gap-2">
+
+                    {/* Image Preview & Upload Controls */}
+                    <div className="flex flex-wrap items-center gap-4 p-3 rounded-lg border bg-muted/20">
+                      <div className="h-20 w-32 rounded-md border border-dashed bg-background flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
+                        {block.data.url ? (
+                          <img
+                            src={String(block.data.url)}
+                            alt={String(block.data.alt || 'Preview')}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-muted-foreground/60">
+                            <ImageIcon className="h-6 w-6 mb-1" />
+                            <span className="text-[10px]">No Image</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={uploadingBlockId === block.id}
+                            onClick={() => {
+                              const el = document.getElementById(`img_input_${block.id}`) as HTMLInputElement;
+                              el?.click();
+                            }}
+                            className="h-8 text-xs gap-1.5 cursor-pointer font-medium"
+                          >
+                            <Upload className={`h-3.5 w-3.5 ${uploadingBlockId === block.id ? 'animate-spin' : ''}`} />
+                            <span>{uploadingBlockId === block.id ? 'Uploading...' : block.data.url ? 'Change Image' : 'Upload Image'}</span>
+                          </Button>
+
+                          {block.data.url ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleUpdateBlockData(block.id, 'url', '')}
+                              className="h-8 text-xs text-destructive hover:bg-destructive/10 gap-1 cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Clear</span>
+                            </Button>
+                          ) : null}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Direct upload converts to auto-cropped WebP via DAM Pipeline.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase">Image URL / Source</label>
                       <Input
-                        value={String(block.data.alt || '')}
-                        onChange={(e) => handleUpdateBlockData(block.id, 'alt', e.target.value)}
-                        placeholder="Alt text for accessibility"
-                        className="h-7 text-xs"
+                        value={String(block.data.url || '')}
+                        onChange={(e) => handleUpdateBlockData(block.id, 'url', e.target.value)}
+                        placeholder="https://... or /uploads/..."
+                        className="h-8 text-xs font-mono"
                       />
-                      <Input
-                        value={String(block.data.caption || '')}
-                        onChange={(e) => handleUpdateBlockData(block.id, 'caption', e.target.value)}
-                        placeholder="Caption description"
-                        className="h-7 text-xs"
-                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      <div>
+                        <label className="text-[10px] font-semibold text-muted-foreground uppercase">Alt Text (Accessibility & SEO)</label>
+                        <Input
+                          value={String(block.data.alt || '')}
+                          onChange={(e) => handleUpdateBlockData(block.id, 'alt', e.target.value)}
+                          placeholder="Descriptive alt text"
+                          className="h-7 text-xs mt-0.5"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold text-muted-foreground uppercase">Caption / Subtitle</label>
+                        <Input
+                          value={String(block.data.caption || '')}
+                          onChange={(e) => handleUpdateBlockData(block.id, 'caption', e.target.value)}
+                          placeholder="Photo credits or caption"
+                          className="h-7 text-xs mt-0.5"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

@@ -233,4 +233,17 @@ export const cmsClient = {
       };
     }
   },
+
+  async getSettings() {
+    try {
+      const res = await fetchCmsApi<{
+        branding?: { logoUrl?: string; faviconUrl?: string; primaryColor?: string };
+        settings?: Record<string, any>;
+      }>('/settings');
+      return res;
+    } catch {
+      return { branding: {}, settings: {} };
+    }
+  },
 };
+

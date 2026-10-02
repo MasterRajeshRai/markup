@@ -391,6 +391,37 @@ export function Sidebar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const [siteBranding, setSiteBranding] = useState<{ name: string; logoUrl: string }>({
+    name: 'Markup',
+    logoUrl: '',
+  });
+
+  useEffect(() => {
+    // 1. Initial fetch from API
+    fetch('/api/v1/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        const name = data.site?.name || 'Markup';
+        const logoUrl = data.site?.branding?.logoUrl || data.settings?.site_logo || '';
+        setSiteBranding({ name, logoUrl });
+      })
+      .catch(() => {});
+
+    // 2. Listen for live updates dispatched from Settings page
+    const handleBrandingUpdate = (e: any) => {
+      if (e?.detail) {
+        setSiteBranding({
+          name: e.detail.name || 'Markup',
+          logoUrl: e.detail.logoUrl || '',
+        });
+      }
+    };
+
+    window.addEventListener('cms-settings-updated', handleBrandingUpdate);
+    return () => {
+      window.removeEventListener('cms-settings-updated', handleBrandingUpdate);
+    };
+  }, []);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -505,14 +536,24 @@ export function Sidebar() {
             onClick={() => setIsMobileOpen(false)}
             className="flex items-center gap-3 min-w-0 group cursor-pointer"
           >
-            <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center text-background font-bold text-sm shadow-xs shrink-0">
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-current">
-                <path d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 8a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4zM6 14a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm10-8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-              </svg>
+            <div className="h-8 w-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center overflow-hidden shadow-2xs shrink-0">
+              {siteBranding.logoUrl ? (
+                <img
+                  src={siteBranding.logoUrl}
+                  alt={siteBranding.name}
+                  className="h-full w-full object-contain p-0.5"
+                />
+              ) : (
+                <div className="h-full w-full bg-foreground flex items-center justify-center text-background font-bold text-sm">
+                  <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-current">
+                    <path d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 8a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4zM6 14a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm10-8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                  </svg>
+                </div>
+              )}
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-[15px] tracking-tight text-foreground leading-tight truncate">
-                Markup
+                {siteBranding.name}
               </span>
               <span className="text-[12px] text-muted-foreground/80 font-normal leading-tight truncate mt-0.5">
                 Headless CMS
