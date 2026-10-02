@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
 
     const robots = buildRobotsTxt({
       sitemapUrl: `${baseUrl}/sitemap.xml`,
-      disallowPaths: ['/admin', '/api/v1/auth', '/api/v1/users'],
+      disallowPaths: ['/admin', '/admin/', '/api/'],
+      customRules: 'Allow: /ads.txt',
     });
 
     return new NextResponse(robots, {
