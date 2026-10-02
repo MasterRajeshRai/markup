@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAiProvider } from '@headless/core';
 
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  return NextResponse.json({
+    status: 'ready',
+    providers: ['mock', 'gemini', 'openai'],
+    defaultProvider: process.env.GEMINI_API_KEY ? 'gemini' : 'mock',
+    features: ['generate', 'rewrite', 'seo-suggest', 'alt-text', 'translate'],
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

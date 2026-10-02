@@ -17,6 +17,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+function withTimeout<T>(promise: Promise<T>, ms = 1500): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), ms)),
+  ]);
+}
+
 const localStorage = new LocalStorageDriver({
   uploadDir: process.env.STORAGE_LOCAL_PATH || path.join(process.cwd(), 'public/uploads'),
   publicPathPrefix: process.env.STORAGE_PUBLIC_URL || '/uploads',
@@ -98,11 +105,14 @@ export async function POST(req: NextRequest) {
     let dbPresets: any[] = [];
     let availablePresets: CropPresetDefinition[] = DEFAULT_CROP_PRESETS;
     try {
-      dbPresets = await prisma.cropPreset.findMany({
-        where: {
-          OR: [{ siteId }, { siteId: null }],
-        },
-      });
+      dbPresets = await withTimeout(
+        prisma.cropPreset.findMany({
+          where: {
+            OR: [{ siteId }, { siteId: null }],
+          },
+        }),
+        1000
+      );
       if (dbPresets.length > 0) {
         availablePresets = dbPresets.map((p) => ({
           name: p.name,
@@ -157,23 +167,26 @@ export async function POST(req: NextRequest) {
         });
 
         try {
-          await prisma.mediaProcessingJob.create({
-            data: {
-              id: jobId,
-              siteId,
-              userId: adminSession?.user?.id,
-              status: 'PROCESSING',
-              tempFileId,
-              originalFilename: file.name,
-              originalMimeType: file.type,
-              originalFileSize: file.size,
-              selectedPresets: selectedPresets.length > 0 ? selectedPresets : availablePresets.filter((p) => p.isDefault).map((p) => p.slug),
-              focalX,
-              focalY,
-              progress: 5,
-              currentStep: 'validating',
-            },
-          });
+          await withTimeout(
+            prisma.mediaProcessingJob.create({
+              data: {
+                id: jobId,
+                siteId,
+                userId: adminSession?.user?.id,
+                status: 'PROCESSING',
+                tempFileId,
+                originalFilename: file.name,
+                originalMimeType: file.type,
+                originalFileSize: file.size,
+                selectedPresets: selectedPresets.length > 0 ? selectedPresets : availablePresets.filter((p) => p.isDefault).map((p) => p.slug),
+                focalX,
+                focalY,
+                progress: 5,
+                currentStep: 'validating',
+              },
+            }),
+            1000
+          );
         } catch {
           // Continue with in-memory job tracking
         }
@@ -220,40 +233,43 @@ export async function POST(req: NextRequest) {
           let createdMedia: any = null;
 
           try {
-            createdMedia = await prisma.media.create({
-              data: {
-                id: pipelineResult.mediaId,
-                siteId,
-                folderId: folderId || null,
-                filename: pipelineResult.filename, // SEO friendly image name kept
-                originalName: file.name,
-                mimeType: 'image/webp',
-                size: pipelineResult.originalSize,
-                width: pipelineResult.originalWidth,
-                height: pipelineResult.originalHeight,
-                focalPoint: { x: focalX, y: focalY },
-                focalX,
-                focalY,
-                originalWidth: pipelineResult.originalWidth,
-                originalHeight: pipelineResult.originalHeight,
-                originalSize: pipelineResult.originalSize,
-                originalMimeType: pipelineResult.originalMimeType,
-                storageDriver: pipelineResult.storageProvider,
-                storageBucket: pipelineResult.storageBucket,
-                storageKey: pipelineResult.primaryVariantKey,
-                path: pipelineResult.primaryVariantKey,
-                publicUrl: pipelineResult.primaryPublicUrl,
-                altText: humanAltText,
-                createdById: adminSession?.user?.id,
-                metadata: {
-                  seoName: pipelineResult.seoName,
-                  r2ReferenceName: pipelineResult.primaryR2ReferenceName,
-                  variantsCount: pipelineResult.variants.length,
-                  durationMs: pipelineResult.durationMs,
-                  tempOriginalDeleted: pipelineResult.tempOriginalDeleted,
+            createdMedia = await withTimeout(
+              prisma.media.create({
+                data: {
+                  id: pipelineResult.mediaId,
+                  siteId,
+                  folderId: folderId || null,
+                  filename: pipelineResult.filename, // SEO friendly image name kept
+                  originalName: file.name,
+                  mimeType: 'image/webp',
+                  size: pipelineResult.originalSize,
+                  width: pipelineResult.originalWidth,
+                  height: pipelineResult.originalHeight,
+                  focalPoint: { x: focalX, y: focalY },
+                  focalX,
+                  focalY,
+                  originalWidth: pipelineResult.originalWidth,
+                  originalHeight: pipelineResult.originalHeight,
+                  originalSize: pipelineResult.originalSize,
+                  originalMimeType: pipelineResult.originalMimeType,
+                  storageDriver: pipelineResult.storageProvider,
+                  storageBucket: pipelineResult.storageBucket,
+                  storageKey: pipelineResult.primaryVariantKey,
+                  path: pipelineResult.primaryVariantKey,
+                  publicUrl: pipelineResult.primaryPublicUrl,
+                  altText: humanAltText,
+                  createdById: adminSession?.user?.id,
+                  metadata: {
+                    seoName: pipelineResult.seoName,
+                    r2ReferenceName: pipelineResult.primaryR2ReferenceName,
+                    variantsCount: pipelineResult.variants.length,
+                    durationMs: pipelineResult.durationMs,
+                    tempOriginalDeleted: pipelineResult.tempOriginalDeleted,
+                  },
                 },
-              },
-            });
+              }),
+              1000
+            );
 
             // Save MediaVariant records in DB
             for (const variant of pipelineResult.variants) {
@@ -393,7 +409,53 @@ export async function POST(req: NextRequest) {
           } catch {
             // Handled
           }
-          throw procErr;
+
+          // Fallback to local storage so upload always succeeds even if pipeline fails
+          try {
+            const uploadResult = await localStorage.upload(buffer, file.name, file.type);
+            let mediaRecord: any = null;
+            try {
+              mediaRecord = await withTimeout(
+                prisma.media.create({
+                  data: {
+                    siteId,
+                    folderId: folderId || null,
+                    filename: path.basename(uploadResult.path),
+                    originalName: file.name,
+                    mimeType: file.type,
+                    size: uploadResult.size,
+                    storageDriver: 'local',
+                    path: uploadResult.path,
+                    publicUrl: uploadResult.publicUrl,
+                    altText: file.name.replace(/\.[^/.]+$/, ''),
+                    createdById: adminSession?.user?.id,
+                  },
+                }),
+                1000
+              );
+            } catch {
+              mediaRecord = {
+                id: `med_${Date.now()}`,
+                filename: path.basename(uploadResult.path),
+                originalName: file.name,
+                mimeType: file.type,
+                size: uploadResult.size,
+                storageDriver: 'local',
+                publicUrl: uploadResult.publicUrl,
+                altText: file.name.replace(/\.[^/.]+$/, ''),
+                variants: [],
+                mediaVariants: [],
+                folderId: folderId || null,
+                usageCount: 0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              addMockMedia(mediaRecord);
+            }
+            uploadedAssets.push(mediaRecord);
+          } catch (localErr) {
+            throw procErr;
+          }
         }
       } else {
         // Non-image upload: PDFs, docs, audio, video
@@ -401,21 +463,24 @@ export async function POST(req: NextRequest) {
         let mediaRecord: any = null;
 
         try {
-          mediaRecord = await prisma.media.create({
-            data: {
-              siteId,
-              folderId: folderId || null,
-              filename: path.basename(uploadResult.path),
-              originalName: file.name,
-              mimeType: file.type,
-              size: uploadResult.size,
-              storageDriver: 'local',
-              path: uploadResult.path,
-              publicUrl: uploadResult.publicUrl,
-              altText: file.name.replace(/\.[^/.]+$/, ''),
-              createdById: adminSession?.user?.id,
-            },
-          });
+          mediaRecord = await withTimeout(
+            prisma.media.create({
+              data: {
+                siteId,
+                folderId: folderId || null,
+                filename: path.basename(uploadResult.path),
+                originalName: file.name,
+                mimeType: file.type,
+                size: uploadResult.size,
+                storageDriver: 'local',
+                path: uploadResult.path,
+                publicUrl: uploadResult.publicUrl,
+                altText: file.name.replace(/\.[^/.]+$/, ''),
+                createdById: adminSession?.user?.id,
+              },
+            }),
+            1000
+          );
         } catch {
           mediaRecord = {
             id: `med_${Date.now()}`,

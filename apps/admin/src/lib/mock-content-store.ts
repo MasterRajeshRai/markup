@@ -465,9 +465,10 @@ export function getMockContentTypes(): MockContentType[] {
 }
 
 export function getMockContentTypeBySlug(slug: string): MockContentType | null {
-  const found = contentTypesStore.find((ct) => ct.slug === slug || ct.id === slug);
+  const norm = slug === 'page' ? 'pages' : slug === 'article' ? 'articles' : slug === 'product' ? 'products' : slug;
+  const found = contentTypesStore.find((ct) => ct.slug === slug || ct.id === slug || ct.slug === norm);
   if (!found) return null;
-  const entriesCount = contentEntriesStore.filter((e) => e.contentType === found.slug).length;
+  const entriesCount = contentEntriesStore.filter((e) => e.contentType === found.slug || e.contentType === slug).length;
   return { ...found, entriesCount };
 }
 
@@ -531,7 +532,8 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
   let filtered = [...contentEntriesStore];
 
   if (typeSlug) {
-    filtered = filtered.filter((e) => e.contentType === typeSlug);
+    const norm = typeSlug === 'page' ? 'pages' : typeSlug === 'article' ? 'articles' : typeSlug;
+    filtered = filtered.filter((e) => e.contentType === typeSlug || e.contentType === norm);
   }
 
   if (locale) {
@@ -597,13 +599,14 @@ export function getMockContentEntryByIdOrSlug(idOrSlug: string): MockContentEntr
 }
 
 export function createMockContentEntry(entry: Partial<MockContentEntry> & { title: string; slug: string; contentType: string }): MockContentEntry {
+  const normType = entry.contentType === 'page' ? 'pages' : entry.contentType === 'article' ? 'articles' : entry.contentType;
   const newEntry: MockContentEntry = {
     id: entry.id || `ent_${Date.now()}`,
     slug: entry.slug,
     title: entry.title,
     status: entry.status || 'DRAFT',
     locale: entry.locale || 'en-US',
-    contentType: entry.contentType,
+    contentType: normType,
     currentVersion: 1,
     data: entry.data || {},
     blocks: entry.blocks || [],

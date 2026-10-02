@@ -52,7 +52,7 @@ export default function PagesManagementPage() {
   const fetchPages = () => {
     setLoading(true);
     const params = new URLSearchParams();
-    params.set('type', 'page');
+    params.set('type', 'pages');
     if (statusFilter) params.set('status', statusFilter);
     if (search) params.set('q', search);
 
@@ -62,7 +62,7 @@ export default function PagesManagementPage() {
         if (res.data) {
           setPages(res.data);
         } else {
-          // If no type=page, fetch all and filter client side
+          // If no type=pages, fetch all and filter client side
           fetch('/api/v1/content')
             .then((r) => r.json())
             .then((allRes) => {
@@ -102,7 +102,7 @@ export default function PagesManagementPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contentTypeSlug: 'page',
+          contentTypeSlug: 'pages',
           title,
           slug,
         }),
@@ -118,7 +118,7 @@ export default function PagesManagementPage() {
       setIsCreateOpen(false);
       setTitle('');
       setSlug('');
-      router.push(`/admin/content/page/${data.entry.id}`);
+      router.push(`/admin/content/pages/${data.entry.id}`);
     } catch {
       setError('An unexpected error occurred');
       setCreating(false);
@@ -264,7 +264,7 @@ export default function PagesManagementPage() {
                       <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                         <td className="py-3 px-4">
                           <Link
-                            href={`/admin/content/${p.contentType || 'page'}/${p.id}`}
+                            href={`/admin/content/${p.contentType === 'page' ? 'pages' : (p.contentType || 'pages')}/${p.id}`}
                             className="font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                           >
                             <FileCode className="h-3.5 w-3.5 text-primary" />
@@ -299,7 +299,7 @@ export default function PagesManagementPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <Link href={`/admin/content/${p.contentType || 'page'}/${p.id}`}>
+                            <Link href={`/admin/content/${p.contentType === 'page' ? 'pages' : (p.contentType || 'pages')}/${p.id}`}>
                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Edit in Block Builder">
                                 <Edit className="h-3.5 w-3.5" />
                               </Button>
