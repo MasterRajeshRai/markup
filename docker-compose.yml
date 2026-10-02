@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: headless-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: headless_cms
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: headless-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: headless-admin
+    restart: always
+    environment:
+      DATABASE_URL: "postgresql://postgres:password@postgres:5432/headless_cms?schema=public"
+      JWT_SECRET: "enterprise-headless-cms-secret-jwt-key-minimum-32-chars"
+      REDIS_URL: "redis://redis:6379"
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:

@@ -1,0 +1,353 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root,
+  html {
+    color-scheme: light;
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96.5%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 20% 96.5%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 20% 94.5%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 92%;
+    --input: 214 20% 92%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
+    --scrollbar-thumb: rgba(100, 116, 139, 0.4);
+    --scrollbar-thumb-hover: rgba(100, 116, 139, 0.75);
+    --scrollbar-track: transparent;
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .dark,
+  html.dark {
+    color-scheme: dark;
+    --background: 240 14% 6%;
+    --foreground: 210 40% 98%;
+    --card: 240 12% 9.5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 12% 9.5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 14%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 240 10% 13.5%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 10% 14.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 10% 16%;
+    --input: 240 10% 16%;
+    --ring: 224 76% 48%;
+    --radius: 0.75rem;
+    --scrollbar-thumb: rgba(148, 163, 184, 0.4);
+    --scrollbar-thumb-hover: rgba(148, 163, 184, 0.75);
+    --scrollbar-track: transparent;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: Söhne, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Admin Base Typography & Form Controls */
+  .admin-root,
+  .admin-root input,
+  .admin-root select,
+  .admin-root textarea,
+  .admin-root button,
+  .admin-root table,
+  .admin-root th,
+  .admin-root td,
+  .admin-root label,
+  .admin-root p,
+  .admin-root li {
+    font-size: 15px;
+  }
+
+  /* WebKit / Chromium Custom Scrollbars (Chrome, Edge, Brave, Arc, Safari) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb) !important;
+    border-radius: 9999px !important;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover) !important;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent !important;
+  }
+
+  /* Firefox Custom Scrollbars */
+  @supports (-moz-appearance: none) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar,
+  .sidebar-scrollbar,
+  .thin-scrollbar {
+    overflow-y: auto;
+    color-scheme: inherit;
+  }
+
+  /* Thin Scrollbar & Custom Scrollbars */
+  .custom-scrollbar::-webkit-scrollbar,
+  .sidebar-scrollbar::-webkit-scrollbar,
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track,
+  .sidebar-scrollbar::-webkit-scrollbar-track,
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb,
+  .sidebar-scrollbar::-webkit-scrollbar-thumb,
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.4) !important;
+    border-radius: 9999px !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.8) !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-button,
+  .sidebar-scrollbar::-webkit-scrollbar-button,
+  .thin-scrollbar::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Dark mode scrollbars */
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb,
+  html.dark .custom-scrollbar::-webkit-scrollbar-thumb,
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb,
+  html.dark .sidebar-scrollbar::-webkit-scrollbar-thumb,
+  .dark .thin-scrollbar::-webkit-scrollbar-thumb,
+  html.dark .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.45) !important;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+  html.dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .thin-scrollbar::-webkit-scrollbar-thumb:hover,
+  html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.85) !important;
+  }
+
+  @supports (-moz-appearance: none) {
+    .custom-scrollbar,
+    .sidebar-scrollbar,
+    .thin-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+    }
+
+    .dark .custom-scrollbar,
+    html.dark .custom-scrollbar,
+    .dark .sidebar-scrollbar,
+    html.dark .sidebar-scrollbar,
+    .dark .thin-scrollbar,
+    html.dark .thin-scrollbar {
+      scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+    }
+  }
+
+  /* Admin Dashboard 15px Typography Normalization */
+  .admin-root .text-\[11px\],
+  .admin-root .text-\[12px\],
+  .admin-root .text-\[13px\],
+  .admin-root .text-\[13\.5px\],
+  .admin-root .text-\[14px\],
+  .admin-root .text-\[15px\],
+  .admin-root .text-xs,
+  .admin-root .text-sm {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+  }
+
+  .admin-root .text-\[9px\],
+  .admin-root .text-\[9\.5px\],
+  .admin-root .text-\[10px\] {
+    font-size: 12.5px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* ==============================================================
+   HERO SLIDER HIGH-PERFORMANCE CINEMATIC ANIMATIONS (60 FPS)
+   ============================================================== */
+
+@keyframes heroKenBurns {
+  0% {
+    transform: scale(1.0) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate3d(-1%, -1%, 0);
+  }
+}
+
+@keyframes heroSlideFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroTextRevealUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroBadgePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translate3d(0, -10px, 0);
+  }
+  70% {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroCtaBounce {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes heroProgressTimer {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.animate-hero-ken-burns {
+  animation: heroKenBurns 8s cubic-bezier(0.25, 1, 0.5, 1) infinite alternate;
+  will-change: transform;
+}
+
+.animate-hero-slide-in {
+  animation: heroSlideFadeIn 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-hero-badge {
+  animation: heroBadgePop 500ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+.animate-hero-subtitle {
+  animation: heroTextRevealUp 550ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+
+.animate-hero-title {
+  animation: heroTextRevealUp 650ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+}
+
+.animate-hero-description {
+  animation: heroTextRevealUp 650ms cubic-bezier(0.16, 1, 0.3, 1) 450ms both;
+}
+
+.animate-hero-cta {
+  animation: heroCtaBounce 600ms cubic-bezier(0.16, 1, 0.3, 1) 580ms both;
+}
+

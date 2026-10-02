@@ -1,0 +1,834 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// SITES, LOCALES & TENANCY
+// -------------------------------------------------------------
+
+model Site {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  domain        String?  @unique
+  defaultLocale String   @default("en-US")
+  isDefault     Boolean  @default(false)
+  branding      Json?    @default("{}")
+  settings      Json?    @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  locales        Locale[]
+  contentTypes   ContentType[]
+  contentEntries ContentEntry[]
+  mediaFolders   MediaFolder[]
+  media          Media[]
+  taxonomies     Taxonomy[]
+  menus          Menu[]
+  workflows      Workflow[]
+  redirects      Redirect[]
+  apiKeys        ApiKey[]
+  webhooks       Webhook[]
+  auditLogs      AuditLog[]
+  siteSettings   Setting[]
+  cropPresets    CropPreset[]
+  mediaJobs      MediaProcessingJob[]
+
+  @@index([slug])
+  @@index([domain])
+}
+
+model Locale {
+  id        String   @id @default(cuid())
+  code      String   // e.g., "en-US", "es-ES", "fr-FR"
+  name      String   // e.g., "English (US)"
+  isDefault Boolean  @default(false)
+  siteId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, code])
+  @@index([siteId])
+}
+
+// -------------------------------------------------------------
+// AUTHENTICATION & RBAC
+// -------------------------------------------------------------
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  avatarUrl       String?
+  isActive        Boolean   @default(true)
+  isEmailVerified Boolean   @default(false)
+  mfaEnabled      Boolean   @default(false)
+  mfaSecret       String?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions       Session[]
+  userRoles      UserRole[]
+  contentEntries ContentEntry[]   @relation("AuthorEntries")
+  revisions      ContentRevision[]
+  mediaUploaded  Media[]          @relation("MediaUploader")
+  auditLogs      AuditLog[]       @relation("ActorAuditLogs")
+  apiKeys        ApiKey[]         @relation("CreatedApiKeys")
+  redirects      Redirect[]       @relation("CreatedRedirects")
+  mediaJobs      MediaProcessingJob[] @relation("UserMediaJobs")
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@index([slug])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  action      String   @unique // e.g., "content.create", "content.publish", "media.upload"
+  description String?
+  module      String   // e.g., "content", "media", "users", "settings"
+
+  rolePermissions RolePermission[]
+
+  @@index([action])
+  @@index([module])
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model AccountLockout {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  lastAttemptAt  DateTime  @default(now())
+
+  @@index([email])
+}
+
+// -------------------------------------------------------------
+// CONTENT MODELING & SCHEMAS
+// -------------------------------------------------------------
+
+model ContentType {
+  id                 String   @id @default(cuid())
+  siteId             String
+  name               String
+  slug               String
+  description        String?
+  icon               String?  @default("FileText")
+  isSingle           Boolean  @default(false)
+  isPublishable      Boolean  @default(true)
+  hasDrafts          Boolean  @default(true)
+  hasRevisions       Boolean  @default(true)
+  seoConfig          Json?    @default("{}")
+  publishingBehavior Json?    @default("{}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  site    Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  fields  ContentField[]
+  entries ContentEntry[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+  @@index([slug])
+}
+
+model ContentField {
+  id              String   @id @default(cuid())
+  contentTypeId   String
+  name            String
+  apiId           String
+  type            String   // text, longtext, richtext, number, boolean, date, datetime, email, url, color, json, markdown, code, media, gallery, relation, repeatable, block, select, etc.
+  isRequired      Boolean  @default(false)
+  defaultValue    Json?
+  validationRules Json?    @default("{}")
+  helpText        String?
+  isVisible       Boolean  @default(true)
+  order           Int      @default(0)
+  options         Json?    @default("{}")
+
+  contentType ContentType @relation(fields: [contentTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([contentTypeId, apiId])
+  @@index([contentTypeId])
+  @@index([apiId])
+}
+
+// -------------------------------------------------------------
+// CONTENT ENTRIES, REVISIONS & WORKFLOWS
+// -------------------------------------------------------------
+
+enum EntryStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+model ContentEntry {
+  id                   String      @id @default(cuid())
+  contentTypeId        String
+  siteId               String
+  slug                 String
+  title                String
+  status               EntryStatus @default(DRAFT)
+  publishedAt          DateTime?
+  scheduledPublishAt   DateTime?
+  scheduledUnpublishAt DateTime?
+  expiresAt            DateTime?
+  authorId             String?
+  parentId             String?
+  isTemplate           Boolean     @default(false)
+  currentVersion       Int         @default(1)
+  locale               String      @default("en-US")
+  
+  data                 Json        @default("{}") // Dynamic content type field values
+  blocks               Json        @default("[]") // Visual block builder layout and data
+  seo                  Json        @default("{}") // SEO title, description, OG, Twitter, Schema, robots
+  
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  contentType          ContentType         @relation(fields: [contentTypeId], references: [id], onDelete: Cascade)
+  site                 Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  author               User?               @relation("AuthorEntries", fields: [authorId], references: [id], onDelete: SetNull)
+  revisions            ContentRevision[]
+  taxonomyTerms        EntryTaxonomyTerm[]
+  sourceRelations      ContentRelation[]   @relation("SourceEntries")
+  targetRelations      ContentRelation[]   @relation("TargetEntries")
+  sourceTranslations   Translation[]       @relation("SourceTranslations")
+  targetTranslations   Translation[]       @relation("TargetTranslations")
+
+  @@unique([siteId, contentTypeId, slug, locale])
+  @@index([siteId])
+  @@index([contentTypeId])
+  @@index([status])
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([scheduledPublishAt])
+}
+
+model ContentRevision {
+  id            String   @id @default(cuid())
+  entryId       String
+  version       Int
+  authorId      String?
+  changeSummary String?
+  changedFields Json?    @default("[]")
+  data          Json     @default("{}")
+  blocks        Json     @default("[]")
+  seo           Json     @default("{}")
+  createdAt     DateTime @default(now())
+
+  entry  ContentEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  author User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([entryId])
+  @@index([version])
+}
+
+model ContentRelation {
+  id            String @id @default(cuid())
+  sourceEntryId String
+  targetEntryId String
+  fieldApiId    String
+  order         Int    @default(0)
+
+  sourceEntry ContentEntry @relation("SourceEntries", fields: [sourceEntryId], references: [id], onDelete: Cascade)
+  targetEntry ContentEntry @relation("TargetEntries", fields: [targetEntryId], references: [id], onDelete: Cascade)
+
+  @@index([sourceEntryId])
+  @@index([targetEntryId])
+  @@index([fieldApiId])
+}
+
+model Translation {
+  id            String @id @default(cuid())
+  sourceEntryId String
+  targetEntryId String
+  sourceLocale  String
+  targetLocale  String
+
+  sourceEntry ContentEntry @relation("SourceTranslations", fields: [sourceEntryId], references: [id], onDelete: Cascade)
+  targetEntry ContentEntry @relation("TargetTranslations", fields: [targetEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceEntryId, targetLocale])
+  @@index([sourceEntryId])
+  @@index([targetEntryId])
+}
+
+// -------------------------------------------------------------
+// MEDIA LIBRARY & DIGITAL ASSET MANAGEMENT
+// -------------------------------------------------------------
+
+model MediaFolder {
+  id        String   @id @default(cuid())
+  siteId    String
+  name      String
+  slug      String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site     Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  parent   MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children MediaFolder[] @relation("FolderHierarchy")
+  media    Media[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+  @@index([parentId])
+}
+
+model Media {
+  id            String   @id @default(cuid())
+  siteId        String
+  folderId      String?
+  filename      String
+  originalName  String
+  mimeType      String
+  size          Int      // bytes
+  width         Int?
+  height        Int?
+  focalPoint    Json?    @default("{\"x\": 0.5, \"y\": 0.5}")
+  altText       String?
+  caption       String?
+  description   String?
+  copyright     String?
+  credit        String?
+  storageDriver String   @default("local") // local, s3, cloudflare_r2
+  storageBucket String?
+  storageKey    String?
+  path          String
+  publicUrl     String
+  focalX        Float?   @default(0.5)
+  focalY        Float?   @default(0.5)
+  originalWidth Int?
+  originalHeight Int?
+  originalSize  Int?
+  originalMimeType String?
+  variants      Json?    @default("{}") // legacy json cache
+  metadata      Json?    @default("{}")
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  site          Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  folder        MediaFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader      User?         @relation("MediaUploader", fields: [createdById], references: [id], onDelete: SetNull)
+  usages        MediaUsage[]
+  mediaVariants MediaVariant[]
+  jobs          MediaProcessingJob[]
+
+  @@index([siteId])
+  @@index([folderId])
+  @@index([mimeType])
+  @@index([createdAt])
+}
+
+model MediaVariant {
+  id              String      @id @default(cuid())
+  mediaId         String
+  presetId        String?
+  presetSlug      String      // "thumbnail", "card", "medium", "hero", etc.
+  width           Int
+  height          Int
+  format          String      @default("webp") // "webp"
+  quality         Int         @default(82)
+  fileSize        Int
+  storageProvider String      @default("cloudflare_r2") // "cloudflare_r2" or "local"
+  storageBucket   String?
+  storageKey      String
+  publicUrl       String
+  createdAt       DateTime    @default(now())
+
+  media           Media       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  preset          CropPreset? @relation(fields: [presetId], references: [id], onDelete: SetNull)
+
+  @@index([mediaId])
+  @@index([presetSlug])
+}
+
+model CropPreset {
+  id          String   @id @default(cuid())
+  siteId      String?
+  name        String   // "Thumbnail", "Card", "Medium", "Hero", "Social"
+  slug        String   // "thumbnail", "card", "medium", "hero", "social"
+  width       Int
+  height      Int
+  fit         String   @default("cover") // "cover", "contain"
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site        Site?    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  variants    MediaVariant[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+  @@index([slug])
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  UPLOADING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model MediaProcessingJob {
+  id               String    @id @default(cuid())
+  siteId           String?
+  userId           String?
+  status           JobStatus @default(QUEUED)
+  tempFileId       String    @unique
+  tempFilePath     String?
+  originalFilename String
+  originalMimeType String
+  originalFileSize Int
+  originalWidth    Int?
+  originalHeight   Int?
+  selectedPresets  Json      @default("[]") // array of preset slugs
+  focalX           Float?    @default(0.5)
+  focalY           Float?    @default(0.5)
+  progress         Int       @default(0) // 0-100
+  currentStep      String?   // "validating", "cropping", "converting", "uploading", "cleaning"
+  mediaId          String?
+  error            String?
+  metadata         Json?     @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  site             Site?     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user             User?     @relation("UserMediaJobs", fields: [userId], references: [id], onDelete: SetNull)
+  media            Media?    @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([siteId])
+  @@index([createdAt])
+}
+
+model MediaUsage {
+  id         String   @id @default(cuid())
+  mediaId    String
+  entityType String   // e.g. "content_entry", "site_setting", "user"
+  entityId   String
+  fieldKey   String
+  createdAt  DateTime @default(now())
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId])
+  @@index([entityType, entityId])
+}
+
+// -------------------------------------------------------------
+// TAXONOMIES & NAVIGATION
+// -------------------------------------------------------------
+
+model Taxonomy {
+  id             String   @id @default(cuid())
+  siteId         String
+  name           String
+  slug           String
+  description    String?
+  isHierarchical Boolean  @default(false)
+  appliesTo      Json?    @default("[]") // ContentType slugs this taxonomy applies to
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  site  Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  terms TaxonomyTerm[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+model TaxonomyTerm {
+  id          String   @id @default(cuid())
+  taxonomyId  String
+  parentId    String?
+  name        String
+  slug        String
+  description String?
+  order       Int      @default(0)
+  metadata    Json?    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  taxonomy Taxonomy            @relation(fields: [taxonomyId], references: [id], onDelete: Cascade)
+  parent   TaxonomyTerm?       @relation("TermHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children TaxonomyTerm[]      @relation("TermHierarchy")
+  entries  EntryTaxonomyTerm[]
+
+  @@unique([taxonomyId, slug])
+  @@index([taxonomyId])
+  @@index([parentId])
+}
+
+model EntryTaxonomyTerm {
+  id      String @id @default(cuid())
+  entryId String
+  termId  String
+
+  entry ContentEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  term  TaxonomyTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, termId])
+  @@index([entryId])
+  @@index([termId])
+}
+
+model Menu {
+  id          String   @id @default(cuid())
+  siteId      String
+  name        String
+  slug        String
+  description String?
+  location    String?  // e.g. "header", "footer", "mobile"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site  Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  items MenuItem[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+enum MenuItemType {
+  INTERNAL
+  EXTERNAL
+  DYNAMIC
+}
+
+model MenuItem {
+  id         String       @id @default(cuid())
+  menuId     String
+  parentId   String?
+  title      String
+  url        String
+  target     String       @default("_self") // _self, _blank
+  type       MenuItemType @default(INTERNAL)
+  entityType String?      // e.g. "content_entry"
+  entityId   String?      // linked ContentEntry id
+  order      Int          @default(0)
+  isActive   Boolean      @default(true)
+
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children MenuItem[] @relation("MenuHierarchy")
+
+  @@index([menuId])
+  @@index([parentId])
+}
+
+// -------------------------------------------------------------
+// WORKFLOWS & STATE MACHINE
+// -------------------------------------------------------------
+
+model Workflow {
+  id             String   @id @default(cuid())
+  siteId         String
+  name           String
+  slug           String
+  description    String?
+  contentTypeIds Json?    @default("[]") // content type ids applying this workflow
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  site        Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  states      WorkflowState[]
+  transitions WorkflowTransition[]
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+model WorkflowState {
+  id          String  @id @default(cuid())
+  workflowId  String
+  name        String
+  slug        String
+  color       String  @default("#64748b")
+  isInitial   Boolean @default(false)
+  isPublished Boolean @default(false)
+  isArchived  Boolean @default(false)
+  order       Int     @default(0)
+
+  workflow        Workflow             @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  fromTransitions WorkflowTransition[] @relation("FromTransitions")
+  toTransitions   WorkflowTransition[] @relation("ToTransitions")
+
+  @@unique([workflowId, slug])
+  @@index([workflowId])
+}
+
+model WorkflowTransition {
+  id                 String  @id @default(cuid())
+  workflowId         String
+  fromStateId        String
+  toStateId          String
+  name               String
+  requiredPermission String? // Permission action required, e.g., "content.publish"
+  notifyRoles        Json?   @default("[]")
+
+  workflow  Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  fromState WorkflowState @relation("FromTransitions", fields: [fromStateId], references: [id], onDelete: Cascade)
+  toState   WorkflowState @relation("ToTransitions", fields: [toStateId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([fromStateId])
+  @@index([toStateId])
+}
+
+// -------------------------------------------------------------
+// REDIRECT MANAGER
+// -------------------------------------------------------------
+
+model Redirect {
+  id             String    @id @default(cuid())
+  siteId         String
+  sourceUrl      String
+  destinationUrl String
+  statusCode     Int       @default(301) // 301, 302, 307, 308
+  isActive       Boolean   @default(true)
+  hitCount       Int       @default(0)
+  lastUsedAt     DateTime?
+  notes          String?
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  site    Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  creator User? @relation("CreatedRedirects", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([siteId, sourceUrl])
+  @@index([siteId])
+  @@index([sourceUrl])
+}
+
+// -------------------------------------------------------------
+// API MANAGEMENT & ACCESS TOKENS
+// -------------------------------------------------------------
+
+enum ApiKeyRole {
+  READ_ONLY
+  READ_WRITE
+  ADMIN
+}
+
+enum ApiKeyEnvironment {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+}
+
+model ApiKey {
+  id          String            @id @default(cuid())
+  siteId      String
+  name        String
+  keyPrefix   String            // First 8 chars e.g. "cms_live_..."
+  keyHash     String            @unique // SHA256 hash of secret key
+  role        ApiKeyRole        @default(READ_ONLY)
+  scopes      Json              @default("[\"content:read\"]")
+  environment ApiKeyEnvironment @default(DEVELOPMENT)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdById String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  site    Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  creator User? @relation("CreatedApiKeys", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([siteId])
+  @@index([keyHash])
+}
+
+// -------------------------------------------------------------
+// WEBHOOKS & EVENT DISPATCHING
+// -------------------------------------------------------------
+
+model Webhook {
+  id         String   @id @default(cuid())
+  siteId     String
+  name       String
+  url        String
+  secret     String
+  events     Json     @default("[]") // e.g. ["content.published", "content.deleted", "media.uploaded"]
+  isActive   Boolean  @default(true)
+  headers    Json?    @default("{}")
+  retryCount Int      @default(3)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  site       Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([siteId])
+  @@index([isActive])
+}
+
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  webhookId      String
+  event          String
+  payload        Json
+  requestHeaders Json?    @default("{}")
+  responseStatus Int?
+  responseBody   String?
+  durationMs     Int?
+  error          String?
+  attempt        Int      @default(1)
+  success        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+// -------------------------------------------------------------
+// AUDIT LOGS & SITE SETTINGS
+// -------------------------------------------------------------
+
+enum ActorType {
+  USER
+  API_KEY
+  SYSTEM
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  siteId     String?
+  actorId    String?
+  actorType  ActorType @default(USER)
+  action     String    // e.g. "auth.login", "content.publish", "user.create", "role.update"
+  entityType String    // e.g. "ContentEntry", "User", "Role", "Media"
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?     @default("{}")
+  createdAt  DateTime  @default(now())
+
+  site  Site? @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  actor User? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([siteId])
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum SettingCategory {
+  GENERAL
+  BRANDING
+  SEO
+  EMAIL
+  SECURITY
+  CODE_INJECTION
+}
+
+model Setting {
+  id        String          @id @default(cuid())
+  siteId    String
+  key       String
+  value     Json
+  category  SettingCategory @default(GENERAL)
+  isPublic  Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, key])
+  @@index([siteId])
+  @@index([category])
+}
+
+model ScheduledJob {
+  id          String    @id @default(cuid())
+  type        String    // PUBLISH_CONTENT, UNPUBLISH_CONTENT, WEBHOOK_RETRY, SITEMAP_GENERATE
+  payload     Json
+  scheduledAt DateTime
+  executedAt  DateTime?
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  error       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, scheduledAt])
+}

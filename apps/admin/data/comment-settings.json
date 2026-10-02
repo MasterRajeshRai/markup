@@ -1,0 +1,22 @@
+{
+  "moderationMode": "FIRST_TIME_ONLY",
+  "allowGuestComments": true,
+  "requireEmailVerification": false,
+  "maxLinksAllowed": 2,
+  "closeCommentsAfterDays": 0,
+  "maxThreadDepth": 3,
+  "enableMarkdown": true,
+  "enableUpvotes": true,
+  "enableAvatars": true,
+  "blocklistKeywords": [
+    "viagra",
+    "crypto pump",
+    "free spins",
+    "buy backlinks",
+    "whatsapp group"
+  ],
+  "notifyAdminOnNew": true,
+  "notifyAuthorOnReply": true,
+  "akismetEnabled": false,
+  "turnstileEnabled": false
+}

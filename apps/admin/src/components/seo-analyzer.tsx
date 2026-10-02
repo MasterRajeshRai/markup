@@ -1,0 +1,2044 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Search, CheckCircle2, AlertCircle, XCircle, ChevronDown, ChevronUp,
+  Globe, Target, Copy, Check, Clock, Sparkles, BookOpen, Share2,
+  Code2, Save, X, RefreshCw, Twitter, Facebook, Zap, Sliders,
+  Smartphone, Monitor, Star, FileCheck, Gauge, ExternalLink, Link2,
+  Layers, Award,
+} from 'lucide-react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type CheckStatus = 'good' | 'ok' | 'bad' | 'info';
+
+export interface SEOCheck {
+  id: string;
+  label: string;
+  status: CheckStatus;
+  message: string;
+  weight: number;
+}
+
+export interface ContentStats {
+  wordCount: number;
+  charCount: number;
+  sentenceCount: number;
+  paragraphCount: number;
+  readingTimeMin: number;
+  headingCount: number;
+  internalLinkCount: number;
+  externalLinkCount: number;
+  imageCount: number;
+  imagesWithAltCount: number;
+}
+
+export interface KeywordAnalysis {
+  keyword: string;
+  isPrimary: boolean;
+  score: number;
+  checks: SEOCheck[];
+  count: number;
+  density: number;
+  inTitle: boolean;
+  inTitleFront: boolean;
+  inSlug: boolean;
+  inMeta: boolean;
+  inIntro: boolean;
+  inHeadings: boolean;
+  inImageAlt: boolean;
+}
+
+export interface MultiKeywordSEOResult {
+  overallScore: number;
+  readabilityScore: number;
+  fleschScore: number;
+  keywordAnalyses: Record<string, KeywordAnalysis>;
+  activeKeyword: string;
+  readabilityChecks: SEOCheck[];
+  suggestedKeywords: string[];
+  stats: ContentStats;
+}
+
+export interface SEOInputs {
+  keywords: string[]; // up to 5 keywords
+  activeKeywordIndex?: number;
+  title: string;
+  metaDescription: string;
+  slug: string;
+  content: string;
+  isPillarContent?: boolean;
+}
+
+const STATUS_SCORE: Record<CheckStatus, number> = { good: 100, ok: 60, bad: 0, info: 0 };
+
+const STOP_WORDS = new Set([
+  'the','a','an','and','or','but','in','on','at','to','for','of','with','by',
+  'from','is','are','was','were','be','been','being','have','has','had','do',
+  'does','did','will','would','could','should','may','might','this','that',
+  'these','those','it','its','as','if','not','no','so','we','you','he','she',
+  'they','them','their','our','your','his','her','my','i','me','us','into',
+  'than','then','each','both','very','just','more','also','how','what','when',
+  'where','which','who','all','any','about','up','out','there','can','get',
+  'use','after','before','between','through','over','under','such','other',
+  'some','time','new','now','first','last','only','most','make','know','think',
+  'see','come','take','give','go','well','own','say','set','put','same','while',
+  'one','two','three','four','five',
+]);
+
+// ─── Flesch-Kincaid & Stats ──────────────────────────────────────────────────
+
+export function countSyllables(word: string): number {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!word) return 0;
+  if (word.length <= 3) return 1;
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+  const m = word.match(/[aeiouy]{1,2}/g);
+  return m ? m.length : 1;
+}
+
+export function fleschReadingEase(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 3);
+  const words = text.match(/\b[a-zA-Z']+\b/g) || [];
+  if (!sentences.length || !words.length) return 0;
+  const syllables = words.reduce((s, w) => s + countSyllables(w), 0);
+  const asl = words.length / sentences.length;
+  const asw = syllables / words.length;
+  return Math.max(0, Math.min(100, Math.round(206.835 - 1.015 * asl - 84.6 * asw)));
+}
+
+export function fleschLabel(score: number): { label: string; color: string } {
+  if (score >= 90) return { label: 'Very Easy', color: 'text-emerald-500' };
+  if (score >= 70) return { label: 'Easy', color: 'text-emerald-400' };
+  if (score >= 60) return { label: 'Standard', color: 'text-blue-500' };
+  if (score >= 50) return { label: 'Fairly Difficult', color: 'text-amber-500' };
+  if (score >= 30) return { label: 'Difficult', color: 'text-orange-500' };
+  return { label: 'Very Confusing', color: 'text-red-500' };
+}
+
+export function computeContentStats(content: string): ContentStats {
+  const words = content.trim().split(/\s+/).filter(Boolean);
+  const chars = content.length;
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 3);
+  const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 0);
+
+  const headingCount = (content.match(/^#+\s+/gm) || []).length + (content.match(/<h[1-6]/gi) || []).length;
+
+  // External vs internal links
+  const externalLinks = (content.match(/https?:\/\/[^\s'")]+/gi) || []).length;
+  const allMarkdownLinks = (content.match(/\[[^\]]+\]\(([^)]+)\)/g) || []).length;
+  const internalLinks = Math.max(0, allMarkdownLinks - externalLinks) + (content.match(/href=["'](?:\/|\.\/|\.\.\/)[^"']*["']/gi) || []).length;
+
+  // Image detection
+  const markdownImages = content.match(/!\[([^\]]*)\]\(([^)]+)\)/g) || [];
+  const htmlImages = content.match(/<img[^>]+>/gi) || [];
+  const imageCount = markdownImages.length + htmlImages.length;
+
+  let withAlt = 0;
+  markdownImages.forEach((img) => {
+    const match = img.match(/!\[([^\]]+)\]/);
+    if (match && match[1]?.trim()) withAlt++;
+  });
+  htmlImages.forEach((img) => {
+    if (/alt=["'][^"']+["']/i.test(img)) withAlt++;
+  });
+
+  return {
+    wordCount: words.length,
+    charCount: chars,
+    sentenceCount: sentences.length,
+    paragraphCount: paragraphs.length,
+    readingTimeMin: Math.max(1, Math.ceil(words.length / 220)),
+    headingCount,
+    internalLinkCount: internalLinks,
+    externalLinkCount: externalLinks,
+    imageCount,
+    imagesWithAltCount: withAlt,
+  };
+}
+
+// ─── Keyword suggestions ─────────────────────────────────────────────────────
+
+export function extractKeywordSuggestions(content: string, existingKeywords: string[]): string[] {
+  const words = content.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+  const freq: Record<string, number> = {};
+  words.forEach((w) => {
+    if (!STOP_WORDS.has(w)) freq[w] = (freq[w] || 0) + 1;
+  });
+
+  const wordArr = content
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !STOP_WORDS.has(w));
+
+  for (let i = 0; i < wordArr.length - 1; i++) {
+    const bigram = `${wordArr[i]} ${wordArr[i + 1]}`;
+    freq[bigram] = (freq[bigram] || 0) + 1;
+  }
+
+  const existingSet = new Set(existingKeywords.map((k) => k.trim().toLowerCase()));
+
+  return Object.entries(freq)
+    .filter(([w, c]) => c >= 2 && !existingSet.has(w))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([w]) => w);
+}
+
+// ─── Schema Generator ────────────────────────────────────────────────────────
+
+export type SchemaType = 'Article' | 'BlogPosting' | 'NewsArticle' | 'FAQPage' | 'HowTo' | 'BreadcrumbList';
+
+export function generateSchema(
+  type: SchemaType,
+  inputs: {
+    title: string;
+    description: string;
+    slug: string;
+    content: string;
+    imageUrl?: string;
+    authorName?: string;
+    siteName?: string;
+  }
+): object {
+  const base = { '@context': 'https://schema.org' };
+  const url = `https://${inputs.siteName || 'yoursite.com'}/${inputs.slug}`;
+  const now = new Date().toISOString();
+
+  if (type === 'Article' || type === 'BlogPosting' || type === 'NewsArticle') {
+    return {
+      ...base,
+      '@type': type,
+      headline: inputs.title,
+      description: inputs.description,
+      image: inputs.imageUrl || `https://${inputs.siteName || 'yoursite.com'}/og-image.jpg`,
+      datePublished: now,
+      dateModified: now,
+      author: {
+        '@type': 'Person',
+        name: inputs.authorName || 'Staff Author',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: inputs.siteName || 'Acme Platform',
+        logo: {
+          '@type': 'ImageObject',
+          url: `https://${inputs.siteName || 'yoursite.com'}/logo.png`,
+        },
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': url,
+      },
+    };
+  }
+
+  if (type === 'FAQPage') {
+    const qaPairs = inputs.content.match(/#+\s+(.+)\n+([\s\S]+?)(?=\n#+|$)/g) || [];
+    const items = qaPairs.slice(0, 8).map((block) => {
+      const lines = block.trim().split('\n');
+      const q = lines[0].replace(/^#+\s+/, '');
+      const a = lines.slice(1).join(' ').trim().slice(0, 300);
+      return {
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a || 'See article for full breakdown.' },
+      };
+    });
+    return {
+      ...base,
+      '@type': 'FAQPage',
+      mainEntity: items.length
+        ? items
+        : [{ '@type': 'Question', name: 'What is this topic?', acceptedAnswer: { '@type': 'Answer', text: inputs.description || inputs.title } }],
+    };
+  }
+
+  if (type === 'HowTo') {
+    const steps = (inputs.content.match(/^[-*]\s+(.+)$/gm) || []).slice(0, 6).map((step, idx) => ({
+      '@type': 'HowToStep',
+      position: idx + 1,
+      name: `Step ${idx + 1}`,
+      text: step.replace(/^[-*]\s+/, ''),
+    }));
+
+    return {
+      ...base,
+      '@type': 'HowTo',
+      name: inputs.title,
+      description: inputs.description,
+      step: steps.length ? steps : [{ '@type': 'HowToStep', position: 1, name: 'Initial Setup', text: 'Follow the steps in the guide.' }],
+    };
+  }
+
+  // BreadcrumbList
+  return {
+    ...base,
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `https://${inputs.siteName || 'yoursite.com'}` },
+      { '@type': 'ListItem', position: 2, name: 'Articles', item: `https://${inputs.siteName || 'yoursite.com'}/articles` },
+      { '@type': 'ListItem', position: 3, name: inputs.title, item: url },
+    ],
+  };
+}
+
+// ─── Single Keyword Analysis Engine ──────────────────────────────────────────
+
+export function analyzeKeyword(
+  keyword: string,
+  isPrimary: boolean,
+  inputs: {
+    title: string;
+    metaDescription: string;
+    slug: string;
+    content: string;
+    isPillarContent?: boolean;
+    stats: ContentStats;
+  }
+): KeywordAnalysis {
+  const { title, metaDescription, slug, content, isPillarContent, stats } = inputs;
+  const kw = keyword.trim().toLowerCase();
+  const checks: SEOCheck[] = [];
+
+  const words = content.trim().split(/\s+/).filter(Boolean);
+  const kwRegex = kw ? new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi') : null;
+  const kwCount = kw && kwRegex ? (content.match(kwRegex) || []).length : 0;
+  const kwDensity = words.length > 0 ? (kwCount / words.length) * 100 : 0;
+
+  const inTitle = Boolean(kw && title.toLowerCase().includes(kw));
+  // Front-loaded title check (appears in first 50% of title)
+  const inTitleFront = inTitle && title.toLowerCase().indexOf(kw) <= Math.max(10, title.length / 2);
+  const inSlug = Boolean(kw && slug.toLowerCase().includes(kw.replace(/\s+/g, '-')));
+  const inMeta = Boolean(kw && metaDescription.toLowerCase().includes(kw));
+
+  const first100 = words.slice(0, 100).join(' ').toLowerCase();
+  const inIntro = Boolean(kw && first100.includes(kw));
+
+  const headings = content.match(/^#+\s+.*$/gm) || [];
+  const inHeadings = Boolean(kw && headings.some((h) => h.toLowerCase().includes(kw)));
+
+  // Check image alt tags
+  const imgMatches = content.match(/!\[([^\]]*)\]/g) || [];
+  const inImageAlt = Boolean(kw && imgMatches.some((m) => m.toLowerCase().includes(kw)));
+
+  if (!kw) {
+    checks.push({
+      id: 'kw-missing',
+      label: 'Focus keyword defined',
+      status: 'bad',
+      message: 'Enter a focus keyword to evaluate search optimization signals.',
+      weight: 20,
+    });
+    return {
+      keyword: '',
+      isPrimary,
+      score: 0,
+      checks,
+      count: 0,
+      density: 0,
+      inTitle: false,
+      inTitleFront: false,
+      inSlug: false,
+      inMeta: false,
+      inIntro: false,
+      inHeadings: false,
+      inImageAlt: false,
+    };
+  }
+
+  // 1. Keyword in Title
+  if (inTitleFront) {
+    checks.push({
+      id: 'kw-title-front',
+      label: 'Focus keyword at beginning of SEO Title',
+      status: 'good',
+      message: `"${kw}" is prominently front-loaded in the SEO title. ✓`,
+      weight: 15,
+    });
+  } else if (inTitle) {
+    checks.push({
+      id: 'kw-title',
+      label: 'Focus keyword in SEO Title',
+      status: 'good',
+      message: `"${kw}" appears in the title. (Tip: placing it near the start boosts click-through).`,
+      weight: 12,
+    });
+  } else {
+    checks.push({
+      id: 'kw-title',
+      label: 'Focus keyword in SEO Title',
+      status: 'bad',
+      message: `Add "${kw}" to your title tag. This is the highest-weight on-page ranking factor.`,
+      weight: 15,
+    });
+  }
+
+  // 2. Keyword in Meta Description
+  if (inMeta) {
+    checks.push({
+      id: 'kw-meta',
+      label: 'Focus keyword in Meta Description',
+      status: 'good',
+      message: `"${kw}" found in meta description snippet. ✓`,
+      weight: 10,
+    });
+  } else {
+    checks.push({
+      id: 'kw-meta',
+      label: 'Focus keyword in Meta Description',
+      status: 'bad',
+      message: `Include "${kw}" in your meta description so Google bolds it in search results.`,
+      weight: 10,
+    });
+  }
+
+  // 3. Keyword in URL Slug
+  if (inSlug) {
+    checks.push({
+      id: 'kw-slug',
+      label: 'Focus keyword in URL Permlink',
+      status: 'good',
+      message: `Clean URL permalink contains "${kw.replace(/\s+/g, '-')}". ✓`,
+      weight: 8,
+    });
+  } else {
+    checks.push({
+      id: 'kw-slug',
+      label: 'Focus keyword in URL Permlink',
+      status: 'ok',
+      message: `Include "${kw.replace(/\s+/g, '-')}" in the URL slug for keyword-rich permalinks.`,
+      weight: 8,
+    });
+  }
+
+  // 4. Keyword in Opening 10% / First 100 Words
+  if (inIntro) {
+    checks.push({
+      id: 'kw-intro',
+      label: 'Focus keyword in first 100 words',
+      status: 'good',
+      message: `"${kw}" appears in your opening hook to establish topical relevance early. ✓`,
+      weight: 8,
+    });
+  } else {
+    checks.push({
+      id: 'kw-intro',
+      label: 'Focus keyword in first 100 words',
+      status: 'ok',
+      message: `Introduce "${kw}" naturally in your introductory paragraph.`,
+      weight: 8,
+    });
+  }
+
+  // 5. Keyword in Subheadings (H2, H3)
+  if (inHeadings) {
+    checks.push({
+      id: 'kw-headings',
+      label: 'Focus keyword in H2/H3 subheadings',
+      status: 'good',
+      message: `"${kw}" is reinforced in subheadings. ✓`,
+      weight: 8,
+    });
+  } else {
+    checks.push({
+      id: 'kw-headings',
+      label: 'Focus keyword in H2/H3 subheadings',
+      status: 'ok',
+      message: `Use "${kw}" in at least one H2 or H3 heading to structure search context.`,
+      weight: 8,
+    });
+  }
+
+  // 6. Keyword Density
+  if (kwDensity >= 0.5 && kwDensity <= 2.5) {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density',
+      status: 'good',
+      message: `Density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — within the ideal 0.5–2.5% range. ✓`,
+      weight: 10,
+    });
+  } else if (kwDensity > 2.5) {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density',
+      status: 'bad',
+      message: `Density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — too high. Risks keyword stuffing penalty.`,
+      weight: 10,
+    });
+  } else {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density',
+      status: stats.wordCount < 100 ? 'info' : 'ok',
+      message: stats.wordCount < 100 ? 'Add more content to calculate density accurately.' : `Density is ${kwDensity.toFixed(1)}% (${kwCount}x) — slightly low. Aim for at least 0.5%.`,
+      weight: 8,
+    });
+  }
+
+  // 7. Keyword in Image ALT Text
+  if (stats.imageCount > 0 && inImageAlt) {
+    checks.push({
+      id: 'kw-alt',
+      label: 'Focus keyword in Image ALT text',
+      status: 'good',
+      message: `"${kw}" used in image alt attribute for Google Images traffic. ✓`,
+      weight: 6,
+    });
+  } else if (stats.imageCount > 0) {
+    checks.push({
+      id: 'kw-alt',
+      label: 'Focus keyword in Image ALT text',
+      status: 'ok',
+      message: `Add "${kw}" to the descriptive ALT text of your primary image.`,
+      weight: 6,
+    });
+  }
+
+  // 8. Content Length (Pillar vs Standard)
+  const targetWords = isPillarContent ? 1500 : 600;
+  if (stats.wordCount >= (isPillarContent ? 2000 : 900)) {
+    checks.push({
+      id: 'content-len',
+      label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
+      status: 'good',
+      message: `${stats.wordCount} words — comprehensive depth. ✓`,
+      weight: 12,
+    });
+  } else if (stats.wordCount >= targetWords) {
+    checks.push({
+      id: 'content-len',
+      label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
+      status: 'good',
+      message: `${stats.wordCount} words — satisfies target word count. ✓`,
+      weight: 10,
+    });
+  } else {
+    checks.push({
+      id: 'content-len',
+      label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
+      status: 'bad',
+      message: `Currently ${stats.wordCount} words. Aim for at least ${targetWords} words${isPillarContent ? ' for pillar content' : ''}.`,
+      weight: 12,
+    });
+  }
+
+  // 9. Links Analysis (Internal & External)
+  if (stats.externalLinkCount >= 2 && stats.internalLinkCount >= 1) {
+    checks.push({
+      id: 'links-all',
+      label: 'Internal & Outbound Links',
+      status: 'good',
+      message: `${stats.internalLinkCount} internal link(s) and ${stats.externalLinkCount} external link(s) found. ✓`,
+      weight: 8,
+    });
+  } else if (stats.externalLinkCount >= 1 || stats.internalLinkCount >= 1) {
+    checks.push({
+      id: 'links-all',
+      label: 'Internal & Outbound Links',
+      status: 'ok',
+      message: `Include both internal links to other articles and outbound authoritative references.`,
+      weight: 6,
+    });
+  } else {
+    checks.push({
+      id: 'links-all',
+      label: 'Internal & Outbound Links',
+      status: 'bad',
+      message: 'No links found. Add internal links to your content and outbound links to authority sources.',
+      weight: 8,
+    });
+  }
+
+  // 10. Title Length (50-60 chars optimal)
+  const titleLen = title.length;
+  if (titleLen >= 50 && titleLen <= 60) {
+    checks.push({
+      id: 'title-len',
+      label: 'SEO Title length (50-60 characters)',
+      status: 'good',
+      message: `${titleLen} characters — optimal display width in SERP snippets. ✓`,
+      weight: 8,
+    });
+  } else if (titleLen > 60) {
+    checks.push({
+      id: 'title-len',
+      label: 'SEO Title length (50-60 characters)',
+      status: 'ok',
+      message: `${titleLen} chars — Google will truncate after ~60 characters on desktop.`,
+      weight: 6,
+    });
+  } else if (titleLen > 0) {
+    checks.push({
+      id: 'title-len',
+      label: 'SEO Title length (50-60 characters)',
+      status: 'ok',
+      message: `${titleLen} chars — expand towards 50–60 chars to maximize SERP real estate.`,
+      weight: 6,
+    });
+  } else {
+    checks.push({
+      id: 'title-len',
+      label: 'SEO Title defined',
+      status: 'bad',
+      message: 'Enter an SEO Title.',
+      weight: 10,
+    });
+  }
+
+  // 11. Meta Description Length (120-160 chars optimal)
+  const metaLen = metaDescription.length;
+  if (metaLen >= 120 && metaLen <= 160) {
+    checks.push({
+      id: 'meta-len',
+      label: 'Meta Description length (120-160 characters)',
+      status: 'good',
+      message: `${metaLen} characters — ideal length for desktop and mobile snippets. ✓`,
+      weight: 8,
+    });
+  } else if (metaLen > 160) {
+    checks.push({
+      id: 'meta-len',
+      label: 'Meta Description length (120-160 characters)',
+      status: 'ok',
+      message: `${metaLen} characters — Google may truncate descriptions longer than 160 chars.`,
+      weight: 6,
+    });
+  } else if (metaLen > 0) {
+    checks.push({
+      id: 'meta-len',
+      label: 'Meta Description length (120-160 characters)',
+      status: 'ok',
+      message: `${metaLen} chars — expand toward 120–160 chars to give readers a compelling preview.`,
+      weight: 6,
+    });
+  } else {
+    checks.push({
+      id: 'meta-len',
+      label: 'Meta Description defined',
+      status: 'bad',
+      message: 'Add a meta description to control how your page appears in search results.',
+      weight: 8,
+    });
+  }
+
+  // Compute weighted score
+  const totalWeight = checks.filter((c) => c.status !== 'info').reduce((s, c) => s + c.weight, 0);
+  const earnedWeight = checks
+    .filter((c) => c.status !== 'info')
+    .reduce((s, c) => s + (STATUS_SCORE[c.status] * c.weight) / 100, 0);
+  const score = totalWeight ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+
+  return {
+    keyword,
+    isPrimary,
+    score,
+    checks,
+    count: kwCount,
+    density: kwDensity,
+    inTitle,
+    inTitleFront,
+    inSlug,
+    inMeta,
+    inIntro,
+    inHeadings,
+    inImageAlt,
+  };
+}
+
+// ─── Readability Analysis Engine ─────────────────────────────────────────────
+
+export function analyzeReadability(
+  content: string,
+  isPillarContent?: boolean
+): { score: number; checks: SEOCheck[]; fleschScore: number } {
+  const checks: SEOCheck[] = [];
+  const words = content.trim().split(/\s+/).filter(Boolean);
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 3);
+  const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 0);
+
+  const flesch = fleschReadingEase(content);
+  const avgSentenceLen = sentences.length > 0 ? words.length / sentences.length : 0;
+  const longSentences = sentences.filter((s) => s.trim().split(/\s+/).length > 20).length;
+  const longSentencePct = sentences.length > 0 ? (longSentences / sentences.length) * 100 : 0;
+
+  // Passive voice
+  const passiveMatches = (content.match(/\b(is|are|was|were|be|been|being)\s+\w+ed\b/gi) || []).length;
+  const passivePct = sentences.length > 0 ? (passiveMatches / sentences.length) * 100 : 0;
+
+  // Transition words
+  const transitionWords = [
+    'however','therefore','furthermore','additionally','consequently','meanwhile',
+    'nevertheless','moreover','although','because','since','while','also','but',
+    'yet','so','first','second','finally','next','thus','hence','accordingly',
+    'as a result','in addition','for example','for instance','specifically',
+  ];
+  const transitionCount = transitionWords.filter((w) => content.toLowerCase().includes(w)).length;
+
+  // Paragraph length
+  const longParas = paragraphs.filter((p) => p.trim().split(/\s+/).length > 150).length;
+  const hCount = (content.match(/^#+\s+/gm) || []).length;
+
+  // 1. Flesch Reading Ease
+  if (flesch >= 60) {
+    checks.push({
+      id: 'flesch-ease',
+      label: 'Flesch Reading Ease',
+      status: 'good',
+      message: `Score is ${flesch}/100 (${fleschLabel(flesch).label}) — accessible to general audiences. ✓`,
+      weight: 25,
+    });
+  } else if (flesch >= 45) {
+    checks.push({
+      id: 'flesch-ease',
+      label: 'Flesch Reading Ease',
+      status: 'ok',
+      message: `Score is ${flesch}/100 (${fleschLabel(flesch).label}) — consider shortening sentences for easier reading.`,
+      weight: 20,
+    });
+  } else {
+    checks.push({
+      id: 'flesch-ease',
+      label: 'Flesch Reading Ease',
+      status: 'bad',
+      message: `Score is ${flesch}/100 (${fleschLabel(flesch).label}) — difficult for online readers. Break up complex ideas.`,
+      weight: 25,
+    });
+  }
+
+  // 2. Average Sentence Length
+  if (avgSentenceLen <= 18) {
+    checks.push({
+      id: 'avg-sent-len',
+      label: 'Sentence length balance',
+      status: 'good',
+      message: `Average of ${avgSentenceLen.toFixed(0)} words per sentence. ✓`,
+      weight: 15,
+    });
+  } else if (avgSentenceLen <= 24) {
+    checks.push({
+      id: 'avg-sent-len',
+      label: 'Sentence length balance',
+      status: 'ok',
+      message: `Average sentence length is ${avgSentenceLen.toFixed(0)} words. Aim for under 20.`,
+      weight: 15,
+    });
+  } else {
+    checks.push({
+      id: 'avg-sent-len',
+      label: 'Sentence length balance',
+      status: 'bad',
+      message: `Sentences average ${avgSentenceLen.toFixed(0)} words — too long for web skimmability.`,
+      weight: 15,
+    });
+  }
+
+  // 3. Long Sentences %
+  if (longSentencePct <= 20) {
+    checks.push({
+      id: 'long-sent-pct',
+      label: 'Long sentences (<20% of text)',
+      status: 'good',
+      message: `Only ${longSentencePct.toFixed(0)}% of sentences exceed 20 words. ✓`,
+      weight: 15,
+    });
+  } else if (longSentencePct <= 35) {
+    checks.push({
+      id: 'long-sent-pct',
+      label: 'Long sentences (<20% of text)',
+      status: 'ok',
+      message: `${longSentencePct.toFixed(0)}% of sentences are over 20 words. Trim a few.`,
+      weight: 15,
+    });
+  } else {
+    checks.push({
+      id: 'long-sent-pct',
+      label: 'Long sentences (<20% of text)',
+      status: 'bad',
+      message: `${longSentencePct.toFixed(0)}% of sentences are long. Split sentences to improve flow.`,
+      weight: 15,
+    });
+  }
+
+  // 4. Passive Voice (<10%)
+  if (passivePct <= 10) {
+    checks.push({
+      id: 'passive-voice',
+      label: 'Active voice predominance',
+      status: 'good',
+      message: `Only ${passivePct.toFixed(0)}% passive voice — clear, direct writing. ✓`,
+      weight: 15,
+    });
+  } else if (passivePct <= 20) {
+    checks.push({
+      id: 'passive-voice',
+      label: 'Active voice predominance',
+      status: 'ok',
+      message: `${passivePct.toFixed(0)}% passive voice. Replace with active verbs where possible.`,
+      weight: 15,
+    });
+  } else {
+    checks.push({
+      id: 'passive-voice',
+      label: 'Active voice predominance',
+      status: 'bad',
+      message: `${passivePct.toFixed(0)}% passive voice. Convert sentences to direct active voice.`,
+      weight: 15,
+    });
+  }
+
+  // 5. Transition Words
+  if (transitionCount >= 6) {
+    checks.push({
+      id: 'transitions',
+      label: 'Transition word variety',
+      status: 'good',
+      message: `${transitionCount} transition word types found for smooth idea flow. ✓`,
+      weight: 15,
+    });
+  } else if (transitionCount >= 3) {
+    checks.push({
+      id: 'transitions',
+      label: 'Transition word variety',
+      status: 'ok',
+      message: `${transitionCount} transition types used. Add more connectors (e.g. "therefore", "however").`,
+      weight: 15,
+    });
+  } else {
+    checks.push({
+      id: 'transitions',
+      label: 'Transition word variety',
+      status: 'bad',
+      message: 'Few transition words detected. Use transitional phrases to link paragraphs together.',
+      weight: 15,
+    });
+  }
+
+  // 6. Subheading Distribution
+  const requiredHeadings = isPillarContent ? 4 : 2;
+  if (words.length > 300 && hCount >= requiredHeadings) {
+    checks.push({
+      id: 'subheading-dist',
+      label: 'Subheading distribution',
+      status: 'good',
+      message: `${hCount} subheadings organize the content sections effectively. ✓`,
+      weight: 15,
+    });
+  } else if (words.length > 300) {
+    checks.push({
+      id: 'subheading-dist',
+      label: 'Subheading distribution',
+      status: 'ok',
+      message: 'Add subheadings every 300 words to guide reader scanning.',
+      weight: 15,
+    });
+  }
+
+  const totalWeight = checks.reduce((s, c) => s + c.weight, 0);
+  const earnedWeight = checks.reduce((s, c) => s + (STATUS_SCORE[c.status] * c.weight) / 100, 0);
+  const score = totalWeight ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+
+  return { score, checks, fleschScore: flesch };
+}
+
+// ─── Master Multi-Keyword SEO Analyzer Engine ────────────────────────────────
+
+export function analyzeMultiKeyword(inputs: SEOInputs): MultiKeywordSEOResult {
+  const stats = computeContentStats(inputs.content);
+  const cleanKeywords = inputs.keywords
+    .map((k) => k.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  const effectiveKeywords = cleanKeywords.length > 0 ? cleanKeywords : [''];
+  const activeIndex = Math.min(Math.max(0, inputs.activeKeywordIndex || 0), effectiveKeywords.length - 1);
+  const activeKeyword = effectiveKeywords[activeIndex] || '';
+
+  const keywordAnalyses: Record<string, KeywordAnalysis> = {};
+  effectiveKeywords.forEach((kw, idx) => {
+    keywordAnalyses[kw] = analyzeKeyword(kw, idx === 0, {
+      title: inputs.title,
+      metaDescription: inputs.metaDescription,
+      slug: inputs.slug,
+      content: inputs.content,
+      isPillarContent: inputs.isPillarContent,
+      stats,
+    });
+  });
+
+  const readability = analyzeReadability(inputs.content, inputs.isPillarContent);
+
+  // Overall combined score:
+  // Primary keyword gets 60%, average of secondary keywords gets 20%, readability gets 20%
+  const primaryKw = effectiveKeywords[0];
+  const primaryScore = keywordAnalyses[primaryKw]?.score || 0;
+
+  let secondaryAvg = primaryScore;
+  if (effectiveKeywords.length > 1) {
+    const secScores = effectiveKeywords.slice(1).map((k) => keywordAnalyses[k]?.score || 0);
+    secondaryAvg = secScores.reduce((a, b) => a + b, 0) / secScores.length;
+  }
+
+  const overallScore = Math.round(
+    primaryScore * 0.6 + secondaryAvg * 0.2 + readability.score * 0.2
+  );
+
+  return {
+    overallScore,
+    readabilityScore: readability.score,
+    fleschScore: readability.fleschScore,
+    keywordAnalyses,
+    activeKeyword,
+    readabilityChecks: readability.checks,
+    suggestedKeywords: extractKeywordSuggestions(inputs.content, effectiveKeywords),
+    stats,
+  };
+}
+
+// Backward-compatible analyze alias
+export function analyze(inputs: { focusKeyword: string; title: string; metaDescription: string; slug: string; content: string }): {
+  seoScore: number;
+  readabilityScore: number;
+  fleschScore: number;
+  seoChecks: SEOCheck[];
+  readabilityChecks: SEOCheck[];
+  suggestedKeywords: string[];
+} {
+  const multi = analyzeMultiKeyword({
+    keywords: [inputs.focusKeyword],
+    title: inputs.title,
+    metaDescription: inputs.metaDescription,
+    slug: inputs.slug,
+    content: inputs.content,
+  });
+
+  const primary = multi.keywordAnalyses[inputs.focusKeyword] || Object.values(multi.keywordAnalyses)[0];
+
+  return {
+    seoScore: primary?.score || 0,
+    readabilityScore: multi.readabilityScore,
+    fleschScore: multi.fleschScore,
+    seoChecks: primary?.checks || [],
+    readabilityChecks: multi.readabilityChecks,
+    suggestedKeywords: multi.suggestedKeywords,
+  };
+}
+
+// ─── Score Ring Component ─────────────────────────────────────────────────────
+
+export function ScoreRing({ score, label, size = 72 }: { score: number; label: string; size?: number }) {
+  const [disp, setDisp] = useState(0);
+  const r = (size - 12) / 2;
+  const circ = 2 * Math.PI * r;
+  const color = disp >= 80 ? '#22c55e' : disp >= 50 ? '#f59e0b' : '#ef4444';
+
+  useEffect(() => {
+    setDisp(0);
+    let cur = 0;
+    const steps = 40;
+    const inc = score / steps;
+    const t = setInterval(() => {
+      cur += inc;
+      if (cur >= score) {
+        setDisp(score);
+        clearInterval(t);
+      } else {
+        setDisp(Math.round(cur));
+      }
+    }, 700 / steps);
+    return () => clearInterval(t);
+  }, [score]);
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={`${color}22`} strokeWidth={6} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={6}
+            strokeLinecap="round"
+            strokeDasharray={circ}
+            strokeDashoffset={circ * (1 - disp / 100)}
+            style={{ transition: 'stroke-dashoffset 0.05s ease-out, stroke 0.4s' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-base font-black leading-none" style={{ color }}>{disp}</span>
+          <span className="text-[8px] text-muted-foreground font-medium">/100</span>
+        </div>
+      </div>
+      <span className="text-[10px] font-semibold text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+// ─── Check Item Component ────────────────────────────────────────────────────
+
+export function CheckItem({ check, idx }: { check: SEOCheck; idx: number }) {
+  const [open, setOpen] = useState(false);
+  const Icon = check.status === 'good' ? CheckCircle2 : check.status === 'ok' ? AlertCircle : check.status === 'bad' ? XCircle : AlertCircle;
+  const color = { good: 'text-emerald-500', ok: 'text-amber-500', bad: 'text-red-500', info: 'text-muted-foreground' }[check.status];
+  const bg = {
+    good: 'bg-emerald-500/6 border-emerald-500/15 hover:bg-emerald-500/10',
+    ok: 'bg-amber-500/6 border-amber-500/15 hover:bg-amber-500/10',
+    bad: 'bg-red-500/6 border-red-500/15 hover:bg-red-500/10',
+    info: 'bg-muted/20 border-border hover:bg-muted/30',
+  }[check.status];
+
+  return (
+    <div className={cn('rounded-lg border transition-colors', bg)}>
+      <button
+        type="button"
+        className="w-full flex items-center gap-2.5 px-3 py-2 text-left"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <Icon className={cn('h-3.5 w-3.5 shrink-0', color)} />
+        <span className="text-xs font-medium text-foreground flex-1 leading-snug">{check.label}</span>
+        {open ? <ChevronUp className="h-3 w-3 text-muted-foreground/50 shrink-0" /> : <ChevronDown className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-2 text-[11px] text-muted-foreground leading-relaxed border-t border-inherit pt-1.5">
+          {check.message}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Dual Desktop / Mobile SERP Preview Component ─────────────────────────────
+
+export function SERPPreview({
+  title,
+  meta,
+  slug,
+  keyword,
+  device = 'desktop',
+  onDeviceChange,
+}: {
+  title: string;
+  meta: string;
+  slug: string;
+  keyword: string;
+  device?: 'desktop' | 'mobile';
+  onDeviceChange?: (d: 'desktop' | 'mobile') => void;
+}) {
+  const domain = 'yoursite.com';
+  const url = `${domain}/${slug || 'article-slug'}`;
+  const t = (title || 'Page Title').slice(0, 60) + (title.length > 60 ? '…' : '');
+  const d = (meta || 'Add a compelling meta description to describe your page and attract organic clicks from search results.').slice(0, 160) + (meta.length > 160 ? '…' : '');
+
+  const highlight = (text: string) => {
+    if (!keyword) return text;
+    const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(re, '<strong class="font-bold text-foreground">$1</strong>');
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-xs space-y-3">
+      <div className="flex items-center justify-between border-b pb-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Google Search Preview</span>
+        {onDeviceChange && (
+          <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
+            <button
+              type="button"
+              onClick={() => onDeviceChange('desktop')}
+              className={cn(
+                'px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition-all',
+                device === 'desktop' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Monitor className="h-3 w-3" />
+              <span>Desktop</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeviceChange('mobile')}
+              className={cn(
+                'px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition-all',
+                device === 'mobile' ? 'bg-card text-foreground shadow-xs font-bold' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Smartphone className="h-3 w-3" />
+              <span>Mobile</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {device === 'desktop' ? (
+        <div className="p-3 rounded-lg bg-background border space-y-1 text-left">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono truncate">
+            <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Globe className="h-2.5 w-2.5 text-primary" />
+            </div>
+            <span className="truncate">{url}</span>
+          </div>
+          <div
+            className="text-[17px] leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-normal line-clamp-1"
+            dangerouslySetInnerHTML={{ __html: highlight(t) }}
+          />
+          <div
+            className="text-xs text-muted-foreground leading-relaxed line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: highlight(d) }}
+          />
+        </div>
+      ) : (
+        <div className="p-3 rounded-2xl bg-background border shadow-xs space-y-2 text-left max-w-sm mx-auto">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Globe className="h-3 w-3 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold text-foreground truncate">{domain}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{url}</div>
+            </div>
+          </div>
+          <div
+            className="text-[16px] font-medium leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: highlight(t) }}
+          />
+          <div
+            className="text-xs text-muted-foreground leading-snug line-clamp-3"
+            dangerouslySetInnerHTML={{ __html: highlight(d) }}
+          />
+        </div>
+      )}
+
+      {/* Snippet Progress Bars */}
+      <div className="grid grid-cols-2 gap-3 pt-1 text-[10px]">
+        <div>
+          <div className="flex justify-between font-semibold mb-0.5">
+            <span>Title Tag</span>
+            <span className={title.length >= 50 && title.length <= 60 ? 'text-emerald-500' : title.length > 60 ? 'text-red-500' : 'text-amber-500'}>
+              {title.length}/60
+            </span>
+          </div>
+          <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className={cn('h-full rounded-full transition-all', title.length >= 50 && title.length <= 60 ? 'bg-emerald-500' : title.length > 60 ? 'bg-red-500' : 'bg-amber-500')}
+              style={{ width: `${Math.min(100, (title.length / 60) * 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between font-semibold mb-0.5">
+            <span>Meta Description</span>
+            <span className={meta.length >= 120 && meta.length <= 160 ? 'text-emerald-500' : meta.length > 160 ? 'text-red-500' : 'text-amber-500'}>
+              {meta.length}/160
+            </span>
+          </div>
+          <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className={cn('h-full rounded-full transition-all', meta.length >= 120 && meta.length <= 160 ? 'bg-emerald-500' : meta.length > 160 ? 'bg-red-500' : 'bg-amber-500')}
+              style={{ width: `${Math.min(100, (meta.length / 160) * 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Social Cards Preview Component ──────────────────────────────────────────
+
+export function SocialPreview({
+  title,
+  meta,
+  slug,
+  ogImage,
+  siteName,
+}: {
+  title: string;
+  meta: string;
+  slug: string;
+  ogImage: string;
+  siteName: string;
+}) {
+  const domain = siteName || 'yoursite.com';
+  const t = (title || 'Page Title').slice(0, 70);
+  const d = (meta || 'Description').slice(0, 125);
+
+  return (
+    <div className="space-y-4">
+      {/* Facebook Card */}
+      <div>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Facebook className="h-3.5 w-3.5 text-blue-500" />
+          <span className="text-xs font-semibold">Facebook Open Graph</span>
+        </div>
+        <div className="rounded-xl border overflow-hidden bg-background shadow-xs">
+          <div className="h-36 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center relative overflow-hidden">
+            {ogImage ? (
+              <img src={ogImage} alt="OG" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-muted-foreground/60">
+                <Share2 className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                <span className="text-[10px]">1200 × 630 px</span>
+              </div>
+            )}
+          </div>
+          <div className="p-3 border-t">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{domain}</p>
+            <p className="text-xs font-bold text-foreground mt-0.5 line-clamp-1">{t}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{d}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Twitter Card */}
+      <div>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Twitter className="h-3.5 w-3.5 text-sky-500" />
+          <span className="text-xs font-semibold">Twitter / X Summary Card</span>
+        </div>
+        <div className="rounded-xl border overflow-hidden bg-background shadow-xs">
+          <div className="h-32 bg-gradient-to-br from-sky-100 to-sky-200 dark:from-sky-950/40 dark:to-zinc-900 flex items-center justify-center">
+            {ogImage ? (
+              <img src={ogImage} alt="Twitter" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-sky-500/60">
+                <Twitter className="h-5 w-5 mx-auto mb-1 opacity-60" />
+                <span className="text-[10px]">Summary Large Image</span>
+              </div>
+            )}
+          </div>
+          <div className="p-2.5 border-t">
+            <p className="text-xs font-semibold text-foreground line-clamp-1">{t}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{d}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Schema Panel Component ──────────────────────────────────────────────────
+
+export function SchemaPanel({
+  inputs,
+}: {
+  inputs: {
+    title: string;
+    description: string;
+    slug: string;
+    content: string;
+    imageUrl?: string;
+    authorName?: string;
+    siteName?: string;
+  };
+}) {
+  const [type, setType] = useState<SchemaType>('Article');
+  const [copied, setCopied] = useState(false);
+  const schema = generateSchema(type, inputs);
+  const json = JSON.stringify(schema, null, 2);
+
+  const copy = () => {
+    navigator.clipboard.writeText(`<script type="application/ld+json">\n${json}\n</script>`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="text-xs font-bold block mb-1.5">Schema.org Rich Snippet Type</label>
+        <div className="grid grid-cols-3 gap-1">
+          {(['Article', 'BlogPosting', 'NewsArticle', 'FAQPage', 'HowTo', 'BreadcrumbList'] as SchemaType[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setType(t)}
+              className={cn(
+                'px-2 py-1 rounded-md text-[10px] font-medium border text-center transition-all',
+                type === t ? 'bg-primary text-primary-foreground font-bold border-primary' : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted'
+              )}
+            >
+              {t === 'BreadcrumbList' ? 'Breadcrumb' : t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">JSON-LD Output</span>
+          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={copy}>
+            {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
+          </Button>
+        </div>
+        <pre className="text-[10px] bg-muted/30 border rounded-lg p-3 max-h-48 overflow-y-auto font-mono text-muted-foreground whitespace-pre">
+          {`<script type="application/ld+json">\n${json}\n</script>`}
+        </pre>
+      </div>
+
+      <a
+        href="https://validator.schema.org"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline font-medium"
+      >
+        <span>Test schema in Google Rich Results Validator</span>
+        <ExternalLink className="h-2.5 w-2.5" />
+      </a>
+    </div>
+  );
+}
+
+// ─── Article Editorial SEO Sidebar (Rank Markup Inspector) ───────────────────
+
+export interface ArticleSEOSidebarProps {
+  title: string;
+  slug: string;
+  content: string;
+  seoData: {
+    focusKeyword?: string;
+    keywords?: string[]; // up to 5 keywords
+    title?: string;
+    description?: string;
+    canonical?: string;
+    robots?: string;
+    ogImage?: string;
+    siteName?: string;
+    isPillarContent?: boolean;
+  };
+  onUpdateSeo: (updated: Record<string, any>) => void;
+  onUpdateSlug?: (slug: string) => void;
+  onClose?: () => void;
+  className?: string;
+}
+
+export function ArticleSEOSidebar({
+  title,
+  slug,
+  content,
+  seoData,
+  onUpdateSeo,
+  onUpdateSlug,
+  onClose,
+  className,
+}: ArticleSEOSidebarProps) {
+  const [tab, setTab] = useState<'checks' | 'serp' | 'social' | 'schema' | 'stats' | 'directives'>('checks');
+  const [serpDevice, setSerpDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [newKeywordInput, setNewKeywordInput] = useState('');
+  const [activeKeywordIdx, setActiveKeywordIdx] = useState(0);
+
+  // Manage up to 5 keywords
+  const keywordsList: string[] = useMemo(() => {
+    if (Array.isArray(seoData.keywords) && seoData.keywords.length > 0) {
+      return seoData.keywords.slice(0, 5);
+    }
+    if (seoData.focusKeyword) {
+      return [seoData.focusKeyword];
+    }
+    return [];
+  }, [seoData.keywords, seoData.focusKeyword]);
+
+  const isPillar = Boolean(seoData.isPillarContent);
+  const seoTitle = seoData.title || title || '';
+  const seoDesc = seoData.description || '';
+  const ogImg = seoData.ogImage || '';
+  const canonical = seoData.canonical || '';
+  const robots = seoData.robots || 'index, follow';
+  const siteName = seoData.siteName || 'yoursite.com';
+
+  const multiResult = useMemo(() => {
+    return analyzeMultiKeyword({
+      keywords: keywordsList,
+      activeKeywordIndex: activeKeywordIdx,
+      title: seoTitle,
+      metaDescription: seoDesc,
+      slug,
+      content,
+      isPillarContent: isPillar,
+    });
+  }, [keywordsList, activeKeywordIdx, seoTitle, seoDesc, slug, content, isPillar]);
+
+  const activeKw = keywordsList[activeKeywordIdx] || keywordsList[0] || '';
+  const activeAnalysis = multiResult.keywordAnalyses[activeKw] || Object.values(multiResult.keywordAnalyses)[0];
+
+  const handleAddKeyword = (kwToAdd: string) => {
+    const trimmed = kwToAdd.trim();
+    if (!trimmed) return;
+    if (keywordsList.includes(trimmed)) return;
+    if (keywordsList.length >= 5) return;
+
+    const next = [...keywordsList, trimmed];
+    onUpdateSeo({
+      keywords: next,
+      focusKeyword: next[0],
+    });
+    setActiveKeywordIdx(next.length - 1);
+    setNewKeywordInput('');
+  };
+
+  const handleRemoveKeyword = (indexToRemove: number) => {
+    const next = keywordsList.filter((_, idx) => idx !== indexToRemove);
+    onUpdateSeo({
+      keywords: next,
+      focusKeyword: next[0] || '',
+    });
+    setActiveKeywordIdx(Math.max(0, indexToRemove - 1));
+  };
+
+  const handleSetPrimary = (indexToPromote: number) => {
+    if (indexToPromote === 0) return;
+    const promoted = keywordsList[indexToPromote];
+    const rest = keywordsList.filter((_, idx) => idx !== indexToPromote);
+    const next = [promoted, ...rest];
+    onUpdateSeo({
+      keywords: next,
+      focusKeyword: promoted,
+    });
+    setActiveKeywordIdx(0);
+  };
+
+  const goodCount = (c: SEOCheck[] = []) => c.filter((x) => x.status === 'good').length;
+  const badCount = (c: SEOCheck[] = []) => c.filter((x) => x.status === 'bad').length;
+
+  const totalBad = badCount(activeAnalysis?.checks) + badCount(multiResult.readabilityChecks);
+  const totalGood = goodCount(activeAnalysis?.checks) + goodCount(multiResult.readabilityChecks);
+
+  return (
+    <div className={cn('flex flex-col h-full bg-card border-l text-xs', className)}>
+      {/* ── Top Header Bar ───────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b bg-muted/20 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-md bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
+            <Zap className="h-3.5 w-3.5 fill-current" />
+          </div>
+          <div>
+            <div className="font-bold text-foreground text-xs flex items-center gap-1">
+              <span>Rank Markup</span>
+              <span className="text-[9px] px-1 py-0.2 rounded bg-primary/10 text-primary font-mono font-bold">PRO</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground">Multi-Keyword Optimization</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              'px-2 py-0.5 rounded-full font-bold text-[11px] border flex items-center gap-1',
+              multiResult.overallScore >= 80
+                ? 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                : multiResult.overallScore >= 50
+                ? 'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                : 'bg-red-500/12 text-red-600 dark:text-red-400 border-red-500/30'
+            )}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            <span>{multiResult.overallScore}/100</span>
+          </div>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+              title="Close Rank Markup sidebar"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Pillar Content & Score Rings Row ─────────────────────────────── */}
+      <div className="px-3 py-2.5 border-b bg-background/50 space-y-2 shrink-0">
+        <div className="flex items-center justify-between text-[11px]">
+          <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-foreground">
+            <input
+              type="checkbox"
+              checked={isPillar}
+              onChange={(e) => onUpdateSeo({ isPillarContent: e.target.checked })}
+              className="rounded accent-primary h-3.5 w-3.5"
+            />
+            <Star className={cn('h-3.5 w-3.5', isPillar ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground')} />
+            <span>Pillar / Cornerstone Post</span>
+          </label>
+          <span className="text-[10px] text-muted-foreground">
+            {isPillar ? 'Stricter 1500w+ rules' : 'Standard 600w+'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-around pt-1">
+          <ScoreRing score={activeAnalysis?.score || 0} label="SEO Score" size={68} />
+          <div className="w-px h-12 bg-border" />
+          <ScoreRing score={multiResult.readabilityScore} label="Readability" size={68} />
+          <div className="w-px h-12 bg-border" />
+          <div className="text-center">
+            <div className={cn('text-lg font-black', fleschLabel(multiResult.fleschScore).color)}>
+              {multiResult.fleschScore}
+            </div>
+            <div className="text-[9px] text-muted-foreground font-medium">Flesch Ease</div>
+            <div className={cn('text-[9px] font-bold mt-0.5', fleschLabel(multiResult.fleschScore).color)}>
+              {fleschLabel(multiResult.fleschScore).label}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 5-Keywords Manager Section ───────────────────────────────────── */}
+      <div className="p-3 border-b bg-card space-y-2.5 shrink-0">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-bold text-foreground flex items-center gap-1">
+            <Target className="h-3 w-3 text-primary" />
+            <span>Focus Keywords</span>
+            <span className="text-[10px] text-muted-foreground font-normal">
+              ({keywordsList.length}/5)
+            </span>
+          </label>
+
+          {activeAnalysis && activeKw && (
+            <span
+              className={cn(
+                'text-[10px] font-semibold px-1.5 py-0.2 rounded',
+                activeAnalysis.density >= 0.5 && activeAnalysis.density <= 2.5
+                  ? 'bg-emerald-500/10 text-emerald-600'
+                  : 'bg-amber-500/10 text-amber-600'
+              )}
+            >
+              {activeAnalysis.count}x ({activeAnalysis.density.toFixed(1)}%)
+            </span>
+          )}
+        </div>
+
+        {/* Keyword Pills Strip */}
+        <div className="flex flex-wrap gap-1.5">
+          {keywordsList.map((kwItem, idx) => {
+            const isSelected = idx === activeKeywordIdx;
+            const kwScore = multiResult.keywordAnalyses[kwItem]?.score || 0;
+            const isPrimaryKw = idx === 0;
+
+            return (
+              <div
+                key={kwItem}
+                className={cn(
+                  'group flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-all cursor-pointer',
+                  isSelected
+                    ? 'border-primary bg-primary/10 text-foreground font-bold shadow-xs'
+                    : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                )}
+                onClick={() => setActiveKeywordIdx(idx)}
+              >
+                {isPrimaryKw ? (
+                  <span title="Primary Focus Keyword">
+                    <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSetPrimary(idx);
+                    }}
+                    className="opacity-40 group-hover:opacity-100 hover:text-amber-500 transition-opacity"
+                    title="Promote to Primary Keyword"
+                  >
+                    <Star className="h-3 w-3" />
+                  </button>
+                )}
+
+                <span className="truncate max-w-[180px]">{kwItem}</span>
+
+                <span
+                  className={cn(
+                    'text-[9px] font-mono px-1 rounded-full font-bold',
+                    kwScore >= 80 ? 'bg-emerald-500/15 text-emerald-600' : kwScore >= 50 ? 'bg-amber-500/15 text-amber-600' : 'bg-red-500/15 text-red-600'
+                  )}
+                >
+                  {kwScore}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveKeyword(idx);
+                  }}
+                  className="opacity-40 group-hover:opacity-100 hover:text-destructive transition-opacity ml-0.5"
+                  title="Remove keyword"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Keyword Input (if < 5) */}
+        {keywordsList.length < 5 && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddKeyword(newKeywordInput);
+            }}
+            className="flex items-center gap-1.5"
+          >
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+              <Input
+                value={newKeywordInput}
+                onChange={(e) => setNewKeywordInput(e.target.value)}
+                placeholder={
+                  keywordsList.length === 0
+                    ? 'Enter Primary Focus Keyword...'
+                    : `Add Secondary Keyword (${keywordsList.length + 1}/5)...`
+                }
+                className="pl-7 pr-2 h-7 text-[11px] bg-background"
+              />
+            </div>
+            <Button type="submit" size="sm" variant="outline" className="h-7 text-[10px] px-2">
+              Add
+            </Button>
+          </form>
+        )}
+
+        {/* Active Keyword Presence Check Badges */}
+        {activeAnalysis && activeKw ? (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
+                activeAnalysis.inTitle ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
+              )}
+            >
+              {activeAnalysis.inTitle ? '✓' : '✕'} Title
+            </span>
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
+                activeAnalysis.inSlug ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
+              )}
+            >
+              {activeAnalysis.inSlug ? '✓' : '✕'} URL
+            </span>
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
+                activeAnalysis.inMeta ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
+              )}
+            >
+              {activeAnalysis.inMeta ? '✓' : '✕'} Meta
+            </span>
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
+                activeAnalysis.inIntro ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
+              )}
+            >
+              {activeAnalysis.inIntro ? '✓' : '✕'} First 100w
+            </span>
+            <span
+              className={cn(
+                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
+                activeAnalysis.inHeadings ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
+              )}
+            >
+              {activeAnalysis.inHeadings ? '✓' : '✕'} Headings
+            </span>
+          </div>
+        ) : null}
+
+        {/* Suggested LSI Terms */}
+        {multiResult.suggestedKeywords.length > 0 && keywordsList.length < 5 && (
+          <div className="pt-0.5">
+            <div className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              <span>Suggested related terms:</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {multiResult.suggestedKeywords.slice(0, 5).map((sk) => (
+                <button
+                  key={sk}
+                  type="button"
+                  onClick={() => handleAddKeyword(sk)}
+                  className="px-1.5 py-0.5 text-[10px] rounded border bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors text-muted-foreground"
+                >
+                  +{sk}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Navigation Sub-Tabs Strip ────────────────────────────────────── */}
+      <div className="flex border-b bg-muted/10 shrink-0 px-2 overflow-x-auto">
+        {[
+          { key: 'checks', label: 'Checks', badge: totalBad ? `${totalBad}` : null },
+          { key: 'serp', label: 'SERP' },
+          { key: 'social', label: 'Social' },
+          { key: 'schema', label: 'Schema' },
+          { key: 'stats', label: 'Stats' },
+          { key: 'directives', label: 'Directives' },
+        ].map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key as any)}
+            className={cn(
+              'px-2.5 py-2 text-[11px] font-medium border-b-2 -mb-px transition-colors flex items-center gap-1 whitespace-nowrap',
+              tab === t.key
+                ? 'border-primary text-foreground font-bold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <span>{t.label}</span>
+            {t.badge && (
+              <span className="px-1 py-0.2 rounded-full text-[9px] bg-red-500/15 text-red-500 font-bold">
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tab Content Panels ───────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* TAB 1: CHECKS */}
+        {tab === 'checks' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-[11px] border-b pb-2">
+              <span className="font-bold text-foreground">
+                Optimization for: <span className="text-primary font-mono">{activeKw || 'General'}</span>
+              </span>
+              <div className="text-[10px] text-muted-foreground">
+                <span className="text-emerald-500 font-bold">{totalGood} Passed</span> ·{' '}
+                <span className="text-red-500 font-bold">{totalBad} Issues</span>
+              </div>
+            </div>
+
+            {/* Keyword Checks */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Target className="h-3 w-3 text-primary" />
+                <span>Keyword Requirements ({activeAnalysis?.checks.length || 0})</span>
+              </div>
+              {(activeAnalysis?.checks || []).map((c, idx) => (
+                <CheckItem key={c.id} check={c} idx={idx} />
+              ))}
+            </div>
+
+            {/* Readability Checks */}
+            <div className="space-y-1.5 pt-2 border-t">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <BookOpen className="h-3 w-3 text-blue-500" />
+                <span>Readability & Structure ({multiResult.readabilityChecks.length})</span>
+              </div>
+              {multiResult.readabilityChecks.map((c, idx) => (
+                <CheckItem key={c.id} check={c} idx={idx} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: SERP PREVIEW */}
+        {tab === 'serp' && (
+          <div className="space-y-3">
+            <SERPPreview
+              title={seoTitle}
+              meta={seoDesc}
+              slug={slug}
+              keyword={activeKw}
+              device={serpDevice}
+              onDeviceChange={setSerpDevice}
+            />
+
+            <div className="space-y-2.5 pt-2 border-t">
+              <div>
+                <div className="flex justify-between items-center text-[11px] font-semibold mb-1">
+                  <span>SEO Title Tag</span>
+                  <span
+                    className={cn(
+                      seoTitle.length >= 50 && seoTitle.length <= 60
+                        ? 'text-emerald-500'
+                        : seoTitle.length > 60
+                        ? 'text-red-500'
+                        : 'text-amber-500'
+                    )}
+                  >
+                    {seoTitle.length}/60 chars
+                  </span>
+                </div>
+                <Input
+                  value={seoTitle}
+                  onChange={(e) => onUpdateSeo({ title: e.target.value })}
+                  placeholder={title || 'Page Title (50-60 characters)'}
+                  className="h-8 text-xs bg-background"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center text-[11px] font-semibold mb-1">
+                  <span>Meta Description</span>
+                  <span
+                    className={cn(
+                      seoDesc.length >= 120 && seoDesc.length <= 160
+                        ? 'text-emerald-500'
+                        : seoDesc.length > 160
+                        ? 'text-red-500'
+                        : 'text-amber-500'
+                    )}
+                  >
+                    {seoDesc.length}/160 chars
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  value={seoDesc}
+                  onChange={(e) => onUpdateSeo({ description: e.target.value })}
+                  placeholder="Compelling summary snippet (120-160 characters)..."
+                  className="w-full rounded-md border bg-background p-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {onUpdateSlug && (
+                <div>
+                  <label className="text-[11px] font-semibold block mb-1">URL Permlink Slug</label>
+                  <Input
+                    value={slug}
+                    onChange={(e) => onUpdateSlug(e.target.value)}
+                    placeholder="article-slug"
+                    className="h-8 text-xs font-mono bg-background"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: SOCIAL PREVIEW */}
+        {tab === 'social' && (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] font-semibold block mb-1">Social Featured Image URL (Open Graph)</label>
+              <Input
+                value={ogImg}
+                onChange={(e) => onUpdateSeo({ ogImage: e.target.value })}
+                placeholder="https://.../cover-1200x630.jpg"
+                className="h-8 text-xs font-mono bg-background"
+              />
+            </div>
+            <SocialPreview
+              title={seoTitle}
+              meta={seoDesc}
+              slug={slug}
+              ogImage={ogImg}
+              siteName={siteName}
+            />
+          </div>
+        )}
+
+        {/* TAB 4: SCHEMA GENERATOR */}
+        {tab === 'schema' && (
+          <SchemaPanel
+            inputs={{
+              title: seoTitle,
+              description: seoDesc,
+              slug,
+              content,
+              imageUrl: ogImg,
+              siteName,
+            }}
+          />
+        )}
+
+        {/* TAB 5: CONTENT STATS CHUNK */}
+        {tab === 'stats' && (
+          <div className="space-y-3">
+            <div className="text-[11px] font-bold text-foreground">Content Metrics & Telemetry</div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">Word Count</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.wordCount}</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">Reading Time</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.readingTimeMin} min</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">Headings</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.headingCount}</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">Paragraphs</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.paragraphCount}</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">Internal Links</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.internalLinkCount}</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20">
+                <div className="text-muted-foreground text-[10px]">External Links</div>
+                <div className="text-lg font-black text-foreground">{multiResult.stats.externalLinkCount}</div>
+              </div>
+              <div className="p-2.5 rounded-lg border bg-muted/20 col-span-2">
+                <div className="text-muted-foreground text-[10px]">Images with Alt Text</div>
+                <div className="text-base font-black text-foreground">
+                  {multiResult.stats.imagesWithAltCount} / {multiResult.stats.imageCount} images
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: DIRECTIVES */}
+        {tab === 'directives' && (
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="font-semibold block mb-1">Robots Meta Directive</label>
+              <select
+                value={robots}
+                onChange={(e) => onUpdateSeo({ robots: e.target.value })}
+                className="w-full h-8 rounded border bg-background px-2 text-xs"
+              >
+                <option value="index, follow">index, follow (Standard Default)</option>
+                <option value="noindex, follow">noindex, follow (Do not index, follow links)</option>
+                <option value="noindex, nofollow">noindex, nofollow (Complete exclusion)</option>
+                <option value="index, nofollow">index, nofollow (Index page, ignore links)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="font-semibold block mb-1">Canonical URL Override</label>
+              <Input
+                value={canonical}
+                onChange={(e) => onUpdateSeo({ canonical: e.target.value })}
+                placeholder="https://example.com/canonical-url"
+                className="h-8 text-xs font-mono bg-background"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Leave blank to automatically use the canonical permalink.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Standalone Full-Page SEO Analyzer (for /admin/seo) ──────────────────────
+
+export function SEOAnalyzerWithEditor() {
+  const [content, setContent] = useState(
+    `# Getting Started with Headless Architecture\n\nA modern headless architecture decouples content management from frontend presentation layer. Unlike traditional CMS platforms, a headless architecture delivers content as structured JSON data over ultra-fast edge APIs.\n\n## Why Modern Engineering Teams Go Headless\n\nTherefore, headless architecture enables teams to build faster digital experiences. Furthermore, it allows you to deliver content across mobile apps, web, and IoT screens.\n\n### Key Benefits\n\n- High performance with edge CDNs\n- Omnichannel distribution across platforms\n- Unmatched developer flexibility with Next.js\n\n## API-First Delivery\n\nFor more details, see the official guide at https://headlesscms.org and developer docs.`
+  );
+  const [title, setTitle] = useState('Getting Started with Modern Headless Architecture');
+  const [slug, setSlug] = useState('getting-started-with-headless-architecture');
+  const [meta, setMeta] = useState('Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and velocity.');
+  const [keywords, setKeywords] = useState<string[]>(['headless architecture', 'jamstack cms']);
+  const [isPillar, setIsPillar] = useState(false);
+  const [activeTab, setActiveTab] = useState<'write' | 'settings'>('write');
+
+  const handleUpdateSeo = (updated: Record<string, any>) => {
+    if (updated.keywords) setKeywords(updated.keywords);
+    if (updated.title) setTitle(updated.title);
+    if (updated.description) setMeta(updated.description);
+    if (updated.isPillarContent !== undefined) setIsPillar(updated.isPillarContent);
+  };
+
+  return (
+    <div className="flex gap-4 h-[calc(100vh-160px)] min-h-[580px]">
+      {/* Editor Left */}
+      <div className="flex-1 min-w-0 flex flex-col gap-3">
+        <div className="flex items-center gap-1 border-b pb-2 shrink-0">
+          <button
+            onClick={() => setActiveTab('write')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
+              activeTab === 'write' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+            )}
+          >
+            ✏️ Content Editor
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
+              activeTab === 'settings' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+            )}
+          >
+            ⚙️ Snippet & Metadata
+          </button>
+          <span className="ml-auto text-[11px] text-muted-foreground font-mono">
+            {content.trim().split(/\s+/).filter(Boolean).length} words
+          </span>
+        </div>
+
+        {activeTab === 'write' ? (
+          <div className="flex-1 flex flex-col gap-2 min-h-0">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Article Title..."
+              className="h-10 text-base font-bold shrink-0"
+            />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="flex-1 w-full rounded-xl border bg-background px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 leading-relaxed font-mono"
+              placeholder="Write your article content here..."
+            />
+          </div>
+        ) : (
+          <div className="space-y-3 overflow-y-auto flex-1 p-1">
+            <div>
+              <label className="text-xs font-semibold block mb-1">SEO Title Tag</label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-9 text-xs" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1">URL Permlink</label>
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} className="h-9 text-xs font-mono" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1">Meta Description</label>
+              <textarea
+                value={meta}
+                onChange={(e) => setMeta(e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border bg-background p-2.5 text-xs resize-none"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Rank Markup Sidebar Right */}
+      <div className="w-full sm:w-[440px] md:w-[480px] lg:w-[520px] xl:w-[560px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-xl border shadow-xs">
+        <ArticleSEOSidebar
+          title={title}
+          slug={slug}
+          content={content}
+          seoData={{
+            keywords,
+            focusKeyword: keywords[0],
+            title,
+            description: meta,
+            isPillarContent: isPillar,
+          }}
+          onUpdateSeo={handleUpdateSeo}
+          onUpdateSlug={(s) => setSlug(s)}
+          className="border-0"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Legacy alias export
+export const SEOAnalyzer = ArticleSEOSidebar;
+export { analyzeMultiKeyword as analyzeSEO };
