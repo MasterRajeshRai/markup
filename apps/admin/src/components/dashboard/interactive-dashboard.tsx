@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   AreaChart,
@@ -217,18 +217,76 @@ export function InteractiveDashboard({
   const [eventTickerIndex, setEventTickerIndex] = useState<number>(0);
   const [mounted, setMounted] = useState<boolean>(false);
 
+  // Real-Time Live State from Production API
+  const [liveMetrics, setLiveMetrics] = useState<any>(null);
+  const [isLive, setIsLive] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveCounts, setLiveCounts] = useState<DashboardMetricsProps>({
+    publishedCount,
+    draftCount,
+    scheduledCount,
+    mediaCount,
+    usersCount,
+    contentTypesCount,
+  });
+
+  const fetchLiveMetrics = useCallback(async (tf: Timeframe = timeframe, manual = false) => {
+    if (manual) setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/v1/dashboard/metrics?timeframe=${tf}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setLiveMetrics(json);
+          setLastUpdated(new Date());
+          if (json.counts) {
+            setLiveCounts(json.counts);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[InteractiveDashboard] Failed to fetch live metrics, using local fallback', e);
+    } finally {
+      if (manual) setIsRefreshing(false);
+    }
+  }, [timeframe]);
+
+  useEffect(() => {
+    fetchLiveMetrics(timeframe);
+  }, [timeframe, fetchLiveMetrics]);
+
+  // Real-time auto-polling every 12 seconds when online/live
+  useEffect(() => {
+    if (!isLive) return;
+    const interval = setInterval(() => {
+      fetchLiveMetrics(timeframe);
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [isLive, timeframe, fetchLiveMetrics]);
+
+  const activeEvents = useMemo(() => {
+    if (liveMetrics?.recentEvents && Array.isArray(liveMetrics.recentEvents) && liveMetrics.recentEvents.length > 0) {
+      return liveMetrics.recentEvents;
+    }
+    return RECENT_EVENTS;
+  }, [liveMetrics]);
+
   useEffect(() => {
     setMounted(true);
     const interval = setInterval(() => {
-      setEventTickerIndex((prev) => (prev + 1) % RECENT_EVENTS.length);
+      setEventTickerIndex((prev) => (prev + 1) % (activeEvents.length || 1));
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeEvents]);
 
   // -----------------------------------------------------------
-  // Dynamic Datasets based on timeframe
+  // Dynamic Datasets based on live metrics or timeframe
   // -----------------------------------------------------------
   const contentVelocityData = useMemo(() => {
+    if (liveMetrics?.contentVelocity && Array.isArray(liveMetrics.contentVelocity)) {
+      return liveMetrics.contentVelocity;
+    }
     switch (timeframe) {
       case '7d':
         return [
@@ -267,9 +325,12 @@ export function InteractiveDashboard({
           { period: 'Day 26-30', published: 34, drafts: 48, scheduled: 18 },
         ];
     }
-  }, [timeframe]);
+  }, [timeframe, liveMetrics]);
 
   const audienceGrowthData = useMemo(() => {
+    if (liveMetrics?.audienceGrowth && Array.isArray(liveMetrics.audienceGrowth)) {
+      return liveMetrics.audienceGrowth;
+    }
     switch (timeframe) {
       case '7d':
         return [
@@ -303,21 +364,29 @@ export function InteractiveDashboard({
           { period: 'Wk 4', subscribers: 230, leads: 145, comments: 182 },
         ];
     }
-  }, [timeframe]);
+  }, [timeframe, liveMetrics]);
 
-  const mediaStorageData = useMemo(() => [
-    { name: 'Hero', value: 420, fill: PALETTE.blue },
-    { name: 'Medium', value: 310, fill: PALETTE.emerald },
-    { name: 'Card', value: 380, fill: PALETTE.amber },
-    { name: 'Thumbnail', value: 240, fill: PALETTE.purple },
-    { name: 'Custom', value: 132, fill: PALETTE.cyan },
-  ], []);
+  const mediaStorageData = useMemo(() => {
+    if (liveMetrics?.mediaStorage && Array.isArray(liveMetrics.mediaStorage)) {
+      return liveMetrics.mediaStorage;
+    }
+    return [
+      { name: 'Hero', value: 420, fill: PALETTE.blue },
+      { name: 'Medium', value: 310, fill: PALETTE.emerald },
+      { name: 'Card', value: 380, fill: PALETTE.amber },
+      { name: 'Thumbnail', value: 240, fill: PALETTE.purple },
+      { name: 'Custom', value: 132, fill: PALETTE.cyan },
+    ];
+  }, [liveMetrics]);
 
   const totalAssetsCount = useMemo(() => {
-    return mediaStorageData.reduce((acc, curr) => acc + curr.value, 0) + mediaCount;
-  }, [mediaStorageData, mediaCount]);
+    return mediaStorageData.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0) + liveCounts.mediaCount;
+  }, [mediaStorageData, liveCounts.mediaCount]);
 
   const monetizationData = useMemo(() => {
+    if (liveMetrics?.monetization && Array.isArray(liveMetrics.monetization)) {
+      return liveMetrics.monetization;
+    }
     switch (timeframe) {
       case '7d':
         return [
@@ -351,31 +420,64 @@ export function InteractiveDashboard({
           { period: 'Wk 4', revenue: 3420, ecpm: 22.1 },
         ];
     }
-  }, [timeframe]);
+  }, [timeframe, liveMetrics]);
 
-  const healthRadarData = useMemo(() => [
-    { metric: 'SEO Health', score: 96, benchmark: 88 },
-    { metric: 'Content Velocity', score: 91, benchmark: 82 },
-    { metric: 'Media Optimization', score: 98, benchmark: 85 },
-    { metric: 'Security & RBAC', score: 100, benchmark: 90 },
-    { metric: 'Community Growth', score: 86, benchmark: 75 },
-    { metric: 'API Reliability', score: 99, benchmark: 95 },
-  ], []);
+  const healthRadarData = useMemo(() => {
+    if (liveMetrics?.healthRadar && Array.isArray(liveMetrics.healthRadar)) {
+      return liveMetrics.healthRadar;
+    }
+    return [
+      { metric: 'SEO Health', score: 96, benchmark: 88 },
+      { metric: 'Content Velocity', score: 91, benchmark: 82 },
+      { metric: 'Media Optimization', score: 98, benchmark: 85 },
+      { metric: 'Security & RBAC', score: 100, benchmark: 90 },
+      { metric: 'Community Growth', score: 86, benchmark: 75 },
+      { metric: 'API Reliability', score: 99, benchmark: 95 },
+    ];
+  }, [liveMetrics]);
 
-  const workflowsData = useMemo(() => [
-    { name: 'Queue Dispatch', value: 98, fill: PALETTE.purple },
-    { name: 'SEO Audit', value: 95, fill: PALETTE.amber },
-    { name: 'Legal Approval', value: 84, fill: PALETTE.emerald },
-    { name: 'Draft Review SLA', value: 92, fill: PALETTE.blue },
-  ], []);
+  const workflowsData = useMemo(() => {
+    if (liveMetrics?.workflows && Array.isArray(liveMetrics.workflows)) {
+      return liveMetrics.workflows;
+    }
+    return [
+      { name: 'Queue Dispatch', value: 98, fill: PALETTE.purple },
+      { name: 'SEO Audit', value: 95, fill: PALETTE.amber },
+      { name: 'Legal Approval', value: 84, fill: PALETTE.emerald },
+      { name: 'Draft Review SLA', value: 92, fill: PALETTE.blue },
+    ];
+  }, [liveMetrics]);
 
-  const contentTypeData = useMemo(() => [
-    { model: 'Articles', requests: 420, fill: PALETTE.blue },
-    { model: 'Landing Pages', requests: 310, fill: PALETTE.emerald },
-    { model: 'Documentation', requests: 280, fill: PALETTE.amber },
-    { model: 'Case Studies', requests: 190, fill: PALETTE.purple },
-    { model: 'Product Specs', requests: 140, fill: PALETTE.cyan },
-  ], []);
+  const contentTypeData = useMemo(() => {
+    if (liveMetrics?.contentTypeDistribution && Array.isArray(liveMetrics.contentTypeDistribution)) {
+      return liveMetrics.contentTypeDistribution;
+    }
+    return [
+      { model: 'Articles', requests: 420, fill: PALETTE.blue },
+      { model: 'Landing Pages', requests: 310, fill: PALETTE.emerald },
+      { model: 'Documentation', requests: 280, fill: PALETTE.amber },
+      { model: 'Case Studies', requests: 190, fill: PALETTE.purple },
+      { model: 'Product Specs', requests: 140, fill: PALETTE.cyan },
+    ];
+  }, [liveMetrics]);
+
+  const totalLeads = useMemo(() => {
+    return audienceGrowthData.reduce((acc: number, curr: any) => acc + (curr.leads || 0), 0);
+  }, [audienceGrowthData]);
+
+  const totalSubscribers = useMemo(() => {
+    return audienceGrowthData.reduce((acc: number, curr: any) => acc + (curr.subscribers || 0), 0);
+  }, [audienceGrowthData]);
+
+  const totalRevenue = useMemo(() => {
+    return monetizationData.reduce((acc: number, curr: any) => acc + (curr.revenue || 0), 0);
+  }, [monetizationData]);
+
+  const avgHealthScore = useMemo(() => {
+    if (!healthRadarData.length) return '95.7';
+    const sum = healthRadarData.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0);
+    return (sum / healthRadarData.length).toFixed(1);
+  }, [healthRadarData]);
 
   return (
     <div className="space-y-6">
@@ -385,12 +487,27 @@ export function InteractiveDashboard({
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
               Platform Intelligence
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Edge Active
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsLive(!isLive)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-all cursor-pointer',
+                  isLive
+                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                    : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'
+                )}
+                title={isLive ? 'Real-time sync active (every 12s). Click to pause.' : 'Real-time sync paused. Click to resume.'}
+              >
+                <span className={cn('h-1.5 w-1.5 rounded-full', isLive ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground')} />
+                <span>{isLive ? 'Live Stream (Online)' : 'Stream Paused'}</span>
+              </button>
+              {lastUpdated && (
+                <span className="text-[11px] font-mono text-muted-foreground/80 hidden sm:inline-block">
+                  Synced {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -400,6 +517,19 @@ export function InteractiveDashboard({
 
         {/* Action & Filter Cluster */}
         <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          {/* Real-time Manual Sync Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isRefreshing}
+            onClick={() => fetchLiveMetrics(timeframe, true)}
+            className="h-9 px-3 text-xs gap-1.5 border-border/80 bg-card hover:bg-accent hover:text-foreground shadow-2xs cursor-pointer"
+            title="Fetch live production database metrics immediately"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5 text-primary', isRefreshing && 'animate-spin')} />
+            <span>{isRefreshing ? 'Syncing...' : 'Sync Now'}</span>
+          </Button>
+
           {/* Timeframe Selector Pill */}
           <div className="inline-flex items-center rounded-lg border border-border/80 bg-muted/30 p-1 text-xs font-medium shadow-2xs">
             {(['7d', '30d', '90d', '1y'] as Timeframe[]).map((tf) => (
@@ -459,11 +589,11 @@ export function InteractiveDashboard({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {[
           { id: 'all', label: 'All Modules', icon: Sparkles, badge: 'Full Matrix' },
-          { id: 'content', label: 'Content & Editorial', icon: FileText, badge: `${publishedCount} Published` },
+          { id: 'content', label: 'Content & Editorial', icon: FileText, badge: `${liveCounts.publishedCount} Published` },
           { id: 'audience', label: 'Audience & Leads', icon: Users, badge: 'Form + Mail' },
-          { id: 'media', label: 'Media & R2 DAM', icon: ImageIcon, badge: `${mediaCount} Assets` },
+          { id: 'media', label: 'Media & R2 DAM', icon: ImageIcon, badge: `${liveCounts.mediaCount} Assets` },
           { id: 'revenue', label: 'Revenue & Monetization', icon: DollarSign, badge: 'AdSense' },
-          { id: 'system', label: 'System & RBAC', icon: ShieldCheck, badge: `${usersCount} Users` },
+          { id: 'system', label: 'System & RBAC', icon: ShieldCheck, badge: `${liveCounts.usersCount} Users` },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeModule === tab.id;
@@ -506,7 +636,7 @@ export function InteractiveDashboard({
             </div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                {publishedCount + draftCount + scheduledCount}
+                {liveCounts.publishedCount + liveCounts.draftCount + liveCounts.scheduledCount}
               </span>
               <span className="inline-flex items-center text-xs font-medium text-emerald-500">
                 <TrendingUp className="h-3 w-3 mr-0.5" />
@@ -514,7 +644,7 @@ export function InteractiveDashboard({
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {publishedCount} published • {draftCount} in drafts
+              {liveCounts.publishedCount} published • {liveCounts.draftCount} in drafts
             </p>
           </div>
           <div className="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
@@ -558,7 +688,7 @@ export function InteractiveDashboard({
             </div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                1,428
+                {totalLeads.toLocaleString()}
               </span>
               <span className="inline-flex items-center text-xs font-medium text-emerald-500">
                 <TrendingUp className="h-3 w-3 mr-0.5" />
@@ -584,7 +714,7 @@ export function InteractiveDashboard({
             </div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                8,642
+                {totalSubscribers.toLocaleString()}
               </span>
               <span className="inline-flex items-center text-xs font-medium text-emerald-500">
                 <TrendingUp className="h-3 w-3 mr-0.5" />
@@ -610,7 +740,7 @@ export function InteractiveDashboard({
             </div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
-                $23.4k
+                ${totalRevenue >= 1000 ? `${(totalRevenue / 1000).toFixed(1)}k` : totalRevenue.toLocaleString()}
               </span>
               <span className="inline-flex items-center text-xs font-medium text-emerald-500">
                 <TrendingUp className="h-3 w-3 mr-0.5" />
@@ -838,7 +968,7 @@ export function InteractiveDashboard({
                     paddingAngle={3}
                     isAnimationActive={false}
                   >
-                    {mediaStorageData.map((entry, index) => (
+                    {mediaStorageData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} stroke="transparent" />
                     ))}
                   </Pie>
@@ -924,10 +1054,10 @@ export function InteractiveDashboard({
               </ChartContainer>
               <div className="text-center pt-1">
                 <div className="text-xl font-bold font-mono tracking-tight text-foreground">
-                  $23,450.00
+                  ${totalRevenue.toLocaleString()}
                 </div>
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-                  Average eCPM: $18.42 / 1k impressions
+                  Average eCPM: ${(monetizationData.reduce((acc: number, curr: any) => acc + (curr.ecpm || 0), 0) / (monetizationData.length || 1)).toFixed(2)} / 1k impressions
                 </div>
               </div>
             </CardContent>
@@ -983,7 +1113,7 @@ export function InteractiveDashboard({
               </ChartContainer>
               <div className="text-center pt-1">
                 <div className="text-xl font-bold font-mono tracking-tight text-emerald-500">
-                  95.7 / 100 Score
+                  {avgHealthScore} / 100 Score
                 </div>
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
                   Grade A+ Enterprise Health
@@ -1035,22 +1165,12 @@ export function InteractiveDashboard({
                 </RadialBarChart>
               </ChartContainer>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border/40 text-center">
-                <div className="p-2 rounded-lg bg-muted/20">
-                  <div className="text-xs text-muted-foreground">Draft Review</div>
-                  <div className="text-base font-bold text-foreground font-mono">92%</div>
-                </div>
-                <div className="p-2 rounded-lg bg-muted/20">
-                  <div className="text-xs text-muted-foreground">Legal Approval</div>
-                  <div className="text-base font-bold text-foreground font-mono">84%</div>
-                </div>
-                <div className="p-2 rounded-lg bg-muted/20">
-                  <div className="text-xs text-muted-foreground">SEO Audit</div>
-                  <div className="text-base font-bold text-foreground font-mono">95%</div>
-                </div>
-                <div className="p-2 rounded-lg bg-muted/20">
-                  <div className="text-xs text-muted-foreground">Queue Dispatch</div>
-                  <div className="text-base font-bold text-foreground font-mono">98%</div>
-                </div>
+                {workflowsData.map((wf: any, idx: number) => (
+                  <div key={idx} className="p-2 rounded-lg bg-muted/20">
+                    <div className="text-xs text-muted-foreground">{wf.name}</div>
+                    <div className="text-base font-bold text-foreground font-mono">{wf.value}%</div>
+                  </div>
+                ))}
               </div>
             </CardContent>
             <CardFooter className="pt-0 text-xs text-muted-foreground flex items-center justify-between border-t border-border/40 mt-3 py-2.5">
@@ -1097,7 +1217,7 @@ export function InteractiveDashboard({
                   />
                   <ChartTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<ChartTooltipContent />} />
                   <Bar dataKey="requests" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                    {contentTypeData.map((entry, index) => (
+                    {contentTypeData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Bar>
@@ -1109,7 +1229,7 @@ export function InteractiveDashboard({
               </div>
             </CardContent>
             <CardFooter className="pt-0 text-xs text-muted-foreground flex items-center justify-between border-t border-border/40 mt-3 py-2.5">
-              <span>{contentTypesCount} active custom content types</span>
+              <span>{liveCounts.contentTypesCount} active custom content types</span>
               <Link href="/admin/content-types" className="text-primary hover:underline font-semibold flex items-center gap-1">
                 Schema Builder <ArrowUpRight className="h-3 w-3" />
               </Link>
@@ -1139,7 +1259,7 @@ export function InteractiveDashboard({
             </span>
           </CardHeader>
           <CardContent className="space-y-2.5 pt-0">
-            {RECENT_EVENTS.map((evt, idx) => {
+            {activeEvents.map((evt: any, idx: number) => {
               const isCurrent = idx === eventTickerIndex;
               return (
                 <div
