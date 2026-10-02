@@ -202,7 +202,7 @@ function LoginPage() {
           <div className="mx-auto h-12 w-12 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 mb-3">
             <Layers className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">Universal Headless CMS</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">Markup CMS</h1>
           <p className="text-xs text-slate-400 mt-1">
             Enterprise Security Control Plane & Content Infrastructure
           </p>
@@ -529,7 +529,7 @@ function LoginPage() {
 
       {/* Footer copyright */}
       <div className="mt-6 text-xs text-slate-500">
-        Universal Headless CMS © 2026 • High-Security Architecture
+        Markup CMS © 2026 • High-Security Architecture
       </div>
     </div>
   );

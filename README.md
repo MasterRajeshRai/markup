@@ -1,6 +1,6 @@
-# Universal Headless CMS Platform
+# Markup — Enterprise Headless CMS Platform
 
-> A production-ready, extensible, API-first **Universal Headless CMS** built on Next.js 16, TypeScript, PostgreSQL, and Prisma. Capable of powering any modern website, mobile application, PWA, digital kiosk, or third-party digital experience.
+> A production-ready, extensible, API-first **Markup Headless CMS** built on Next.js 16, TypeScript, PostgreSQL, and Prisma. Capable of powering modern websites, mobile applications, PWAs, digital kiosks, or omnichannel digital experiences.
 
 ---
 

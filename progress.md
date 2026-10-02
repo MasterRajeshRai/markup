@@ -1,4 +1,4 @@
-# Universal Headless CMS Platform — Implementation Progress
+# Markup — Enterprise Headless CMS Platform — Implementation Progress
 
 Status Legend:
 - [DONE] Implemented, verified, and operational

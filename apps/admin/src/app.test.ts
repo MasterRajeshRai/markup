@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { prisma, EntryStatus } from '@headless/database';
 import { verifyPassword, hashPassword, generateApiKey, computeRevisionDiff } from '@headless/core';
 
-describe('Universal Headless CMS — Integration & API Verification Suite', () => {
+describe('Markup — Integration & API Verification Suite', () => {
   let testSiteId: string;
   let testContentTypeId: string;
   let adminUserId: string;

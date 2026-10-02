@@ -1,8 +1,8 @@
 {
-  "name": "universal-headless-cms",
+  "name": "markup",
   "version": "1.0.0",
   "private": true,
-  "description": "Enterprise Universal Headless CMS Platform",
+  "description": "Markup — Enterprise Headless CMS Platform",
   "type": "module",
   "scripts": {
     "dev:admin": "pnpm --filter @headless/admin dev",

@@ -512,10 +512,10 @@ export function Sidebar() {
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-[15px] tracking-tight text-foreground leading-tight truncate">
-                Headless CMS
+                Markup
               </span>
               <span className="text-[12px] text-muted-foreground/80 font-normal leading-tight truncate mt-0.5">
-                Enterprise Platform
+                Headless CMS
               </span>
             </div>
           </Link>

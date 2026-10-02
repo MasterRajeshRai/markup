@@ -6,7 +6,7 @@ export async function GET() {
   const openApiSpec = {
     openapi: '3.0.3',
     info: {
-      title: 'Universal Headless CMS REST API',
+      title: 'Markup REST API',
       version: '1.0.0',
       description:
         'Enterprise-grade, API-first headless content management system. Exposes high-performance read APIs for digital experiences and management APIs for editorial operations.',

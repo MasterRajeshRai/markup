@@ -3,7 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Universal Headless CMS — Enterprise Platform',
+  title: 'Markup — Enterprise Headless CMS Platform',
   description: 'Enterprise decoupled headless content management platform powering modern digital experiences.',
 };
 

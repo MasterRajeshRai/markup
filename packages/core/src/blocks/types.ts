@@ -220,7 +220,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     description: 'High-impact banner with badge, title, subtitle, CTAs.',
     defaultData: {
       badge: 'New Release',
-      title: 'Universal Headless CMS',
+      title: 'Markup Headless CMS',
       subtitle: 'Build any modern digital experience with enterprise speed and security.',
       primaryCta: { label: 'Get Started', url: '/docs' },
       secondaryCta: { label: 'Explore API', url: '/api' },

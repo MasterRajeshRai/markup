@@ -584,7 +584,7 @@ export async function createPasswordResetRequest(emailInput: string, origin: str
       variables: {
         recipientName: email.split('@')[0],
         actionUrl: resetUrl,
-        siteName: 'Universal Headless CMS',
+        siteName: 'Markup',
       },
     });
   } catch {

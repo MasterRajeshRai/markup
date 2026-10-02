@@ -60,7 +60,7 @@ export async function executeWebhookDelivery(
     'X-CMS-Event': event,
     'X-CMS-Delivery-Attempt': String(attempt),
     'X-CMS-Signature': signature,
-    'User-Agent': 'Universal-Headless-CMS-Webhook/1.0',
+    'User-Agent': 'Markup-CMS-Webhook/1.0',
   };
 
   const startTime = Date.now();

@@ -427,9 +427,9 @@ async function main() {
       publishedAt: new Date(),
       blocks: homeBlocks,
       seo: {
-        title: 'Universal Headless CMS | Acme Platform',
+        title: 'Markup Headless CMS | Acme Platform',
         description: 'Enterprise API-first headless content management system.',
-        ogTitle: 'Acme Universal Headless CMS',
+        ogTitle: 'Acme Markup Headless CMS',
         robots: 'index, follow',
       },
     },
@@ -448,9 +448,9 @@ async function main() {
       },
       blocks: homeBlocks,
       seo: {
-        title: 'Universal Headless CMS | Acme Platform',
+        title: 'Markup Headless CMS | Acme Platform',
         description: 'Enterprise API-first headless content management system.',
-        ogTitle: 'Acme Universal Headless CMS',
+        ogTitle: 'Acme Markup Headless CMS',
         robots: 'index, follow',
       },
     },

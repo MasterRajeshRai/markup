@@ -95,7 +95,7 @@ export default function ApiDocsPage() {
           </div>
           <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
             <BookOpen className="h-7 w-7 text-primary" />
-            <span>Universal Headless CMS — API Explorer</span>
+            <span>Markup — API Explorer</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1.5 max-w-2xl">
             Complete API specification for content delivery, asset retrieval, webhooks, and administrative operations.
