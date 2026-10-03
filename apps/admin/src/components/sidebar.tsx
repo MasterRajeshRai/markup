@@ -11,6 +11,7 @@ import {
   FileText,
   Layers,
   Image,
+  Images,
   Users,
   Globe,
   GitBranch,
@@ -163,6 +164,13 @@ const SECTIONS: NavSection[] = [
   {
     title: 'Media & Assets',
     items: [
+      {
+        title: 'Albums & Gallery',
+        href: '/admin/gallery',
+        icon: Images,
+        iconColor: 'text-emerald-400',
+        moduleId: 'gallery',
+      },
       {
         title: 'Media Library',
         href: '/admin/media',

@@ -3,13 +3,20 @@ import { NextRequest } from 'next/server';
 
 export const DEFAULT_SITE: Site = {
   id: 'site_default_01',
-  name: 'Headless CMS Default Site',
-  slug: 'default',
+  name: 'Prince Public School',
+  slug: 'prince-public-school',
   domain: 'localhost',
   defaultLocale: 'en-US',
   isDefault: true,
-  branding: {},
-  settings: {},
+  branding: {
+    logoUrl: '/images/pps-crest.svg',
+    faviconUrl: '/favicon.ico',
+    primaryColor: '#1e3a8a',
+  },
+  settings: {
+    site_title: 'Prince Public School',
+    site_tagline: 'Excellence in Education, Character in Leadership',
+  },
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };

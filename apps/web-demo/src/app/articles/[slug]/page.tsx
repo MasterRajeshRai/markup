@@ -37,24 +37,24 @@ export default async function ArticleDetailPage({
             headline: article.title,
             description: article.data?.summary || '',
             datePublished: article.publishedAt,
-            author: { '@type': 'Person', name: article.data?.byline || 'Acme Author' },
+            author: { '@type': 'Person', name: article.data?.byline || 'PPS Editorial Cell' },
           }),
         }}
       />
 
-      <div className="space-y-4 border-b border-slate-800 pb-8 text-center max-w-2xl mx-auto">
+      <div className="space-y-4 border-b border-slate-200 pb-8 text-center max-w-2xl mx-auto">
         <Link
           href="/articles"
-          className="text-xs font-semibold text-blue-400 hover:underline inline-block mb-2"
+          className="text-sm font-bold text-blue-700 hover:underline inline-block mb-2"
         >
           ← Back to Articles
         </Link>
-        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+        <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight font-sans">
           {article.title}
         </h1>
-        <p className="text-base text-slate-300 leading-relaxed">{article.data?.summary}</p>
-        <div className="flex items-center justify-center gap-4 text-xs text-slate-500 pt-2 font-mono">
-          <span>By {article.data?.byline || 'Editorial Staff'}</span>
+        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">{article.data?.summary}</p>
+        <div className="flex items-center justify-center gap-4 text-xs sm:text-sm text-slate-500 pt-2 font-mono">
+          <span>By {article.data?.byline || 'PPS Editorial Cell'}</span>
           <span>•</span>
           <span>{new Date(article.publishedAt || article.createdAt).toLocaleDateString()}</span>
           <span>•</span>
