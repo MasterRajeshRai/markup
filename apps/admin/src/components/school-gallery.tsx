@@ -561,7 +561,7 @@ export function SchoolGallery({ initialAlbumSlug, defaultView = 'albums' }: Scho
       {activePhoto && lightboxAlbum && isMounted && createPortal(
         <div
           style={{ zIndex: 999999 }}
-          className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen bg-black/95 backdrop-blur-md flex flex-col justify-between text-white overflow-hidden"
+          className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-full h-full max-w-full max-h-full bg-black/95 backdrop-blur-md flex flex-col justify-between text-white overflow-hidden"
           onClick={closeLightbox}
         >
           {/* Top Bar */}

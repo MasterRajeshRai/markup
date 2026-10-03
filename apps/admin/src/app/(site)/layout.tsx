@@ -84,7 +84,7 @@ export default async function SiteLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden relative">
       {/* Top Notification Bar */}
       <TopBar />
 
@@ -96,7 +96,7 @@ export default async function SiteLayout({
       />
 
       {/* Main Page Content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
 
       {/* Comprehensive School Footer */}
       <SchoolFooter />

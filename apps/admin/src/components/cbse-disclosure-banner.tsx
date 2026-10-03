@@ -55,7 +55,7 @@ export function CbseDisclosureBanner() {
   };
 
   return (
-    <section id="cbse-disclosure" className="py-8 sm:py-10 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto">
+    <section id="cbse-disclosure" className="py-8 sm:py-10 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto w-full max-w-full overflow-hidden">
       <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 lg:p-7 shadow-xs relative overflow-hidden space-y-4">
         
         {/* Top Accent Ribbon */}
@@ -148,7 +148,7 @@ export function CbseDisclosureBanner() {
         {/* Single-Row Horizontal Document Track (Reduced Height) */}
         <div 
           ref={scrollRef}
-          className="flex items-stretch gap-3 overflow-x-auto scrollbar-none scroll-smooth pb-1 pt-1 -mx-1 px-1"
+          className="flex items-stretch gap-3 overflow-x-auto scrollbar-none scroll-smooth pb-1 pt-1 w-full max-w-full touch-pan-y"
         >
           {filteredDocuments.map((doc) => (
             <Link

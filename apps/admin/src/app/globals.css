@@ -80,6 +80,11 @@
   html {
     font-size: 15px;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
   }
 
   body {
@@ -91,6 +96,31 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+    /* Native App-like Touch Handling & Anti-Horizontal Scroll */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Universal Box-Sizing and Media Overflow Containment */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
   }
 
   /* Admin Base Typography & Form Controls */
@@ -249,6 +279,25 @@
   .admin-root .text-\[10px\] {
     font-size: 12.5px !important;
     line-height: 1.4 !important;
+  }
+
+  /* App-like Touch & Zero-Scrollbar Utilities */
+  .scrollbar-none {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y !important;
+  }
+
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent !important;
   }
 }
 

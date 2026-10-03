@@ -89,43 +89,43 @@ export function SchoolHeader({
       <div className="max-w-[1780px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Mobile View: Logo on left, actions on right */}
-        <div className="flex lg:hidden items-center justify-between h-16 sm:h-18">
-          <Link href="/" className="inline-flex items-center gap-2.5 group">
+        <div className="flex lg:hidden items-center justify-between h-16 sm:h-18 w-full max-w-full gap-2">
+          <Link href="/" className="inline-flex items-center gap-2 group min-w-0 flex-1 overflow-hidden">
             <div className="relative shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoUrl}
                 alt={`${siteTitle} Crest`}
-                className="h-10 w-10 sm:h-11 sm:w-11 object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_6px_rgba(226,160,43,0.3)]"
+                className="h-10 w-10 sm:h-11 sm:w-11 object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_6px_rgba(226,160,43,0.3)] shrink-0"
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-black text-base sm:text-lg tracking-tight text-[#09182d] uppercase leading-none font-sans">
+            <div className="flex flex-col min-w-0 overflow-hidden">
+              <span className="font-black text-sm sm:text-base tracking-tight text-[#09182d] uppercase leading-none font-sans truncate">
                 {siteTitle}
               </span>
-              <span className="text-[11px] font-bold text-amber-700 tracking-wider uppercase font-mono mt-0.5">
+              <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 tracking-wider uppercase font-mono mt-0.5 truncate">
                 Mehrauli, New Delhi
               </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <a
               href="tel:+911128084567"
-              className="p-2 rounded-xl border border-slate-200 text-slate-700 hover:text-[#09182d] hover:bg-slate-50 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl border border-slate-200 text-slate-700 hover:text-[#09182d] hover:bg-slate-50 transition-colors"
               aria-label="Call Admissions Desk"
             >
               <Phone className="w-4 h-4 text-amber-600" />
             </a>
             <Link
               href="/admissions"
-              className="px-3 py-1.5 rounded-full bg-[#e2a02b] text-[#09182d] font-bold text-xs shadow-xs whitespace-nowrap"
+              className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#e2a02b] text-[#09182d] font-bold text-xs shadow-xs whitespace-nowrap"
             >
               Apply
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl border border-slate-200 text-slate-700 hover:text-[#09182d] hover:bg-slate-50 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl border border-slate-200 text-slate-700 hover:text-[#09182d] hover:bg-slate-50 transition-colors"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5 text-[#09182d]" /> : <Menu className="w-5 h-5 text-slate-800" />}
@@ -186,7 +186,7 @@ export function SchoolHeader({
               </button>
 
               {activeDropdown === 'about' && (
-                <div className="absolute top-full left-0 w-[740px] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
+                <div className="absolute top-full left-0 w-[min(740px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
                   <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xl grid grid-cols-12 gap-6">
                     
                     {/* Left Column: Core About Pages */}
@@ -277,7 +277,7 @@ export function SchoolHeader({
               </button>
 
               {activeDropdown === 'academics' && (
-                <div className="absolute top-full left-0 w-[440px] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
+                <div className="absolute top-full left-0 w-[min(440px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
                   <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xl space-y-3.5">
                     
                     {/* Foundational Years */}
@@ -363,7 +363,7 @@ export function SchoolHeader({
               </button>
 
               {activeDropdown === 'beyond' && (
-                <div className="absolute top-full left-0 w-[420px] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
+                <div className="absolute top-full left-0 w-[min(420px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
                   <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xl space-y-1.5">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-[#e2a02b] block px-2.5 py-1 font-mono">
                       Co-Curricular &amp; Stages
@@ -416,7 +416,7 @@ export function SchoolHeader({
               </button>
 
               {activeDropdown === 'infra' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[920px] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[min(920px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
                   <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl grid grid-cols-12 gap-6">
                     
                     {/* Column 1: Learning Spaces (7 items) */}
@@ -549,7 +549,7 @@ export function SchoolHeader({
               </button>
 
               {activeDropdown === 'admissions' && (
-                <div className="absolute top-full left-0 w-[280px] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
+                <div className="absolute top-full left-0 w-[min(280px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 before:absolute before:inset-x-0 before:-top-3 before:h-4 before:content-['']">
                   <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xl space-y-2">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-[#e2a02b] block px-2 py-0.5 font-mono">
                       Admissions 2026-27
@@ -635,7 +635,7 @@ export function SchoolHeader({
 
       {/* Mobile Drawer Navigation with Accordions */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 sm:px-6 py-5 space-y-3 max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-200 shadow-2xl">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 sm:px-6 py-5 space-y-3 max-h-[85vh] overflow-y-auto overflow-x-hidden w-full max-w-full animate-in slide-in-from-top-4 duration-200 shadow-2xl">
           
           {/* Quick Apply Button on top of mobile menu */}
           <div className="pb-2">
