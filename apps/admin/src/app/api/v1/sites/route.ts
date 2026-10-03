@@ -22,7 +22,7 @@ interface MockSiteItem {
   };
 }
 
-export const inMemorySites: MockSiteItem[] = [
+const inMemorySites: MockSiteItem[] = [
   {
     id: 'site_default_01',
     name: 'Markup Digital Portal',

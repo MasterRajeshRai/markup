@@ -2,7 +2,7 @@ import { prisma } from '@headless/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
-import { fallbackApiKeys } from '../route';
+import { fallbackApiKeys } from '../fallback-data';
 import { NextRequest, NextResponse } from 'next/server';
 
 function withTimeout<T>(promise: Promise<T>, ms = 2000): Promise<T> {

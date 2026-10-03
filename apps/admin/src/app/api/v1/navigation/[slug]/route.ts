@@ -2,7 +2,7 @@ import { prisma, MenuItemType } from '@headless/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
-import { fallbackMenus } from '../route';
+import { fallbackMenus } from '../fallback-data';
 
 export const dynamic = 'force-dynamic';
 

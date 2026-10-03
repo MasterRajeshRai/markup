@@ -22,7 +22,7 @@ interface FallbackRole {
   permissions: string[];
 }
 
-export const fallbackRoles: FallbackRole[] = [
+const fallbackRoles: FallbackRole[] = [
   {
     id: 'role_super_admin',
     name: 'Super Admin',

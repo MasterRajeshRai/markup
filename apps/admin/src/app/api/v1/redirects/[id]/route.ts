@@ -3,7 +3,7 @@ import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
 import { NextRequest, NextResponse } from 'next/server';
-import { fallbackRedirects } from '../route';
+import { fallbackRedirects } from '../fallback-data';
 
 export const dynamic = 'force-dynamic';
 

@@ -5,7 +5,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "echo @headless/database ready",
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
     "generate": "prisma generate",
     "push": "prisma db push",
     "migrate": "prisma migrate dev",

@@ -2,7 +2,7 @@ import { prisma } from '@headless/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { recordAuditLog } from '@/lib/audit';
 import { NextRequest, NextResponse } from 'next/server';
-import { fallbackUsers } from '../route';
+import { fallbackUsers } from '../fallback-data';
 
 export const dynamic = 'force-dynamic';
 

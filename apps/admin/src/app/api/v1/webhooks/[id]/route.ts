@@ -2,7 +2,7 @@ import { prisma } from '@headless/database';
 import { executeWebhookDelivery } from '@/lib/webhooks';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
-import { fallbackWebhooks } from '../route';
+import { fallbackWebhooks } from '../fallback-data';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

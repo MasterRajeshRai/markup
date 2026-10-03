@@ -5,41 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export const fallbackMenus = [
-  {
-    id: 'menu_header',
-    name: 'Prince Public School Main Navigation',
-    slug: 'main-navigation',
-    location: 'header',
-    description: 'Primary navbar for Prince Public School website',
-    items: [
-      { id: 'mi_1', label: 'Home', url: '/', target: '_self', order: 0, children: [] },
-      { id: 'mi_2', label: 'About Us', url: '/about', target: '_self', order: 1, children: [] },
-      { id: 'mi_3', label: 'Academics', url: '/academics', target: '_self', order: 2, children: [] },
-      { id: 'mi_4', label: 'Admissions', url: '/admissions', target: '_self', order: 3, children: [] },
-      { id: 'mi_5', label: 'Facilities', url: '/facilities', target: '_self', order: 4, children: [] },
-      { id: 'mi_6', label: 'Student Life', url: '/student-life', target: '_self', order: 5, children: [] },
-      { id: 'mi_7', label: 'Notices', url: '/notices', target: '_self', order: 6, children: [] },
-      { id: 'mi_8', label: 'Gallery', url: '/gallery', target: '_self', order: 7, children: [] },
-      { id: 'mi_9', label: 'Contact', url: '/contact', target: '_self', order: 8, children: [] },
-    ],
-  },
-  {
-    id: 'menu_footer',
-    name: 'Footer Navigation',
-    slug: 'footer-navigation',
-    location: 'footer',
-    description: 'School disclosures, policies, and links',
-    items: [
-      { id: 'mi_10', label: 'CBSE Mandatory Disclosure', url: '/about#cbse-disclosure', target: '_self', order: 0, children: [] },
-      { id: 'mi_11', label: 'Fee Structure', url: '/admissions#fees', target: '_self', order: 1, children: [] },
-      { id: 'mi_12', label: 'Transfer Certificate (TC)', url: '/admissions#tc', target: '_self', order: 2, children: [] },
-      { id: 'mi_13', label: 'Safety & POCSO Policy', url: '/about#safety', target: '_self', order: 3, children: [] },
-      { id: 'mi_14', label: 'Privacy Policy', url: '/privacy', target: '_self', order: 4, children: [] },
-      { id: 'mi_15', label: 'Terms of Use', url: '/terms', target: '_self', order: 5, children: [] },
-    ],
-  },
-];
+import { fallbackMenus } from './fallback-data';
 
 export async function GET(req: NextRequest) {
   try {
