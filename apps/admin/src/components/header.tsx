@@ -19,11 +19,12 @@ import {
   Command,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const { openSearch } = useSearchModal();
-  const { toggleMobile } = useSidebar();
+  const { toggleMobile, isCollapsed, toggleCollapsed } = useSidebar();
   const { user, hasPermission } = useAuth();
   const pathname = usePathname();
   const [isMac, setIsMac] = useState(false);
@@ -33,6 +34,30 @@ export function Header() {
       setIsMac(true);
     }
   }, []);
+
+  // Listen for Ctrl+B / Cmd+B to toggle sidebar menu
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          toggleMobile();
+        } else {
+          toggleCollapsed();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleMobile, toggleCollapsed]);
+
+  const handleToggleSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      toggleMobile();
+    } else {
+      toggleCollapsed();
+    }
+  };
 
   const getPageTitle = () => {
     if (pathname === '/admin') return 'Analytics';
@@ -58,17 +83,26 @@ export function Header() {
       {/* Topbar layout spacer to prevent page content shift */}
       <div className="h-16 shrink-0 pointer-events-none" aria-hidden="true" />
 
-      <header className="fixed top-0 left-0 lg:left-72 right-0 z-30 flex h-16 items-center justify-between border-b bg-card/95 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-all shadow-2xs">
+      <header
+        className={cn(
+          'fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b bg-card/95 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-all duration-300 shadow-2xs',
+          'left-0',
+          isCollapsed ? 'lg:left-20' : 'lg:left-72'
+        )}
+      >
       {/* Left: Sidebar Toggle & Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => toggleMobile()}
-          className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
-          title="Toggle Navigation Menu"
+          onClick={handleToggleSidebar}
+          className={cn(
+            'h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-lg hover:bg-accent/80 transition-all',
+            isCollapsed && 'text-primary bg-primary/10'
+          )}
+          title={isCollapsed ? 'Expand Sidebar Menu (Ctrl+B)' : 'Collapse Sidebar Menu (Ctrl+B)'}
         >
-          <PanelLeft className="h-5 w-5" />
+          <PanelLeft className={cn('h-5 w-5 transition-transform duration-200', isCollapsed && 'rotate-180 text-primary')} />
         </Button>
 
         <div className="h-5 w-px bg-border/60 shrink-0" />

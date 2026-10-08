@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSearchModal } from '@/components/search-modal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   LayoutDashboard,
@@ -392,8 +391,9 @@ const DEMO_ACCOUNTS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { openSearch } = useSearchModal();
-  const { isMobileOpen, setIsMobileOpen } = useSidebar();
+  const { isMobileOpen, setIsMobileOpen, isCollapsed } = useSidebar();
+  const [isHovered, setIsHovered] = useState(false);
+  const isExpanded = isMobileOpen || !isCollapsed || isHovered;
   const { isModuleEnabled, counts } = useModules();
   const { user, hasPermission, logout, refreshUser } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -530,24 +530,46 @@ export function Sidebar() {
       )}
 
       {/* Desktop placeholder spacer to keep page content aligned next to fixed sidebar */}
-      <div className="hidden lg:block w-72 shrink-0 pointer-events-none" aria-hidden="true" />
+      <div
+        className={cn(
+          'hidden lg:block shrink-0 pointer-events-none transition-all duration-300 ease-in-out',
+          isCollapsed ? 'w-20' : 'w-72'
+        )}
+        aria-hidden="true"
+      />
 
       <aside
         suppressHydrationWarning
+        onMouseEnter={() => {
+          if (isCollapsed) setIsHovered(true);
+        }}
+        onMouseLeave={() => {
+          if (isCollapsed) setIsHovered(false);
+        }}
         className={cn(
-          'w-72 max-w-[85vw] border-r bg-card flex flex-col h-screen max-h-screen select-none overflow-hidden shrink-0 transition-transform duration-300 ease-in-out',
-          'fixed inset-y-0 left-0 z-40',
-          isMobileOpen ? 'translate-x-0 shadow-2xl z-[80]' : '-translate-x-full lg:translate-x-0'
+          'border-r bg-card flex flex-col h-screen max-h-screen select-none overflow-hidden shrink-0 transition-all duration-300 ease-in-out',
+          'fixed inset-y-0 left-0',
+          isMobileOpen
+            ? 'w-72 max-w-[85vw] translate-x-0 shadow-2xl z-[80]'
+            : '-translate-x-full lg:translate-x-0 z-40',
+          isExpanded ? 'w-72' : 'w-20',
+          isCollapsed && isHovered && 'shadow-2xl z-50 border-r-border/80'
         )}
       >
         {/* Top Brand Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b shrink-0">
+        <div
+          className={cn(
+            'h-16 flex items-center border-b shrink-0 transition-all duration-300',
+            isExpanded ? 'justify-between px-4' : 'justify-center px-2'
+          )}
+        >
           <Link
             href="/admin"
             onClick={() => setIsMobileOpen(false)}
             className="flex items-center gap-3 min-w-0 group cursor-pointer"
+            title="Markup Headless CMS"
           >
-            <div className="h-8 w-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center overflow-hidden shadow-2xs shrink-0">
+            <div className="h-8.5 w-8.5 rounded-lg bg-foreground/5 border border-border flex items-center justify-center overflow-hidden shadow-2xs shrink-0">
               {siteBranding.logoUrl ? (
                 <img
                   src={siteBranding.logoUrl}
@@ -562,43 +584,48 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-[15px] tracking-tight text-foreground leading-tight truncate">
-                {siteBranding.name}
-              </span>
-              <span className="text-[12px] text-muted-foreground/80 font-normal leading-tight truncate mt-0.5">
-                Headless CMS
-              </span>
-            </div>
+            {isExpanded && (
+              <div className="flex flex-col min-w-0 transition-opacity duration-200 animate-in fade-in">
+                <span className="font-semibold text-[15px] tracking-tight text-foreground leading-tight truncate">
+                  {siteBranding.name}
+                </span>
+                <span className="text-[12px] text-muted-foreground/80 font-normal leading-tight truncate mt-0.5">
+                  Headless CMS
+                </span>
+              </div>
+            )}
           </Link>
 
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => openSearch()}
-              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer"
-              title="Quick Search (Ctrl+K)"
-            >
-              <SearchIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsMobileOpen(false)}
-              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted lg:hidden"
-              title="Close Menu"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          {isExpanded && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setIsMobileOpen(false)}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted lg:hidden cursor-pointer"
+                title="Close Menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Navigation Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar px-3 py-3 space-y-4">
+        <div
+          className={cn(
+            'flex-1 min-h-0 overflow-y-auto thin-scrollbar space-y-4 py-3 transition-all duration-300',
+            isExpanded ? 'px-3' : 'px-2'
+          )}
+        >
           {visibleSections.map((sec) => (
             <div key={sec.title} className="space-y-1">
-              <div className="px-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
-                {sec.title}
-              </div>
+              {isExpanded ? (
+                <div className="px-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 transition-opacity duration-200">
+                  {sec.title}
+                </div>
+              ) : (
+                <div className="my-2 mx-auto w-5 h-px bg-border/50" />
+              )}
               <div className="space-y-0.5 pt-0.5">
                 {sec.items.map((item) => {
                   const Icon = item.icon;
@@ -612,27 +639,38 @@ export function Sidebar() {
                       key={item.title}
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
+                      title={!isExpanded ? item.title : undefined}
                       className={cn(
-                        'flex items-center justify-between px-3 py-2 rounded-lg text-[15px] transition-colors h-9.5',
+                        'flex items-center rounded-lg text-[15px] transition-all relative group',
+                        isExpanded
+                          ? 'justify-between px-3 py-2 h-9.5'
+                          : 'justify-center h-10 w-10 mx-auto',
                         isActive
                           ? 'bg-accent/90 text-foreground font-medium shadow-2xs'
                           : 'text-muted-foreground hover:text-foreground hover:bg-accent/50 font-normal'
                       )}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Icon className={cn('h-4 w-4 shrink-0', item.iconColor)} />
-                        <span className="truncate text-[15px]">{item.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {item.badge && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                            {item.badge}
-                          </span>
-                        )}
-                        {item.hasChevron && (
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      <div className={cn('flex items-center min-w-0', isExpanded ? 'gap-2.5' : 'justify-center')}>
+                        <Icon className={cn('h-4.5 w-4.5 shrink-0', item.iconColor)} />
+                        {isExpanded && (
+                          <span className="truncate text-[15px] transition-opacity duration-200">{item.title}</span>
                         )}
                       </div>
+                      {isExpanded && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {item.badge && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                              {item.badge}
+                            </span>
+                          )}
+                          {item.hasChevron && (
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+                          )}
+                        </div>
+                      )}
+                      {!isExpanded && isActive && (
+                        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
                     </Link>
                   );
                 })}
@@ -642,9 +680,20 @@ export function Sidebar() {
         </div>
 
         {/* Bottom Pinned User Profile with Role Badging and Account Menu */}
-        <div className="p-3 border-t bg-card shrink-0 relative" ref={profileMenuRef}>
+        <div
+          className={cn(
+            'border-t bg-card shrink-0 relative transition-all duration-300',
+            isExpanded ? 'p-3' : 'p-2'
+          )}
+          ref={profileMenuRef}
+        >
           {profileOpen && (
-            <div className="absolute bottom-full left-3 right-3 mb-2 rounded-xl border border-border bg-card shadow-2xl p-3 z-50 animate-in fade-in-50 slide-in-from-bottom-2 duration-150">
+            <div
+              className={cn(
+                'absolute bottom-full mb-2 rounded-xl border border-border bg-card shadow-2xl p-3 z-50 animate-in fade-in-50 slide-in-from-bottom-2 duration-150',
+                isExpanded ? 'left-3 right-3' : 'left-2 w-72'
+              )}
+            >
               <div className="flex items-center gap-3 pb-3 border-b border-border/70">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                   {user?.avatarUrl ? (
@@ -724,9 +773,13 @@ export function Sidebar() {
           {/* Trigger button */}
           <div
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-accent/60 transition-colors cursor-pointer group"
+            className={cn(
+              'flex items-center rounded-lg hover:bg-accent/60 transition-colors cursor-pointer group',
+              isExpanded ? 'justify-between px-2.5 py-2' : 'justify-center p-1.5 mx-auto'
+            )}
+            title={!isExpanded ? (user?.name || 'Administrator') : undefined}
           >
-            <div className="flex items-center gap-3 min-w-0">
+            <div className={cn('flex items-center min-w-0', isExpanded ? 'gap-3' : 'justify-center')}>
               <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
@@ -734,23 +787,27 @@ export function Sidebar() {
                   user?.name?.charAt(0) || 'A'
                 )}
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[14px] font-medium text-foreground truncate leading-tight group-hover:text-foreground">
-                  {user?.name || 'Administrator'}
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className={cn(
-                      'px-1.5 py-0.2 rounded text-[10.5px] font-semibold border leading-tight truncate',
-                      getRoleBadgeStyle(user?.role)
-                    )}
-                  >
-                    {user?.roleName || user?.role || 'Admin'}
+              {isExpanded && (
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] font-medium text-foreground truncate leading-tight group-hover:text-foreground">
+                    {user?.name || 'Administrator'}
                   </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                      className={cn(
+                        'px-1.5 py-0.2 rounded text-[10.5px] font-semibold border leading-tight truncate',
+                        getRoleBadgeStyle(user?.role)
+                      )}
+                    >
+                      {user?.roleName || user?.role || 'Admin'}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-            <ChevronsUpDown className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground transition-colors shrink-0" />
+            {isExpanded && (
+              <ChevronsUpDown className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground transition-colors shrink-0" />
+            )}
           </div>
         </div>
       </aside>
