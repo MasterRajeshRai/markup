@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (!entry) return { title: 'Page Not Found' };
 
     return {
-      title: `${entry.title} | Prince Public School`,
-      description: entry.seo?.description || entry.data?.summary || 'Prince Public School Official Page',
+      title: `${entry.title} | Markup Digital`,
+      description: entry.seo?.description || entry.data?.summary || 'Markup Enterprise CMS Page',
       openGraph: {
         title: entry.title,
         description: entry.seo?.description || entry.data?.summary || '',
@@ -73,17 +73,17 @@ export default async function DynamicCMSPage({ params }: PageProps) {
       ) : (
         /* Default Page Hero & Body container */
         <article className="max-w-4xl mx-auto px-6 py-16 space-y-8">
-          <div className="space-y-3 border-b border-slate-200 pb-8 text-center max-w-2xl mx-auto">
-            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+          <div className="space-y-3 border-b border-slate-800 pb-8 text-center max-w-2xl mx-auto">
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
               {page.title}
             </h1>
             {page.data?.summary && (
-              <p className="text-base text-slate-600 leading-relaxed">{page.data.summary}</p>
+              <p className="text-base text-slate-300 leading-relaxed">{page.data.summary}</p>
             )}
           </div>
 
           {page.data?.content && (
-            <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap">
+            <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-wrap">
               {page.data.content}
             </div>
           )}

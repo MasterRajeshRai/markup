@@ -1,37 +1,11 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import './globals.css';
 import { cmsClient } from '@/lib/cms-client';
-import { TopBar } from '@/components/top-bar';
-import { SchoolHeader } from '@/components/school-header';
-import { SchoolFooter } from '@/components/school-footer';
 
 export const metadata: Metadata = {
-  title: 'Prince Public School, Mehrauli — CBSE Affiliated Secondary School (Class Pre-School to X)',
-  description:
-    'Prince Public School is a premier CBSE affiliated Secondary co-educational school (Pre-School to Class X) located at 2/108, Mehrauli, New Delhi (1.0 km from Qutub Minar). Renowned for 100% CBSE Class X results, value-based character building, day-boarding & hostel facilities.',
-  keywords: [
-    'Prince Public School',
-    'Prince Public School Mehrauli',
-    'CBSE School Mehrauli New Delhi',
-    'School near Qutub Minar',
-    'Admissions 2026-27',
-    'Best CBSE School Mehrauli',
-    'Secondary School Class 10',
-    '100% CBSE Class X Result',
-    'Day Scholar plus Boarding School',
-  ],
-  icons: {
-    icon: '/images/pps-crest.svg',
-    shortcut: '/images/pps-crest.svg',
-    apple: '/images/pps-crest.svg',
-  },
-  openGraph: {
-    title: 'Prince Public School, Mehrauli — Knowledge, Character & Excellence',
-    description: 'Admissions Open 2026-27 for Pre-School to Class X. Premier CBSE Secondary Institution located near Qutub Minar, Mehrauli, New Delhi.',
-    siteName: 'Prince Public School',
-    locale: 'en_IN',
-    type: 'website',
-  },
+  title: 'Markup Digital Experience — Reference Frontend',
+  description: 'Pure decoupled Next.js frontend consuming the Markup Headless CMS API.',
 };
 
 export default async function RootLayout({
@@ -41,67 +15,123 @@ export default async function RootLayout({
 }) {
   let navItems = [
     { title: 'Home', url: '/' },
-    { title: 'About Us', url: '/about' },
-    { title: 'Academics', url: '/academics' },
-    { title: 'Admissions', url: '/admissions' },
-    { title: 'Facilities', url: '/facilities' },
-    { title: 'Student Life', url: '/student-life' },
-    { title: 'Notices', url: '/notices' },
-    { title: 'Gallery', url: '/gallery' },
-    { title: 'Contact', url: '/contact' },
+    { title: 'Articles', url: '/articles' },
   ];
-  let branding: { logoUrl?: string; faviconUrl?: string; primaryColor?: string } = {
-    logoUrl: '/images/pps-crest.svg',
-  };
-  let siteTitle = 'Prince Public School';
+  let footerItems = [
+    { title: 'Privacy Policy', url: '/privacy' },
+    { title: 'Terms of Service', url: '/terms' },
+    { title: 'Security', url: '/security' },
+  ];
+  let branding: { logoUrl?: string; faviconUrl?: string; primaryColor?: string } = {};
+  let siteTitle = 'MARKUP DIGITAL';
 
   try {
-    const [navRes, settingsRes] = await Promise.allSettled([
+    const [nav, footerRes, settingsRes] = await Promise.allSettled([
       cmsClient.getNavigation('main-navigation'),
+      cmsClient.getNavigation('footer-navigation'),
       cmsClient.getSettings(),
     ]);
 
-    if (navRes.status === 'fulfilled' && navRes.value?.data?.items && navRes.value.data.items.length > 0) {
-      navItems = navRes.value.data.items.map((item: any) => ({
-        title: item.title || item.label,
-        url: item.url,
-      }));
+    if (nav.status === 'fulfilled' && nav.value?.data?.items) {
+      navItems = nav.value.data.items;
+    }
+
+    if (footerRes.status === 'fulfilled' && footerRes.value?.data?.items) {
+      footerItems = footerRes.value.data.items;
     }
 
     if (settingsRes.status === 'fulfilled') {
       const data = settingsRes.value as any;
-      if (data?.site?.branding?.logoUrl) {
+      if (data?.site?.branding) {
         branding = data.site.branding;
-      } else if (data?.branding?.logoUrl) {
+      } else if (data?.branding && (data.branding.logoUrl || data.branding.faviconUrl)) {
         branding = data.branding;
+      } else if (data?.settings?.site_logo) {
+        branding = {
+          logoUrl: data.settings.site_logo,
+          faviconUrl: data.settings.site_favicon,
+        };
       }
 
       if (data?.site?.name) {
         siteTitle = data.site.name;
+      } else if (data?.settings?.site_title) {
+        siteTitle = data.settings.site_title;
       }
     }
   } catch {
-    // Graceful fallback to default Prince Public School state
+    // Fallback if CMS API is not active yet
   }
 
   return (
     <html lang="en">
-      <body className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
-        {/* Top Notification Bar */}
-        <TopBar />
+      <body className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+        {/* Navigation Bar */}
+        <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              {branding.logoUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={branding.logoUrl}
+                  alt={siteTitle}
+                  className="h-8 max-w-[140px] object-contain rounded"
+                />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
+                  M
+                </div>
+              )}
+              <span className="font-bold text-sm tracking-tight text-white uppercase">{siteTitle}</span>
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                Headless Client
+              </span>
+            </Link>
 
-        {/* School Main Navigation Header */}
-        <SchoolHeader
-          navItems={navItems}
-          siteTitle={siteTitle}
-          logoUrl={branding.logoUrl || '/images/pps-crest.svg'}
-        />
+            <nav className="flex items-center gap-6 text-sm font-medium">
+              {navItems.map((item: any, idx) => (
+                <Link
+                  key={idx}
+                  href={item.url}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  {item.title || item.label}
+                </Link>
+              ))}
+              <a
+                href="http://localhost:3000/admin"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs px-3 py-1.5 rounded-md border border-slate-700 hover:border-slate-500 text-slate-300 transition-colors"
+              >
+                CMS Admin ↗
+              </a>
+            </nav>
+          </div>
+        </header>
 
-        {/* Main Page Content */}
+        {/* Page Content */}
         <main className="flex-1">{children}</main>
 
-        {/* Comprehensive School Footer */}
-        <SchoolFooter />
+        {/* Footer */}
+        <footer className="border-t border-slate-800/80 py-8 px-6 text-center text-xs text-slate-400">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© 2026 Markup Enterprise. Content managed with Markup CMS.</p>
+            <div className="flex items-center gap-6 text-xs text-slate-400">
+              {footerItems.map((item: any, idx) => (
+                <Link key={idx} href={item.url} className="hover:text-slate-200 transition-colors">
+                  {item.title || item.label}
+                </Link>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 text-[11px] font-mono">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                REST Delivery API Active
+              </span>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

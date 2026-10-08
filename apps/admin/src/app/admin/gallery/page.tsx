@@ -36,11 +36,11 @@ export default function AdminGalleryPage() {
   
   // Form state
   const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState<string>('Ek Ped Maa Ke Naam');
+  const [formCategory, setFormCategory] = useState<string>('Events');
   const [formSubtitle, setFormSubtitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0]);
-  const [formCover, setFormCover] = useState('/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-1.webp');
+  const [formCover, setFormCover] = useState('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80');
 
   // Photo adder state for managing album
   const [newPhotoTitle, setNewPhotoTitle] = useState('');
@@ -209,9 +209,7 @@ export default function AdminGalleryPage() {
   const filteredAlbums = albums.filter((a) => {
     const matchCategory =
       selectedCategory === 'all' ||
-      a.category.toLowerCase() === selectedCategory.toLowerCase() ||
-      (selectedCategory.toLowerCase() === 'ek ped maa ke naam' &&
-        (a.slug === 'ek-ped-maa-ke-naam' || a.category.toLowerCase() === 'special initiatives'));
+      a.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchSearch =
       !search ||
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -234,10 +232,10 @@ export default function AdminGalleryPage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
-            School Gallery &amp; Albums Manager
+            Photo Gallery &amp; Albums Manager
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Create and curate album-wise photo collections, manage high-resolution school event memories, and prepare assets for Cloudflare R2 edge synchronization.
+            Create and curate album-wise photo collections, manage high-resolution media galleries, and prepare assets for Cloudflare R2 edge synchronization.
           </p>
         </div>
 
@@ -258,15 +256,6 @@ export default function AdminGalleryPage() {
             <Plus className="w-4 h-4" />
             <span>Create New Album</span>
           </button>
-
-          <Link
-            href="/gallery"
-            target="_blank"
-            className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-[#09182d] hover:bg-slate-50 text-xs font-semibold"
-          >
-            <span>Live Gallery</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
         </div>
       </div>
 
@@ -294,7 +283,7 @@ export default function AdminGalleryPage() {
               Cloudflare R2 Object Storage
             </div>
             <div className="text-sm font-bold text-slate-100">
-              Target Bucket: <span className="font-mono text-amber-300">pps-media-production</span> &bull; CDN Acceleration
+              Target Bucket: <span className="font-mono text-amber-300">cms-media-production</span> &bull; CDN Acceleration
             </div>
           </div>
         </div>
@@ -326,7 +315,11 @@ export default function AdminGalleryPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
           {[
             { id: 'all', label: 'All Collections' },
-            { id: 'Ek Ped Maa Ke Naam', label: 'Ek Ped Maa Ke Naam' },
+            { id: 'Events', label: 'Events' },
+            { id: 'Projects', label: 'Projects' },
+            { id: 'Campus & Facilities', label: 'Campus & Facilities' },
+            { id: 'Media & Press', label: 'Media & Press' },
+            { id: 'General', label: 'General' },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -466,7 +459,7 @@ export default function AdminGalleryPage() {
                 <input
                   type="text"
                   required
-                  placeholder='e.g., "Ek Ped Maa Ke Naam" or "Independence Day 2026"'
+                  placeholder='e.g., "Annual Digital Summit 2026" or "Product Launch"'
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#09182d]/20"
@@ -483,13 +476,12 @@ export default function AdminGalleryPage() {
                     onChange={(e) => setFormCategory(e.target.value as any)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white"
                   >
-                    <option value="Ek Ped Maa Ke Naam">Ek Ped Maa Ke Naam</option>
-                    <option value="Special Initiatives">Special Initiatives</option>
-                    <option value="Sports & Athletics">Sports &amp; Athletics</option>
-                    <option value="STEM & Innovation">STEM &amp; Innovation</option>
-                    <option value="Cultural & Arts">Cultural &amp; Arts</option>
+                    <option value="Events">Events</option>
+                    <option value="Projects">Projects</option>
                     <option value="Campus & Facilities">Campus &amp; Facilities</option>
-                    <option value="Academics & Merit">Academics &amp; Merit</option>
+                    <option value="Media & Press">Media &amp; Press</option>
+                    <option value="General">General</option>
+                    <option value="Community">Community</option>
                   </select>
                 </div>
 

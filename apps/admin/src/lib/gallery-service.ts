@@ -19,7 +19,7 @@ export interface GalleryAlbum {
   id: string;
   name: string;
   slug: string;
-  category: 'Ek Ped Maa Ke Naam' | 'Special Initiatives' | 'Sports & Athletics' | 'STEM & Innovation' | 'Cultural & Arts' | 'Campus & Facilities' | 'Academics & Merit' | string;
+  category: 'General' | 'Events' | 'Projects' | 'Campus & Facilities' | 'Media & Press' | 'Community' | string;
   subtitle?: string;
   description: string;
   coverImage: string;
@@ -38,66 +38,44 @@ export interface GalleryAlbum {
 // In-memory fallback and persistent store for albums
 let MOCK_ALBUMS: GalleryAlbum[] = [
   {
-    id: 'alb_ek_ped_maa_ke_naam',
-    name: 'Ek Ped Maa Ke Naam',
-    slug: 'ek-ped-maa-ke-naam',
-    category: 'Ek Ped Maa Ke Naam',
-    subtitle: 'Planting Trees, Honoring Mothers & Fostering Green Stewardship',
+    id: 'alb_annual_conference',
+    name: 'Annual Digital Conference',
+    slug: 'annual-digital-conference',
+    category: 'Events',
+    subtitle: 'Showcasing innovations in digital media and software architecture',
     description:
-      'Prince Public School students, respected teachers, and administrative leaders assembled on stage in front of the Saraswati auditorium for the nationwide "Ek Ped Maa Ke Naam" campaign. A cherished initiative celebrating maternal love while creating lasting environmental awareness.',
-    coverImage: '/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-1.webp',
+      'Keynotes, workshop sessions, and collaborative breakout meetings from our annual industry summit. Exploring next-generation headless architectures and omnichannel content delivery.',
+    coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
     eventDate: '2026-09-15',
     isFeatured: true,
     status: 'PUBLISHED',
-    photoCount: 4,
-    r2Bucket: 'pps-media-production',
-    r2Prefix: 'gallery/ek-ped-maa-ke-naam/',
+    photoCount: 2,
+    r2Bucket: 'cms-media-production',
+    r2Prefix: 'gallery/annual-conference/',
     syncStatus: 'local',
     createdAt: '2026-09-15T09:00:00Z',
     updatedAt: '2026-10-03T02:00:00Z',
     photos: [
       {
-        id: 'photo_epmkn_1',
-        title: 'Leadership, Teachers & Young Scholars Assemble on Stage',
-        caption: 'Director Gaurav Sharma, Principal Shailendra Upadhyay, senior faculty, and students gathered in school uniform before the Saraswati mural for "Ek Ped Maa Ke Naam".',
-        imageUrl: '/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-1.webp',
-        altText: 'Prince Public School faculty and students on stage for Ek Ped Maa Ke Naam',
+        id: 'photo_conf_1',
+        title: 'Keynote Presentation',
+        caption: 'Opening keynote discussing headless architecture and content velocity.',
+        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
+        altText: 'Keynote speaker on stage during conference',
         order: 1,
         isCover: true,
-        r2Key: 'gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-1.webp',
+        r2Key: 'gallery/annual-conference/conf-1.webp',
         syncStatus: 'local',
         dateAdded: '2026-09-15',
       },
       {
-        id: 'photo_epmkn_2',
-        title: 'Primary & Pre-School Participants with School Mentors',
-        caption: 'Young learners from foundational classes proudly taking part in the environmental reverence drive alongside their class mentors.',
-        imageUrl: '/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-2.webp',
-        altText: 'Students and teachers pledging for green living',
+        id: 'photo_conf_2',
+        title: 'Collaborative Workshop',
+        caption: 'Engineers and designers collaborating during hands-on design system lab.',
+        imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=1200&auto=format&fit=crop&q=80',
+        altText: 'Participants engaged in interactive workshop',
         order: 2,
-        r2Key: 'gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-2.webp',
-        syncStatus: 'local',
-        dateAdded: '2026-09-15',
-      },
-      {
-        id: 'photo_epmkn_3',
-        title: 'Commitment to Nature and Motherly Dedication',
-        caption: 'Secondary faculty members and student leaders commending the tree plantation saplings dedicated to mothers across India.',
-        imageUrl: '/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-3.webp',
-        altText: 'Secondary wing faculty and students during commemorative tree drive',
-        order: 3,
-        r2Key: 'gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-3.webp',
-        syncStatus: 'local',
-        dateAdded: '2026-09-15',
-      },
-      {
-        id: 'photo_epmkn_4',
-        title: 'School Community United for Environmental Responsibility',
-        caption: 'A complete panoramic gathering celebrating green campus life and value-based education at Prince Public School, Mehrauli.',
-        imageUrl: '/images/gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-4.webp',
-        altText: 'Complete group photo of Prince Public School community for Ek Ped Maa Ke Naam',
-        order: 4,
-        r2Key: 'gallery/ek-ped-maa-ke-naam/ek-ped-maa-ke-naam-4.webp',
+        r2Key: 'gallery/annual-conference/conf-2.webp',
         syncStatus: 'local',
         dateAdded: '2026-09-15',
       },
@@ -144,16 +122,16 @@ export const galleryService = {
       id: `alb_${Date.now()}`,
       name: input.name,
       slug,
-      category: input.category || 'Special Initiatives',
+      category: input.category || 'General',
       subtitle: input.subtitle || '',
       description: input.description || '',
-      coverImage: input.coverImage || photos[0]?.imageUrl || '/images/pps-building-facade.webp',
+      coverImage: input.coverImage || photos[0]?.imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
       eventDate: input.eventDate || new Date().toISOString().split('T')[0],
       isFeatured: false,
       status: 'PUBLISHED',
       photoCount: photos.length,
       photos,
-      r2Bucket: 'pps-media-production',
+      r2Bucket: 'cms-media-production',
       r2Prefix: `gallery/${slug}/`,
       syncStatus: 'local',
       createdAt: new Date().toISOString(),
@@ -194,7 +172,7 @@ export const galleryService = {
       album.syncStatus = 'synced';
       album.photos.forEach((photo) => {
         photo.syncStatus = 'synced';
-        photo.r2Url = `https://pps-media.r2.cloudflarestorage.com/${photo.r2Key}`;
+        photo.r2Url = `https://cms-media.r2.cloudflarestorage.com/${photo.r2Key}`;
         count++;
       });
     });
@@ -202,7 +180,7 @@ export const galleryService = {
     return {
       syncedCount: count,
       status: 'Cloudflare R2 Synchronized',
-      destination: 'pps-media-production.r2.cloudflarestorage.com',
+      destination: 'cms-media-production.r2.cloudflarestorage.com',
     };
   },
 };

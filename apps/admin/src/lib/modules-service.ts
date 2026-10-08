@@ -162,7 +162,7 @@ export const REGISTERED_MODULES: CmsModule[] = [
     category: 'media',
     categoryLabel: 'Media & Galleries',
     icon: 'Images',
-    author: 'Prince Public School IT',
+    author: 'Markup Core Team',
     enabled: true,
     isCore: false,
     routes: ['/admin/gallery', '/gallery'],

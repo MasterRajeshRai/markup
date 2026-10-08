@@ -1,13 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import { cmsClient } from '@/lib/cms-client';
-import { Newspaper, Calendar, Clock, ArrowRight } from 'lucide-react';
-
-export const metadata: Metadata = {
-  title: 'School News & Stories | Prince Public School',
-  description: 'Latest stories, student achievements, Olympiad laureates, and campus updates from Prince Public School.',
-};
 
 export const dynamic = 'force-dynamic';
 
@@ -21,57 +14,52 @@ export default async function ArticlesPage() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
-      <div className="space-y-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-          <Newspaper className="w-3.5 h-3.5 text-amber-700" />
-          Press & Campus Chronicle
+    <div className="max-w-5xl mx-auto px-6 py-16 space-y-8">
+      <div>
+        <span className="text-xs uppercase font-mono font-semibold tracking-wider text-blue-400">
+          CMS Delivery API
         </span>
-        <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight font-sans">
-          School News & Academic Articles
+        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mt-1">
+          Articles & Insights
         </h1>
-        <p className="text-base text-slate-600 max-w-2xl leading-relaxed">
-          Stay connected with pedagogical insights, competition victories, student initiatives, and faculty publications from Prince Public School.
+        <p className="text-sm text-slate-400 mt-2 max-w-xl">
+          Content dynamically retrieved from the Markup Headless CMS articles content model.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {articles.map((art) => (
           <Link
             key={art.id}
             href={`/articles/${art.slug}`}
-            className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between group shadow-sm"
+            className="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 hover:border-blue-500/50 hover:bg-slate-900 transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
                 {art.taxonomies?.map((t: any) => (
                   <span
                     key={t.id}
-                    className="px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200"
+                    className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"
                   >
                     {t.name}
                   </span>
                 ))}
-                <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
-                  {art.data?.read_time || 4} min
+                <span className="text-[11px] text-slate-500 font-mono">
+                  {art.data?.read_time || 5} min read
                 </span>
               </div>
 
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+              <h2 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
                 {art.title}
               </h2>
-              <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+              <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">
                 {art.data?.summary || art.seo?.description || ''}
               </p>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-500 mt-4">
-              <span className="font-medium text-slate-700">{art.data?.byline || 'PPS Editorial Cell'}</span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                {new Date(art.publishedAt || art.createdAt || Date.now()).toLocaleDateString()}
-              </span>
+            <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500 mt-4">
+              <span>{art.data?.byline || 'Staff Writer'}</span>
+              <span>{new Date(art.publishedAt || art.createdAt).toLocaleDateString()}</span>
             </div>
           </Link>
         ))}
