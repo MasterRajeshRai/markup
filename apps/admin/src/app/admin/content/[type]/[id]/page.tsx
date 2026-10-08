@@ -901,17 +901,17 @@ export default function EntryEditorPage() {
 
         {/* ── Right Column: Collapsible Inspector Sidebar ─────────────────── */}
         {isSidebarOpen && (
-          <div className="fixed top-16 right-0 bottom-0 z-30 sm:static sm:top-auto sm:bottom-auto sm:z-auto w-full sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[380px] shrink-0 flex flex-col border-l bg-card h-full overflow-hidden shadow-2xl sm:shadow-lg animate-in slide-in-from-right-4 duration-200">
+          <div className="fixed top-16 right-0 bottom-0 z-30 sm:static sm:top-auto sm:bottom-auto sm:z-auto w-full sm:w-[310px] md:w-[330px] lg:w-[350px] xl:w-[360px] shrink-0 flex flex-col border-l bg-card h-full overflow-hidden shadow-2xl sm:shadow-lg animate-in slide-in-from-right-4 duration-200">
             {/* Sidebar Top Switcher: Details vs Rank Markup */}
-            <div className="flex items-center border-b bg-muted/30 px-3 py-1.5 shrink-0 gap-1">
+            <div className="flex items-center border-b bg-muted/30 px-2.5 py-1.5 shrink-0 gap-1">
               <button
                 type="button"
                 onClick={() => setActiveSidebarTab('document')}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                  'flex-1 flex items-center justify-center gap-1.5 py-1 text-[11px] font-medium rounded-md transition-all cursor-pointer',
                   activeSidebarTab === 'document'
-                    ? 'bg-card text-foreground shadow-xs border'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-card text-foreground shadow-xs border font-medium'
+                    : 'text-muted-foreground hover:text-foreground font-normal'
                 )}
               >
                 <FileText className="h-3.5 w-3.5 text-blue-500" />
@@ -922,16 +922,16 @@ export default function EntryEditorPage() {
                 type="button"
                 onClick={() => setActiveSidebarTab('seo')}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                  'flex-1 flex items-center justify-center gap-1.5 py-1 text-[11px] font-medium rounded-md transition-all cursor-pointer',
                   activeSidebarTab === 'seo'
-                    ? 'bg-card text-foreground shadow-xs border'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-card text-foreground shadow-xs border font-medium'
+                    : 'text-muted-foreground hover:text-foreground font-normal'
                 )}
               >
                 <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                 <span>Rank Markup</span>
                 <span className={cn(
-                  'ml-1 text-[10px] font-bold px-1.5 py-0.2 rounded-full',
+                  'ml-1 text-[9.5px] font-medium px-1.5 py-0.5 rounded-full',
                   liveSeoScore >= 80 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                 )}>
                   {liveSeoScore}
@@ -941,10 +941,10 @@ export default function EntryEditorPage() {
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
-                className="h-7 w-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 cursor-pointer"
+                className="h-6.5 w-6.5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 cursor-pointer"
                 title="Collapse Sidebar"
               >
-                <PanelRightClose className="h-4 w-4" />
+                <PanelRightClose className="h-3.5 w-3.5" />
               </button>
             </div>
 

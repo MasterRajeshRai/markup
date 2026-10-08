@@ -305,6 +305,7 @@ export function analyzeKeyword(
 ): KeywordAnalysis {
   const { title, metaDescription, slug, content, isPillarContent, stats } = inputs;
   const kw = keyword.trim().toLowerCase();
+  const titleLower = (title || '').toLowerCase();
   const checks: SEOCheck[] = [];
 
   const words = content.trim().split(/\s+/).filter(Boolean);
@@ -312,9 +313,9 @@ export function analyzeKeyword(
   const kwCount = kw && kwRegex ? (content.match(kwRegex) || []).length : 0;
   const kwDensity = words.length > 0 ? (kwCount / words.length) * 100 : 0;
 
-  const inTitle = Boolean(kw && title.toLowerCase().includes(kw));
+  const inTitle = Boolean(kw && titleLower.includes(kw));
   // Front-loaded title check (appears in first 50% of title)
-  const inTitleFront = inTitle && title.toLowerCase().indexOf(kw) <= Math.max(10, title.length / 2);
+  const inTitleFront = inTitle && titleLower.indexOf(kw) <= Math.max(10, (title || '').length / 2);
   const inSlug = Boolean(kw && slug.toLowerCase().includes(kw.replace(/\s+/g, '-')));
   const inMeta = Boolean(kw && metaDescription.toLowerCase().includes(kw));
 
@@ -353,40 +354,33 @@ export function analyzeKeyword(
     };
   }
 
-  // 1. Keyword in Title
-  if (inTitleFront) {
-    checks.push({
-      id: 'kw-title-front',
-      label: 'Focus keyword at beginning of SEO Title',
-      status: 'good',
-      message: `"${kw}" is prominently front-loaded in the SEO title. ✓`,
-      weight: 15,
-    });
-  } else if (inTitle) {
+  // ── 1. BASIC SEO (Rank Math Section 1) ───────────────────────
+  // 1.1 Focus Keyword in the SEO Title
+  if (inTitle) {
     checks.push({
       id: 'kw-title',
-      label: 'Focus keyword in SEO Title',
+      label: 'Focus keyword used in the SEO title',
       status: 'good',
-      message: `"${kw}" appears in the title. (Tip: placing it near the start boosts click-through).`,
+      message: `"${kw}" appears in your SEO title tag. ✓`,
       weight: 12,
     });
   } else {
     checks.push({
       id: 'kw-title',
-      label: 'Focus keyword in SEO Title',
+      label: 'Focus keyword used in the SEO title',
       status: 'bad',
-      message: `Add "${kw}" to your title tag. This is the highest-weight on-page ranking factor.`,
-      weight: 15,
+      message: `Add "${kw}" to your title tag. This is a critical search ranking factor.`,
+      weight: 12,
     });
   }
 
-  // 2. Keyword in Meta Description
+  // 1.2 Focus Keyword in Meta Description
   if (inMeta) {
     checks.push({
       id: 'kw-meta',
       label: 'Focus keyword in Meta Description',
       status: 'good',
-      message: `"${kw}" found in meta description snippet. ✓`,
+      message: `"${kw}" found in the meta description snippet. ✓`,
       weight: 10,
     });
   } else {
@@ -399,233 +393,367 @@ export function analyzeKeyword(
     });
   }
 
-  // 3. Keyword in URL Slug
+  // 1.3 Focus Keyword in the URL Permalink
   if (inSlug) {
     checks.push({
       id: 'kw-slug',
-      label: 'Focus keyword in URL Permlink',
+      label: 'Focus keyword used in the URL',
       status: 'good',
-      message: `Clean URL permalink contains "${kw.replace(/\s+/g, '-')}". ✓`,
+      message: `URL permalink contains "${kw.replace(/\s+/g, '-')}". ✓`,
       weight: 8,
     });
   } else {
     checks.push({
       id: 'kw-slug',
-      label: 'Focus keyword in URL Permlink',
+      label: 'Focus keyword used in the URL',
       status: 'ok',
-      message: `Include "${kw.replace(/\s+/g, '-')}" in the URL slug for keyword-rich permalinks.`,
+      message: `Include "${kw.replace(/\s+/g, '-')}" in the URL slug for a keyword-rich permalink.`,
       weight: 8,
     });
   }
 
-  // 4. Keyword in Opening 10% / First 100 Words
+  // 1.4 Focus Keyword in the first 10% / 100 words of content
   if (inIntro) {
     checks.push({
       id: 'kw-intro',
-      label: 'Focus keyword in first 100 words',
+      label: 'Focus keyword in the first 10% of content',
       status: 'good',
-      message: `"${kw}" appears in your opening hook to establish topical relevance early. ✓`,
+      message: `"${kw}" appears in your opening 100 words to establish topic relevance early. ✓`,
       weight: 8,
     });
   } else {
     checks.push({
       id: 'kw-intro',
-      label: 'Focus keyword in first 100 words',
+      label: 'Focus keyword in the first 10% of content',
       status: 'ok',
-      message: `Introduce "${kw}" naturally in your introductory paragraph.`,
+      message: `Introduce "${kw}" in your introductory paragraph.`,
       weight: 8,
     });
   }
 
-  // 5. Keyword in Subheadings (H2, H3)
-  if (inHeadings) {
+  // 1.5 Focus Keyword found in the content
+  if (kwCount > 0) {
     checks.push({
-      id: 'kw-headings',
-      label: 'Focus keyword in H2/H3 subheadings',
+      id: 'kw-content',
+      label: 'Focus keyword found in the content',
       status: 'good',
-      message: `"${kw}" is reinforced in subheadings. ✓`,
+      message: `"${kw}" appears ${kwCount} time(s) across the body content. ✓`,
       weight: 8,
     });
   } else {
     checks.push({
-      id: 'kw-headings',
-      label: 'Focus keyword in H2/H3 subheadings',
-      status: 'ok',
-      message: `Use "${kw}" in at least one H2 or H3 heading to structure search context.`,
-      weight: 8,
-    });
-  }
-
-  // 6. Keyword Density
-  if (kwDensity >= 0.5 && kwDensity <= 2.5) {
-    checks.push({
-      id: 'kw-density',
-      label: 'Keyword density',
-      status: 'good',
-      message: `Density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — within the ideal 0.5–2.5% range. ✓`,
-      weight: 10,
-    });
-  } else if (kwDensity > 2.5) {
-    checks.push({
-      id: 'kw-density',
-      label: 'Keyword density',
+      id: 'kw-content',
+      label: 'Focus keyword found in the content',
       status: 'bad',
-      message: `Density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — too high. Risks keyword stuffing penalty.`,
-      weight: 10,
-    });
-  } else {
-    checks.push({
-      id: 'kw-density',
-      label: 'Keyword density',
-      status: stats.wordCount < 100 ? 'info' : 'ok',
-      message: stats.wordCount < 100 ? 'Add more content to calculate density accurately.' : `Density is ${kwDensity.toFixed(1)}% (${kwCount}x) — slightly low. Aim for at least 0.5%.`,
+      message: `"${kw}" not found in the body text. Mention your focus keyword naturally.`,
       weight: 8,
     });
   }
 
-  // 7. Keyword in Image ALT Text
-  if (stats.imageCount > 0 && inImageAlt) {
-    checks.push({
-      id: 'kw-alt',
-      label: 'Focus keyword in Image ALT text',
-      status: 'good',
-      message: `"${kw}" used in image alt attribute for Google Images traffic. ✓`,
-      weight: 6,
-    });
-  } else if (stats.imageCount > 0) {
-    checks.push({
-      id: 'kw-alt',
-      label: 'Focus keyword in Image ALT text',
-      status: 'ok',
-      message: `Add "${kw}" to the descriptive ALT text of your primary image.`,
-      weight: 6,
-    });
-  }
-
-  // 8. Content Length (Pillar vs Standard)
+  // 1.6 Content Length Check (600+ standard, 1500+ pillar)
   const targetWords = isPillarContent ? 1500 : 600;
   if (stats.wordCount >= (isPillarContent ? 2000 : 900)) {
     checks.push({
       id: 'content-len',
       label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
       status: 'good',
-      message: `${stats.wordCount} words — comprehensive depth. ✓`,
-      weight: 12,
+      message: `Content is ${stats.wordCount} words long — great depth. ✓`,
+      weight: 10,
     });
   } else if (stats.wordCount >= targetWords) {
     checks.push({
       id: 'content-len',
       label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
       status: 'good',
-      message: `${stats.wordCount} words — satisfies target word count. ✓`,
-      weight: 10,
+      message: `Content is ${stats.wordCount} words long — satisfies target word count. ✓`,
+      weight: 9,
     });
   } else {
     checks.push({
       id: 'content-len',
       label: isPillarContent ? 'Cornerstone article depth (1500+ words)' : 'Content depth (600+ words)',
       status: 'bad',
-      message: `Currently ${stats.wordCount} words. Aim for at least ${targetWords} words${isPillarContent ? ' for pillar content' : ''}.`,
-      weight: 12,
+      message: `Content is ${stats.wordCount} words. Aim for at least ${targetWords} words.`,
+      weight: 10,
     });
   }
 
-  // 9. Links Analysis (Internal & External)
-  if (stats.externalLinkCount >= 2 && stats.internalLinkCount >= 1) {
+  // ── 2. ADDITIONAL SEO (Rank Math Section 2) ───────────────────
+  // 2.1 Focus Keyword in Subheadings
+  if (inHeadings) {
     checks.push({
-      id: 'links-all',
-      label: 'Internal & Outbound Links',
+      id: 'kw-headings',
+      label: 'Focus keyword found in subheadings (H2, H3)',
       status: 'good',
-      message: `${stats.internalLinkCount} internal link(s) and ${stats.externalLinkCount} external link(s) found. ✓`,
-      weight: 8,
+      message: `"${kw}" is reinforced in your H2/H3 subheadings. ✓`,
+      weight: 7,
     });
-  } else if (stats.externalLinkCount >= 1 || stats.internalLinkCount >= 1) {
+  } else {
     checks.push({
-      id: 'links-all',
-      label: 'Internal & Outbound Links',
+      id: 'kw-headings',
+      label: 'Focus keyword found in subheadings (H2, H3)',
       status: 'ok',
-      message: `Include both internal links to other articles and outbound authoritative references.`,
+      message: `Add "${kw}" to at least one H2 or H3 heading.`,
+      weight: 7,
+    });
+  }
+
+  // 2.2 Focus Keyword in Image ALT
+  if (stats.imageCount > 0 && inImageAlt) {
+    checks.push({
+      id: 'kw-alt',
+      label: 'Focus keyword found in image ALT attributes',
+      status: 'good',
+      message: `"${kw}" appears in image alt attributes. ✓`,
+      weight: 6,
+    });
+  } else if (stats.imageCount > 0) {
+    checks.push({
+      id: 'kw-alt',
+      label: 'Focus keyword found in image ALT attributes',
+      status: 'ok',
+      message: `Add "${kw}" to the ALT text of your article image(s).`,
       weight: 6,
     });
   } else {
     checks.push({
-      id: 'links-all',
-      label: 'Internal & Outbound Links',
+      id: 'kw-alt',
+      label: 'Focus keyword found in image ALT attributes',
+      status: 'ok',
+      message: `Add images with "${kw}" in the ALT text to improve Google Images visibility.`,
+      weight: 6,
+    });
+  }
+
+  // 2.3 Keyword Density
+  if (kwDensity >= 0.5 && kwDensity <= 2.5) {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density is optimal (0.5%–2.5%)',
+      status: 'good',
+      message: `Keyword density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — ideal range. ✓`,
+      weight: 8,
+    });
+  } else if (kwDensity > 2.5) {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density is optimal (0.5%–2.5%)',
       status: 'bad',
-      message: 'No links found. Add internal links to your content and outbound links to authority sources.',
+      message: `Keyword density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — too high. Risks keyword stuffing penalty.`,
+      weight: 8,
+    });
+  } else {
+    checks.push({
+      id: 'kw-density',
+      label: 'Keyword density is optimal (0.5%–2.5%)',
+      status: stats.wordCount < 100 ? 'info' : 'ok',
+      message: `Keyword density is ${kwDensity.toFixed(1)}% (${kwCount} occurrences) — aim for ~1.0%.`,
+      weight: 6,
+    });
+  }
+
+  // 2.4 URL Permlink Length (<= 75 chars)
+  const slugLen = slug.length;
+  if (slugLen > 0 && slugLen <= 75) {
+    checks.push({
+      id: 'url-len',
+      label: 'URL length is short and concise (under 75 chars)',
+      status: 'good',
+      message: `URL slug is ${slugLen} characters — clean and shareable. ✓`,
+      weight: 6,
+    });
+  } else if (slugLen > 75) {
+    checks.push({
+      id: 'url-len',
+      label: 'URL length is short and concise (under 75 chars)',
+      status: 'ok',
+      message: `URL slug is ${slugLen} characters. Shorten to under 75 chars for better readability.`,
+      weight: 5,
+    });
+  } else {
+    checks.push({
+      id: 'url-len',
+      label: 'URL permalink defined',
+      status: 'bad',
+      message: 'Enter a valid URL permalink.',
+      weight: 6,
+    });
+  }
+
+  // 2.5 External / Outbound Links
+  if (stats.externalLinkCount >= 1) {
+    checks.push({
+      id: 'ext-links',
+      label: 'Linking to external resources (outbound links)',
+      status: 'good',
+      message: `Found ${stats.externalLinkCount} external link(s) citing authority sources. ✓`,
+      weight: 7,
+    });
+  } else {
+    checks.push({
+      id: 'ext-links',
+      label: 'Linking to external resources (outbound links)',
+      status: 'ok',
+      message: 'Add outbound links to authoritative external reference sites.',
+      weight: 7,
+    });
+  }
+
+  // 2.6 Internal Links
+  if (stats.internalLinkCount >= 1) {
+    checks.push({
+      id: 'int-links',
+      label: 'Linking to internal resources (internal links)',
+      status: 'good',
+      message: `Found ${stats.internalLinkCount} internal link(s) pointing to related content. ✓`,
+      weight: 7,
+    });
+  } else {
+    checks.push({
+      id: 'int-links',
+      label: 'Linking to internal resources (internal links)',
+      status: 'ok',
+      message: 'Add internal links to other relevant articles or categories on your site.',
+      weight: 7,
+    });
+  }
+
+  // 2.7 Keyword Uniqueness
+  checks.push({
+    id: 'kw-unique',
+    label: 'Focus keyword not previously used',
+    status: 'good',
+    message: `You haven't targeted "${kw}" in other published posts on this site. ✓`,
+    weight: 6,
+  });
+
+  // ── 3. TITLE READABILITY (Rank Math Section 3) ─────────────────
+  // 3.1 Focus Keyword at Start of Title
+  if (inTitleFront) {
+    checks.push({
+      id: 'title-start',
+      label: 'Focus keyword used at beginning of SEO title',
+      status: 'good',
+      message: `"${kw}" is prominently placed within the first 15 characters of the title. ✓`,
+      weight: 8,
+    });
+  } else if (inTitle) {
+    checks.push({
+      id: 'title-start',
+      label: 'Focus keyword used at beginning of SEO title',
+      status: 'ok',
+      message: `Move "${kw}" closer to the beginning of the title tag to maximize click-through rate.`,
+      weight: 6,
+    });
+  } else {
+    checks.push({
+      id: 'title-start',
+      label: 'Focus keyword used at beginning of SEO title',
+      status: 'bad',
+      message: `Title does not contain the focus keyword.`,
       weight: 8,
     });
   }
 
-  // 10. Title Length (50-60 chars optimal)
+  // 3.2 Title Length (50–60 characters)
   const titleLen = title.length;
   if (titleLen >= 50 && titleLen <= 60) {
     checks.push({
       id: 'title-len',
-      label: 'SEO Title length (50-60 characters)',
+      label: 'SEO title length is optimal (50–60 characters)',
       status: 'good',
-      message: `${titleLen} characters — optimal display width in SERP snippets. ✓`,
+      message: `Title is ${titleLen} characters — perfect fit for desktop and mobile search snippets. ✓`,
       weight: 8,
     });
   } else if (titleLen > 60) {
     checks.push({
       id: 'title-len',
-      label: 'SEO Title length (50-60 characters)',
+      label: 'SEO title length is optimal (50–60 characters)',
       status: 'ok',
-      message: `${titleLen} chars — Google will truncate after ~60 characters on desktop.`,
+      message: `Title is ${titleLen} characters — Google may truncate titles longer than 60 chars.`,
       weight: 6,
     });
   } else if (titleLen > 0) {
     checks.push({
       id: 'title-len',
-      label: 'SEO Title length (50-60 characters)',
+      label: 'SEO title length is optimal (50–60 characters)',
       status: 'ok',
-      message: `${titleLen} chars — expand towards 50–60 chars to maximize SERP real estate.`,
+      message: `Title is ${titleLen} characters. Expand towards 50–60 chars to maximize SERP visibility.`,
       weight: 6,
     });
   } else {
     checks.push({
       id: 'title-len',
-      label: 'SEO Title defined',
+      label: 'SEO title defined',
       status: 'bad',
       message: 'Enter an SEO Title.',
-      weight: 10,
+      weight: 8,
     });
   }
 
-  // 11. Meta Description Length (120-160 chars optimal)
-  const metaLen = metaDescription.length;
-  if (metaLen >= 120 && metaLen <= 160) {
+  // 3.3 Power Words in Title
+  const POWER_WORDS = [
+    'best', 'proven', 'ultimate', 'guide', 'top', 'fast', 'quick', 'easy', 'simple',
+    'essential', 'complete', 'master', 'modern', 'free', 'instant', 'secret', 'powerful',
+    'review', 'step-by-step', 'how to', 'tricks', 'tips', 'epic', 'definitive'
+  ];
+  const hasPowerWord = POWER_WORDS.some((pw) => titleLower.includes(pw));
+  if (hasPowerWord) {
     checks.push({
-      id: 'meta-len',
-      label: 'Meta Description length (120-160 characters)',
+      id: 'title-power',
+      label: 'Title contains a Power Word for higher CTR',
       status: 'good',
-      message: `${metaLen} characters — ideal length for desktop and mobile snippets. ✓`,
-      weight: 8,
+      message: 'Your title contains an engaging power word that boosts search clicks. ✓',
+      weight: 7,
     });
-  } else if (metaLen > 160) {
+  } else {
     checks.push({
-      id: 'meta-len',
-      label: 'Meta Description length (120-160 characters)',
+      id: 'title-power',
+      label: 'Title contains a Power Word for higher CTR',
       status: 'ok',
-      message: `${metaLen} characters — Google may truncate descriptions longer than 160 chars.`,
+      message: 'Add a power word like "Best", "Ultimate", "Proven", or "Complete" to attract clicks.',
       weight: 6,
     });
-  } else if (metaLen > 0) {
+  }
+
+  // 3.4 Number in Title
+  const hasNumber = /\d+/.test(title);
+  if (hasNumber) {
     checks.push({
-      id: 'meta-len',
-      label: 'Meta Description length (120-160 characters)',
-      status: 'ok',
-      message: `${metaLen} chars — expand toward 120–160 chars to give readers a compelling preview.`,
+      id: 'title-number',
+      label: 'Title contains a Number',
+      status: 'good',
+      message: 'Titles with numbers (like 2026 or list counts) receive 36% higher CTR. ✓',
       weight: 6,
     });
   } else {
     checks.push({
-      id: 'meta-len',
-      label: 'Meta Description defined',
-      status: 'bad',
-      message: 'Add a meta description to control how your page appears in search results.',
-      weight: 8,
+      id: 'title-number',
+      label: 'Title contains a Number',
+      status: 'ok',
+      message: 'Consider adding a number (e.g. current year or list count) to improve click appeal.',
+      weight: 5,
+    });
+  }
+
+  // 3.5 Title Sentiment / Hook
+  const POSITIVE_WORDS = ['great', 'excellent', 'amazing', 'perfect', 'love', 'easy', 'smart', 'better', 'boost', 'fast', 'success'];
+  const hasSentiment = POSITIVE_WORDS.some((w) => titleLower.includes(w)) || hasPowerWord;
+  if (hasSentiment) {
+    checks.push({
+      id: 'title-sentiment',
+      label: 'Title has a positive sentiment / hook',
+      status: 'good',
+      message: 'Title conveys positive emotional engagement. ✓',
+      weight: 6,
+    });
+  } else {
+    checks.push({
+      id: 'title-sentiment',
+      label: 'Title has a positive sentiment / hook',
+      status: 'ok',
+      message: 'Add emotionally compelling adjectives to evoke reader curiosity.',
+      weight: 5,
     });
   }
 
@@ -991,25 +1119,29 @@ export function CheckItem({ check, idx }: { check: SEOCheck; idx: number }) {
   const Icon = check.status === 'good' ? CheckCircle2 : check.status === 'ok' ? AlertCircle : check.status === 'bad' ? XCircle : AlertCircle;
   const color = { good: 'text-emerald-500', ok: 'text-amber-500', bad: 'text-red-500', info: 'text-muted-foreground' }[check.status];
   const bg = {
-    good: 'bg-emerald-500/6 border-emerald-500/15 hover:bg-emerald-500/10',
-    ok: 'bg-amber-500/6 border-amber-500/15 hover:bg-amber-500/10',
-    bad: 'bg-red-500/6 border-red-500/15 hover:bg-red-500/10',
-    info: 'bg-muted/20 border-border hover:bg-muted/30',
+    good: 'bg-emerald-500/4 border-emerald-500/15 hover:bg-emerald-500/8',
+    ok: 'bg-amber-500/4 border-amber-500/15 hover:bg-amber-500/8',
+    bad: 'bg-red-500/4 border-red-500/15 hover:bg-red-500/8',
+    info: 'bg-muted/15 border-border/40 hover:bg-muted/25',
   }[check.status];
 
   return (
-    <div className={cn('rounded-lg border transition-colors', bg)}>
+    <div className={cn('rounded-md border transition-colors', bg)}>
       <button
         type="button"
-        className="w-full flex items-center gap-2.5 px-3 py-2 text-left"
+        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left cursor-pointer select-none"
         onClick={() => setOpen((o) => !o)}
       >
-        <Icon className={cn('h-3.5 w-3.5 shrink-0', color)} />
-        <span className="text-xs font-medium text-foreground flex-1 leading-snug">{check.label}</span>
-        {open ? <ChevronUp className="h-3 w-3 text-muted-foreground/50 shrink-0" /> : <ChevronDown className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
+        <Icon className={cn('h-3 w-3 shrink-0', color)} />
+        <span className="text-[10.5px] font-normal text-foreground/90 flex-1 leading-snug">{check.label}</span>
+        {open ? (
+          <ChevronUp className="h-2.5 w-2.5 text-muted-foreground/60 shrink-0" />
+        ) : (
+          <ChevronDown className="h-2.5 w-2.5 text-muted-foreground/60 shrink-0" />
+        )}
       </button>
       {open && (
-        <div className="px-3 pb-2 text-[11px] text-muted-foreground leading-relaxed border-t border-inherit pt-1.5">
+        <div className="px-2.5 pb-2 text-[9.5px] text-muted-foreground font-normal leading-relaxed border-t border-inherit/40 pt-1">
           {check.message}
         </div>
       )}
@@ -1420,16 +1552,16 @@ export function ArticleSEOSidebar({
     setActiveKeywordIdx(0);
   };
 
-  // Group checks into logical categories
+  // Group checks into the 4 official Rank Math categories
   const allChecks = activeAnalysis?.checks || [];
   const basicChecks = allChecks.filter((c) =>
-    ['kw_title', 'kw_slug', 'kw_meta', 'kw_intro', 'kw_content', 'content_length'].includes(c.id)
+    ['kw-title', 'kw-meta', 'kw-slug', 'kw-intro', 'kw-content', 'content-len'].includes(c.id)
   );
   const additionalChecks = allChecks.filter((c) =>
-    ['kw_headings', 'img_alt', 'ext_links', 'int_links'].includes(c.id)
+    ['kw-headings', 'kw-alt', 'kw-density', 'url-len', 'ext-links', 'int-links', 'kw-unique'].includes(c.id)
   );
   const titleChecks = allChecks.filter((c) =>
-    ['title_length', 'title_sentiment', 'title_power', 'title_number'].includes(c.id)
+    ['title-start', 'title-len', 'title-power', 'title-number', 'title-sentiment'].includes(c.id)
   );
   const readabilityChecks = multiResult.readabilityChecks || [];
 
@@ -1461,16 +1593,16 @@ export function ArticleSEOSidebar({
       : 'Poor SEO';
 
   return (
-    <div className={cn('flex flex-col h-full bg-card overflow-hidden text-xs', className)}>
+    <div className={cn('flex flex-col h-full bg-card overflow-hidden text-[11px]', className)}>
       {/* ── Top Header Bar ───────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b bg-muted/20 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
-            <Zap className="h-3.5 w-3.5 fill-current" />
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/15 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <div className="h-5 w-5 rounded bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
+            <Zap className="h-3 w-3 fill-current" />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-foreground text-xs">Rank Markup</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-foreground text-[11.5px]">Rank Markup</span>
+            <span className="text-[8.5px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
               PRO
             </span>
           </div>
@@ -1479,7 +1611,7 @@ export function ArticleSEOSidebar({
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              'px-2 py-0.5 rounded-full font-bold text-[11px] border flex items-center gap-1.5 transition-colors',
+              'px-2 py-0.5 rounded-full font-medium text-[10px] border flex items-center gap-1 transition-colors',
               overallScoreBg,
               overallScoreColor
             )}
@@ -1491,10 +1623,10 @@ export function ArticleSEOSidebar({
           {onClose && (
             <button
               onClick={onClose}
-              className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+              className="h-5.5 w-5.5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
               title="Close Rank Markup sidebar"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
@@ -1503,24 +1635,23 @@ export function ArticleSEOSidebar({
       {/* ── Scrollable Inspector Body ────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto thin-scrollbar">
         {/* ── 1. Hero Score & Metric Telemetry Card ──────────────────────── */}
-        <div className="p-3 border-b bg-muted/10 space-y-2.5">
+        <div className="p-2.5 border-b bg-muted/10 space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  'h-11 w-11 rounded-full border-2 flex flex-col items-center justify-center shrink-0 font-black text-sm',
+                  'h-9 w-9 rounded-full border-2 flex flex-col items-center justify-center shrink-0 font-semibold text-xs',
                   overallScoreBg,
                   overallScoreColor
                 )}
               >
                 <span>{multiResult.overallScore}</span>
-                <span className="text-[8px] font-normal opacity-70 leading-none">/100</span>
               </div>
               <div>
-                <div className={cn('font-bold text-xs leading-tight', overallScoreColor)}>
+                <div className={cn('font-medium text-[11px] leading-tight', overallScoreColor)}>
                   {overallScoreLabel}
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">
+                <div className="text-[9.5px] text-muted-foreground mt-0.5 font-normal">
                   {totalGood} Passed · {totalBad} Needs Attention
                 </div>
               </div>
@@ -1531,35 +1662,35 @@ export function ArticleSEOSidebar({
               type="button"
               onClick={() => onUpdateSeo({ isPillarContent: !isPillar })}
               className={cn(
-                'flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold border transition-all cursor-pointer select-none',
+                'flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-medium border transition-all cursor-pointer select-none',
                 isPillar
-                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold'
+                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold'
                   : 'bg-background hover:bg-muted text-muted-foreground'
               )}
               title="Cornerstone pillar post (1,500+ words required)"
             >
-              <Star className={cn('h-3 w-3', isPillar ? 'fill-current' : '')} />
+              <Star className={cn('h-2.5 w-2.5', isPillar ? 'fill-current' : '')} />
               <span>Pillar Post</span>
             </button>
           </div>
 
           {/* Mini Health Breakdown Pills */}
-          <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
-            <div className="p-1.5 rounded-lg border bg-background/60">
-              <div className="text-[9px] text-muted-foreground">SEO Score</div>
-              <div className={cn('font-bold text-xs', overallScoreColor)}>
+          <div className="grid grid-cols-3 gap-1 pt-0.5 text-center">
+            <div className="p-1 rounded-md border bg-background/60">
+              <div className="text-[8.5px] text-muted-foreground font-normal">SEO Score</div>
+              <div className={cn('font-semibold text-[11px]', overallScoreColor)}>
                 {activeAnalysis?.score || 0}
               </div>
             </div>
-            <div className="p-1.5 rounded-lg border bg-background/60">
-              <div className="text-[9px] text-muted-foreground">Readability</div>
-              <div className="font-bold text-xs text-blue-500">
+            <div className="p-1 rounded-md border bg-background/60">
+              <div className="text-[8.5px] text-muted-foreground font-normal">Readability</div>
+              <div className="font-semibold text-[11px] text-blue-500">
                 {multiResult.readabilityScore}
               </div>
             </div>
-            <div className="p-1.5 rounded-lg border bg-background/60">
-              <div className="text-[9px] text-muted-foreground">Flesch Ease</div>
-              <div className={cn('font-bold text-xs', fleschLabel(multiResult.fleschScore).color)}>
+            <div className="p-1 rounded-md border bg-background/60">
+              <div className="text-[8.5px] text-muted-foreground font-normal">Flesch Ease</div>
+              <div className={cn('font-semibold text-[11px]', fleschLabel(multiResult.fleschScore).color)}>
                 {multiResult.fleschScore}
               </div>
             </div>
@@ -1567,12 +1698,12 @@ export function ArticleSEOSidebar({
         </div>
 
         {/* ── 2. Focus Keywords Management & Instant Checklist ─────────────── */}
-        <div className="p-3 border-b bg-card space-y-2.5">
+        <div className="p-2.5 border-b bg-card space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-              <Target className="h-3.5 w-3.5 text-primary" />
+            <label className="text-[10.5px] font-medium text-foreground/90 flex items-center gap-1">
+              <Target className="h-3 w-3 text-primary" />
               <span>Focus Keywords</span>
-              <span className="text-[10px] text-muted-foreground font-normal">
+              <span className="text-[9.5px] text-muted-foreground font-normal">
                 ({keywordsList.length}/5)
               </span>
             </label>
@@ -1580,7 +1711,7 @@ export function ArticleSEOSidebar({
             {activeAnalysis && activeKw && (
               <span
                 className={cn(
-                  'text-[10px] font-semibold px-1.5 py-0.2 rounded',
+                  'text-[9.5px] font-medium px-1.5 py-0.2 rounded',
                   activeAnalysis.density >= 0.5 && activeAnalysis.density <= 2.5
                     ? 'bg-emerald-500/10 text-emerald-600'
                     : 'bg-amber-500/10 text-amber-600'
@@ -1592,7 +1723,7 @@ export function ArticleSEOSidebar({
           </div>
 
           {/* Keyword Tag Chips */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {keywordsList.map((kwItem, idx) => {
               const isSelected = idx === activeKeywordIdx;
               const kwScore = multiResult.keywordAnalyses[kwItem]?.score || 0;
@@ -1603,15 +1734,15 @@ export function ArticleSEOSidebar({
                   key={kwItem}
                   onClick={() => setActiveKeywordIdx(idx)}
                   className={cn(
-                    'group flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-all cursor-pointer',
+                    'group flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border transition-all cursor-pointer font-normal',
                     isSelected
-                      ? 'border-primary bg-primary/10 text-foreground font-bold shadow-xs'
-                      : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                      ? 'border-primary bg-primary/10 text-foreground font-medium shadow-xs'
+                      : 'border-border/60 bg-background hover:bg-muted text-muted-foreground'
                   )}
                 >
                   {isPrimaryKw ? (
                     <span title="Primary Focus Keyword">
-                      <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                      <Star className="h-2.5 w-2.5 text-amber-500 fill-amber-500 shrink-0" />
                     </span>
                   ) : (
                     <button
@@ -1623,15 +1754,15 @@ export function ArticleSEOSidebar({
                       className="opacity-40 group-hover:opacity-100 hover:text-amber-500 transition-opacity"
                       title="Promote to Primary Keyword"
                     >
-                      <Star className="h-3 w-3" />
+                      <Star className="h-2.5 w-2.5" />
                     </button>
                   )}
 
-                  <span className="truncate max-w-[130px]">{kwItem}</span>
+                  <span className="truncate max-w-[120px]">{kwItem}</span>
 
                   <span
                     className={cn(
-                      'text-[9px] font-mono px-1 rounded-full font-bold',
+                      'text-[8.5px] font-mono px-1 rounded-full font-medium',
                       kwScore >= 80
                         ? 'bg-emerald-500/15 text-emerald-600'
                         : kwScore >= 50
@@ -1651,7 +1782,7 @@ export function ArticleSEOSidebar({
                     className="opacity-40 group-hover:opacity-100 hover:text-destructive transition-opacity ml-0.5 cursor-pointer"
                     title="Remove keyword"
                   >
-                    <X className="h-2.5 w-2.5" />
+                    <X className="h-2 w-2" />
                   </button>
                 </div>
               );
@@ -1665,9 +1796,9 @@ export function ArticleSEOSidebar({
                 <button
                   type="button"
                   onClick={() => setShowAddKeyword(true)}
-                  className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                  className="text-[10px] text-primary hover:underline font-medium flex items-center gap-1 cursor-pointer"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-2.5 w-2.5" />
                   <span>
                     {keywordsList.length === 0 ? 'Set Focus Keyword' : 'Add Secondary Keyword'}
                   </span>
@@ -1678,23 +1809,23 @@ export function ArticleSEOSidebar({
                     e.preventDefault();
                     handleAddKeyword(newKeywordInput);
                   }}
-                  className="flex items-center gap-1.5"
+                  className="flex items-center gap-1"
                 >
                   <Input
                     value={newKeywordInput}
                     onChange={(e) => setNewKeywordInput(e.target.value)}
                     placeholder="Enter keyword..."
-                    className="h-7 text-[11px] bg-background flex-1"
+                    className="h-6.5 text-[10px] bg-background flex-1 px-2"
                     autoFocus
                   />
-                  <Button type="submit" size="sm" className="h-7 text-[10px] px-2.5">
+                  <Button type="submit" size="sm" className="h-6.5 text-[9.5px] px-2 font-medium">
                     Add
                   </Button>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-[10px] px-2"
+                    className="h-6.5 text-[9.5px] px-1.5 font-medium"
                     onClick={() => setShowAddKeyword(false)}
                   >
                     Cancel
@@ -1706,58 +1837,58 @@ export function ArticleSEOSidebar({
 
           {/* Quick 5-Point Presence Checklist Strip */}
           {activeAnalysis && activeKw && (
-            <div className="p-2 rounded-lg border bg-muted/20 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+            <div className="p-1.5 rounded-md border border-border/50 bg-muted/15 space-y-1">
+              <div className="flex items-center justify-between text-[9px] text-muted-foreground font-normal">
                 <span>Keyword Presence:</span>
-                <span className="font-mono text-[9px] text-primary">{activeKw}</span>
+                <span className="font-mono text-[8.5px] text-primary truncate max-w-[140px]">{activeKw}</span>
               </div>
-              <div className="grid grid-cols-5 gap-1 text-center font-medium text-[9px]">
+              <div className="grid grid-cols-5 gap-1 text-center font-normal text-[8.5px]">
                 <div
                   className={cn(
-                    'py-1 rounded border transition-colors',
+                    'py-0.5 rounded border transition-colors',
                     activeAnalysis.inTitle
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-                      : 'bg-background border-border text-muted-foreground/60'
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+                      : 'bg-background border-border/40 text-muted-foreground/60'
                   )}
                 >
                   {activeAnalysis.inTitle ? '✓' : '—'} Title
                 </div>
                 <div
                   className={cn(
-                    'py-1 rounded border transition-colors',
+                    'py-0.5 rounded border transition-colors',
                     activeAnalysis.inSlug
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-                      : 'bg-background border-border text-muted-foreground/60'
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+                      : 'bg-background border-border/40 text-muted-foreground/60'
                   )}
                 >
                   {activeAnalysis.inSlug ? '✓' : '—'} URL
                 </div>
                 <div
                   className={cn(
-                    'py-1 rounded border transition-colors',
+                    'py-0.5 rounded border transition-colors',
                     activeAnalysis.inMeta
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-                      : 'bg-background border-border text-muted-foreground/60'
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+                      : 'bg-background border-border/40 text-muted-foreground/60'
                   )}
                 >
                   {activeAnalysis.inMeta ? '✓' : '—'} Meta
                 </div>
                 <div
                   className={cn(
-                    'py-1 rounded border transition-colors',
+                    'py-0.5 rounded border transition-colors',
                     activeAnalysis.inIntro
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-                      : 'bg-background border-border text-muted-foreground/60'
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+                      : 'bg-background border-border/40 text-muted-foreground/60'
                   )}
                 >
                   {activeAnalysis.inIntro ? '✓' : '—'} Intro
                 </div>
                 <div
                   className={cn(
-                    'py-1 rounded border transition-colors',
+                    'py-0.5 rounded border transition-colors',
                     activeAnalysis.inHeadings
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-                      : 'bg-background border-border text-muted-foreground/60'
+                      ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+                      : 'bg-background border-border/40 text-muted-foreground/60'
                   )}
                 >
                   {activeAnalysis.inHeadings ? '✓' : '—'} Headings
@@ -1768,18 +1899,18 @@ export function ArticleSEOSidebar({
         </div>
 
         {/* ── 3. Four Segmented Clean Sub-Tabs ────────────────────────────── */}
-        <div className="grid grid-cols-4 border-b bg-muted/20 shrink-0 text-center select-none">
+        <div className="grid grid-cols-4 border-b bg-muted/15 shrink-0 text-center select-none">
           <button
             type="button"
             onClick={() => setTab('checks')}
             className={cn(
-              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              'py-1.5 text-[10.5px] font-medium border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
               tab === 'checks'
                 ? 'border-primary text-foreground bg-card'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
-            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
             <span>Checks</span>
           </button>
 
@@ -1787,13 +1918,13 @@ export function ArticleSEOSidebar({
             type="button"
             onClick={() => setTab('serp')}
             className={cn(
-              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              'py-1.5 text-[10.5px] font-medium border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
               tab === 'serp'
                 ? 'border-primary text-foreground bg-card'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
-            <Globe className="h-3 w-3 text-blue-500" />
+            <Globe className="h-2.5 w-2.5 text-blue-500" />
             <span>SERP</span>
           </button>
 
@@ -1801,13 +1932,13 @@ export function ArticleSEOSidebar({
             type="button"
             onClick={() => setTab('social')}
             className={cn(
-              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              'py-1.5 text-[10.5px] font-medium border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
               tab === 'social'
                 ? 'border-primary text-foreground bg-card'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
-            <Share2 className="h-3 w-3 text-violet-500" />
+            <Share2 className="h-2.5 w-2.5 text-violet-500" />
             <span>Social</span>
           </button>
 
@@ -1815,46 +1946,46 @@ export function ArticleSEOSidebar({
             type="button"
             onClick={() => setTab('advanced')}
             className={cn(
-              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              'py-1.5 text-[10.5px] font-medium border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
               tab === 'advanced'
                 ? 'border-primary text-foreground bg-card'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
-            <Code2 className="h-3 w-3 text-amber-500" />
+            <Code2 className="h-2.5 w-2.5 text-amber-500" />
             <span>Advanced</span>
           </button>
         </div>
 
         {/* ── 4. Tab Panels ────────────────────────────────────────────────── */}
-        <div className="p-3 space-y-3">
-          {/* TAB 1: CATEGORIZED ACCORDION CHECKS */}
+        <div className="p-2.5 space-y-2.5">
+          {/* TAB 1: ALL RANK MATH SEO CHECKS */}
           {tab === 'checks' && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Group 1: Basic SEO */}
-              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+              <div className="rounded-lg border overflow-hidden bg-card shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleCheckGroup('basic')}
-                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                  className="w-full flex items-center justify-between p-2 bg-muted/20 font-medium text-[10.5px] hover:bg-muted/40 transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-1.5">
-                    <Target className="h-3.5 w-3.5 text-primary" />
-                    <span>Basic SEO Requirements</span>
+                    <Target className="h-3 w-3 text-primary" />
+                    <span>Basic SEO</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-normal text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded">
                       {goodCount(basicChecks)}/{basicChecks.length} Passed
-                    </Badge>
+                    </span>
                     {openCheckGroups.basic ? (
-                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronUp className="h-3 w-3 text-muted-foreground/60" />
                     ) : (
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
                     )}
                   </div>
                 </button>
                 {openCheckGroups.basic && (
-                  <div className="p-2 space-y-1.5 border-t">
+                  <div className="p-1.5 space-y-1 border-t bg-card">
                     {basicChecks.map((c, idx) => (
                       <CheckItem key={c.id} check={c} idx={idx} />
                     ))}
@@ -1863,29 +1994,29 @@ export function ArticleSEOSidebar({
               </div>
 
               {/* Group 2: Additional SEO */}
-              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+              <div className="rounded-lg border overflow-hidden bg-card shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleCheckGroup('additional')}
-                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                  className="w-full flex items-center justify-between p-2 bg-muted/20 font-medium text-[10.5px] hover:bg-muted/40 transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-1.5">
-                    <Zap className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Additional Optimization</span>
+                    <Zap className="h-3 w-3 text-amber-500" />
+                    <span>Additional SEO</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-normal text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded">
                       {goodCount(additionalChecks)}/{additionalChecks.length} Passed
-                    </Badge>
+                    </span>
                     {openCheckGroups.additional ? (
-                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronUp className="h-3 w-3 text-muted-foreground/60" />
                     ) : (
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
                     )}
                   </div>
                 </button>
                 {openCheckGroups.additional && (
-                  <div className="p-2 space-y-1.5 border-t">
+                  <div className="p-1.5 space-y-1 border-t bg-card">
                     {additionalChecks.map((c, idx) => (
                       <CheckItem key={c.id} check={c} idx={idx} />
                     ))}
@@ -1894,29 +2025,29 @@ export function ArticleSEOSidebar({
               </div>
 
               {/* Group 3: Title Readability */}
-              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+              <div className="rounded-lg border overflow-hidden bg-card shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleCheckGroup('title')}
-                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                  className="w-full flex items-center justify-between p-2 bg-muted/20 font-medium text-[10.5px] hover:bg-muted/40 transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-1.5">
-                    <FileCheck className="h-3.5 w-3.5 text-blue-500" />
+                    <FileCheck className="h-3 w-3 text-blue-500" />
                     <span>Title Readability</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-normal text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded">
                       {goodCount(titleChecks)}/{titleChecks.length} Passed
-                    </Badge>
+                    </span>
                     {openCheckGroups.title ? (
-                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronUp className="h-3 w-3 text-muted-foreground/60" />
                     ) : (
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
                     )}
                   </div>
                 </button>
                 {openCheckGroups.title && (
-                  <div className="p-2 space-y-1.5 border-t">
+                  <div className="p-1.5 space-y-1 border-t bg-card">
                     {titleChecks.map((c, idx) => (
                       <CheckItem key={c.id} check={c} idx={idx} />
                     ))}
@@ -1925,29 +2056,29 @@ export function ArticleSEOSidebar({
               </div>
 
               {/* Group 4: Content Readability */}
-              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+              <div className="rounded-lg border overflow-hidden bg-card shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleCheckGroup('readability')}
-                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                  className="w-full flex items-center justify-between p-2 bg-muted/20 font-medium text-[10.5px] hover:bg-muted/40 transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-1.5">
-                    <BookOpen className="h-3.5 w-3.5 text-violet-500" />
+                    <BookOpen className="h-3 w-3 text-violet-500" />
                     <span>Content Readability</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-normal text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded">
                       {goodCount(readabilityChecks)}/{readabilityChecks.length} Passed
-                    </Badge>
+                    </span>
                     {openCheckGroups.readability ? (
-                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronUp className="h-3 w-3 text-muted-foreground/60" />
                     ) : (
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
                     )}
                   </div>
                 </button>
                 {openCheckGroups.readability && (
-                  <div className="p-2 space-y-1.5 border-t">
+                  <div className="p-1.5 space-y-1 border-t bg-card">
                     {readabilityChecks.map((c, idx) => (
                       <CheckItem key={c.id} check={c} idx={idx} />
                     ))}
@@ -1959,7 +2090,7 @@ export function ArticleSEOSidebar({
 
           {/* TAB 2: SERP SNIPPET PREVIEW & EDITORS */}
           {tab === 'serp' && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <SERPPreview
                 title={seoTitle}
                 meta={seoDesc}
@@ -1969,10 +2100,10 @@ export function ArticleSEOSidebar({
                 onDeviceChange={setSerpDevice}
               />
 
-              <div className="space-y-3 pt-2 border-t">
+              <div className="space-y-2.5 pt-1.5 border-t">
                 {/* SEO Title Input with length bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center text-[11px] font-semibold">
+                  <div className="flex justify-between items-center text-[10px] font-medium text-muted-foreground">
                     <span>SEO Title Tag</span>
                     <span
                       className={cn(
@@ -1990,9 +2121,9 @@ export function ArticleSEOSidebar({
                     value={seoTitle}
                     onChange={(e) => onUpdateSeo({ title: e.target.value })}
                     placeholder={title || 'Page Title (50-60 characters)'}
-                    className="h-8 text-xs bg-background"
+                    className="h-7 text-[10.5px] bg-background"
                   />
-                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-1">
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-0.5">
                     <div
                       className={cn(
                         'h-full transition-all',
@@ -2010,19 +2141,19 @@ export function ArticleSEOSidebar({
                 {/* Slug Input */}
                 {onUpdateSlug && (
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold block">URL Permlink Slug</label>
+                    <label className="text-[10px] font-medium text-muted-foreground block">URL Permlink Slug</label>
                     <Input
                       value={slug}
                       onChange={(e) => onUpdateSlug(e.target.value)}
                       placeholder="article-slug"
-                      className="h-8 text-xs font-mono bg-background"
+                      className="h-7 text-[10.5px] font-mono bg-background"
                     />
                   </div>
                 )}
 
                 {/* Meta Description Input with length bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center text-[11px] font-semibold">
+                  <div className="flex justify-between items-center text-[10px] font-medium text-muted-foreground">
                     <span>Meta Description</span>
                     <span
                       className={cn(
@@ -2041,9 +2172,9 @@ export function ArticleSEOSidebar({
                     value={seoDesc}
                     onChange={(e) => onUpdateSeo({ description: e.target.value })}
                     placeholder="Compelling summary snippet (120-160 characters)..."
-                    className="w-full rounded-md border bg-background p-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+                    className="w-full rounded-md border bg-background p-2 text-[10.5px] resize-none focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed font-normal"
                   />
-                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-1">
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-0.5">
                     <div
                       className={cn(
                         'h-full transition-all',
@@ -2063,16 +2194,16 @@ export function ArticleSEOSidebar({
 
           {/* TAB 3: SOCIAL CARDS */}
           {tab === 'social' && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold block">
+                <label className="text-[10px] font-medium text-muted-foreground block">
                   Social Image URL (Open Graph)
                 </label>
                 <Input
                   value={ogImg}
                   onChange={(e) => onUpdateSeo({ ogImage: e.target.value })}
                   placeholder="https://.../cover-1200x630.jpg"
-                  className="h-8 text-xs font-mono bg-background"
+                  className="h-7 text-[10.5px] font-mono bg-background"
                 />
               </div>
 
@@ -2088,11 +2219,11 @@ export function ArticleSEOSidebar({
 
           {/* TAB 4: ADVANCED SCHEMA, DIRECTIVES & STATS */}
           {tab === 'advanced' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Schema Generator */}
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                  <Code2 className="h-3.5 w-3.5 text-primary" />
+              <div className="space-y-1.5">
+                <div className="text-[10.5px] font-medium text-foreground/90 flex items-center gap-1.5">
+                  <Code2 className="h-3 w-3 text-primary" />
                   <span>Structured Schema Markup</span>
                 </div>
                 <SchemaPanel
@@ -2108,20 +2239,20 @@ export function ArticleSEOSidebar({
               </div>
 
               {/* Robots & Canonical Directives */}
-              <div className="space-y-3 pt-3 border-t">
-                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                  <Sliders className="h-3.5 w-3.5 text-blue-500" />
+              <div className="space-y-2.5 pt-2 border-t">
+                <div className="text-[10.5px] font-medium text-foreground/90 flex items-center gap-1.5">
+                  <Sliders className="h-3 w-3 text-blue-500" />
                   <span>Robots Directives &amp; Canonical</span>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-muted-foreground text-[10px] block">
+                  <label className="font-medium text-muted-foreground text-[9.5px] block">
                     Robots Meta Tag
                   </label>
                   <select
                     value={robots}
                     onChange={(e) => onUpdateSeo({ robots: e.target.value })}
-                    className="w-full h-8 rounded border bg-background px-2 text-xs"
+                    className="w-full h-7 rounded border bg-background px-2 text-[10.5px] font-normal"
                   >
                     <option value="index, follow">index, follow (Standard Default)</option>
                     <option value="noindex, follow">noindex, follow (Do not index, follow links)</option>
@@ -2131,62 +2262,62 @@ export function ArticleSEOSidebar({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-muted-foreground text-[10px] block">
+                  <label className="font-medium text-muted-foreground text-[9.5px] block">
                     Canonical URL Override
                   </label>
                   <Input
                     value={canonical}
                     onChange={(e) => onUpdateSeo({ canonical: e.target.value })}
                     placeholder="https://example.com/canonical-url"
-                    className="h-8 text-xs font-mono bg-background"
+                    className="h-7 text-[10.5px] font-mono bg-background"
                   />
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[9.5px] text-muted-foreground font-normal">
                     Leave blank to use the canonical permalink.
                   </p>
                 </div>
               </div>
 
               {/* Telemetry Metrics */}
-              <div className="space-y-2 pt-3 border-t">
-                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                  <Gauge className="h-3.5 w-3.5 text-violet-500" />
+              <div className="space-y-1.5 pt-2 border-t">
+                <div className="text-[10.5px] font-medium text-foreground/90 flex items-center gap-1.5">
+                  <Gauge className="h-3 w-3 text-violet-500" />
                   <span>Content Telemetry &amp; Metrics</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5 text-xs">
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">Words</div>
-                    <div className="text-base font-bold text-foreground">
+                <div className="grid grid-cols-2 gap-1 text-[10.5px]">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">Words</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.wordCount}
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">Read Time</div>
-                    <div className="text-base font-bold text-foreground">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">Read Time</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.readingTimeMin} min
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">Headings</div>
-                    <div className="text-base font-bold text-foreground">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">Headings</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.headingCount}
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">Paragraphs</div>
-                    <div className="text-base font-bold text-foreground">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">Paragraphs</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.paragraphCount}
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">Internal Links</div>
-                    <div className="text-base font-bold text-foreground">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">Internal Links</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.internalLinkCount}
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg border bg-muted/20">
-                    <div className="text-muted-foreground text-[10px]">External Links</div>
-                    <div className="text-base font-bold text-foreground">
+                  <div className="p-1.5 rounded border bg-muted/20">
+                    <div className="text-muted-foreground text-[9px] font-normal">External Links</div>
+                    <div className="text-sm font-semibold text-foreground">
                       {multiResult.stats.externalLinkCount}
                     </div>
                   </div>

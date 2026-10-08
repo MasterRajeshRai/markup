@@ -246,7 +246,7 @@ export function ArticleDetailsSidebar({
   const visibility = fieldsData.visibility || 'public';
 
   return (
-    <div className={cn('flex flex-col h-full bg-card overflow-y-auto thin-scrollbar text-xs', className)}>
+    <div className={cn('flex flex-col h-full bg-card overflow-y-auto thin-scrollbar text-[11px]', className)}>
       {/* ───────────────────────────────────────────────────────────────────── */}
       {/* SECTION 1: STATUS & PUBLISHING DETAILS                               */}
       {/* ───────────────────────────────────────────────────────────────────── */}
@@ -254,7 +254,7 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('status')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5 text-primary" />
@@ -268,14 +268,14 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.status && (
-          <div className="px-3.5 pb-4 space-y-3 pt-1">
+          <div className="px-3 pb-3 space-y-2.5 pt-0.5">
             {/* Status Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-muted-foreground">Workflow Status</label>
+              <label className="text-[10.5px] font-medium text-muted-foreground">Workflow Status</label>
               <select
                 value={status}
                 onChange={(e) => onStatusChange(e.target.value)}
-                className="w-full h-8 rounded-md border bg-background px-2.5 text-xs font-medium focus:ring-1 focus:ring-primary"
+                className="w-full h-7 rounded-md border bg-background px-2 text-[10.5px] font-normal focus:ring-1 focus:ring-primary"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="IN_REVIEW">Pending Review</option>
@@ -289,15 +289,15 @@ export function ArticleDetailsSidebar({
             {/* Visibility Selector */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-semibold text-muted-foreground">Visibility</label>
-                <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0">
+                <label className="text-[10.5px] font-medium text-muted-foreground">Visibility</label>
+                <Badge variant="outline" className="text-[9px] uppercase font-mono px-1.5 py-0 font-normal">
                   {visibility}
                 </Badge>
               </div>
               <select
                 value={visibility}
                 onChange={(e) => onUpdateFieldsData({ ...fieldsData, visibility: e.target.value })}
-                className="w-full h-8 rounded-md border bg-background px-2.5 text-xs focus:ring-1 focus:ring-primary"
+                className="w-full h-7 rounded-md border bg-background px-2 text-[10.5px] font-normal focus:ring-1 focus:ring-primary"
               >
                 <option value="public">Public (Visible to everyone)</option>
                 <option value="private">Private (Only editors and admins)</option>
@@ -307,8 +307,8 @@ export function ArticleDetailsSidebar({
 
             {/* Scheduled Publish Date */}
             {status === 'SCHEDULED' && (
-              <div className="space-y-1.5 p-2.5 rounded-lg border bg-violet-500/8 border-violet-500/20">
-                <label className="text-[11px] font-semibold text-violet-700 dark:text-violet-400 flex items-center gap-1.5">
+              <div className="space-y-1.5 p-2 rounded-lg border bg-violet-500/8 border-violet-500/20">
+                <label className="text-[10.5px] font-medium text-violet-700 dark:text-violet-400 flex items-center gap-1.5">
                   <Calendar className="h-3 w-3" />
                   <span>Schedule Go-Live Date</span>
                 </label>
@@ -316,7 +316,7 @@ export function ArticleDetailsSidebar({
                   type="datetime-local"
                   value={scheduledDate}
                   onChange={(e) => onScheduledDateChange(e.target.value)}
-                  className="h-8 text-xs bg-background"
+                  className="h-7 text-[10.5px] bg-background font-normal"
                 />
               </div>
             )}
@@ -324,11 +324,11 @@ export function ArticleDetailsSidebar({
             {/* Permalink Slug */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-semibold text-muted-foreground">URL Slug</label>
+                <label className="text-[10.5px] font-medium text-muted-foreground">URL Slug</label>
                 <button
                   type="button"
                   onClick={handleCopyUrl}
-                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                  className="text-[9.5px] text-primary hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
                 >
                   {copiedUrl ? <Check className="h-2.5 w-2.5 text-emerald-500" /> : <Copy className="h-2.5 w-2.5" />}
                   <span>{copiedUrl ? 'Copied' : 'Copy URL'}</span>
@@ -337,25 +337,25 @@ export function ArticleDetailsSidebar({
               <Input
                 value={slug}
                 onChange={(e) => onSlugChange(e.target.value)}
-                className="h-8 text-xs font-mono bg-background"
+                className="h-7 text-[10.5px] font-mono bg-background font-normal"
                 placeholder="article-url-slug"
               />
-              <div className="text-[10px] text-muted-foreground font-mono truncate flex items-center gap-1 mt-0.5">
+              <div className="text-[9.5px] text-muted-foreground font-mono truncate flex items-center gap-1 mt-0.5 font-normal">
                 <Globe className="h-2.5 w-2.5 shrink-0" />
                 <span className="truncate">{publicUrl}</span>
               </div>
             </div>
 
             {/* Author */}
-            <div className="space-y-1 pt-1">
-              <label className="text-[11px] font-semibold text-muted-foreground">Author</label>
-              <div className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/20">
-                <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
+            <div className="space-y-1 pt-0.5">
+              <label className="text-[10.5px] font-medium text-muted-foreground">Author</label>
+              <div className="flex items-center gap-2 p-1.5 rounded-lg border bg-muted/20">
+                <div className="h-5.5 w-5.5 rounded-full bg-primary/20 text-primary flex items-center justify-center font-medium text-[9.5px]">
                   AM
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-xs text-foreground truncate">Alex Morgan</div>
-                  <div className="text-[10px] text-muted-foreground">Administrator</div>
+                  <div className="font-medium text-[11px] text-foreground truncate">Alex Morgan</div>
+                  <div className="text-[9.5px] text-muted-foreground font-normal">Administrator</div>
                 </div>
               </div>
             </div>
@@ -363,11 +363,11 @@ export function ArticleDetailsSidebar({
             {/* Stick to the Top / Featured Toggle */}
             <div className="pt-2 border-t flex items-center justify-between">
               <div className="space-y-0.5 pr-2">
-                <label htmlFor="isPinned" className="text-xs font-semibold text-foreground flex items-center gap-1.5 cursor-pointer">
+                <label htmlFor="isPinned" className="text-[11px] font-medium text-foreground flex items-center gap-1.5 cursor-pointer">
                   <Pin className="h-3 w-3 text-amber-500" />
                   <span>Stick to Top of Blog</span>
                 </label>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[9.5px] text-muted-foreground font-normal">
                   Pins this post to the top of homepage and archives.
                 </p>
               </div>
@@ -376,7 +376,7 @@ export function ArticleDetailsSidebar({
                 type="checkbox"
                 checked={Boolean(fieldsData.is_featured)}
                 onChange={(e) => onUpdateFieldsData({ ...fieldsData, is_featured: e.target.checked })}
-                className="h-4 w-4 accent-primary rounded cursor-pointer shrink-0"
+                className="h-3.5 w-3.5 accent-primary rounded cursor-pointer shrink-0"
               />
             </div>
           </div>
@@ -390,7 +390,7 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('featuredImage')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <ImageIcon className="h-3.5 w-3.5 text-blue-500" />
@@ -404,10 +404,10 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.featuredImage && (
-          <div className="px-3.5 pb-4 space-y-3 pt-1">
+          <div className="px-3 pb-3 space-y-2.5 pt-0.5">
             {featuredImage ? (
               /* Image Thumbnail Card */
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="relative rounded-lg overflow-hidden border bg-muted/40 aspect-[16/9] shadow-xs group">
                   <img
                     src={featuredImage}
@@ -418,14 +418,14 @@ export function ArticleDetailsSidebar({
                     <button
                       type="button"
                       onClick={() => setShowUrlInput((v) => !v)}
-                      className="px-2.5 py-1 rounded bg-white text-slate-900 font-semibold text-[11px] shadow-sm hover:bg-slate-100 cursor-pointer"
+                      className="px-2 py-0.5 rounded bg-white text-slate-900 font-medium text-[10px] shadow-xs hover:bg-slate-100 cursor-pointer"
                     >
                       Replace
                     </button>
                     <button
                       type="button"
                       onClick={handleRemoveFeaturedImage}
-                      className="px-2.5 py-1 rounded bg-red-600 text-white font-semibold text-[11px] shadow-sm hover:bg-red-700 cursor-pointer"
+                      className="px-2 py-0.5 rounded bg-red-600 text-white font-medium text-[10px] shadow-xs hover:bg-red-700 cursor-pointer"
                     >
                       Remove
                     </button>
@@ -434,29 +434,29 @@ export function ArticleDetailsSidebar({
 
                 {/* Alt Text Input */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-muted-foreground">
+                  <label className="text-[10.5px] font-medium text-muted-foreground">
                     Alt Text (Accessibility &amp; SEO)
                   </label>
                   <Input
                     value={featuredImageAlt}
                     onChange={(e) => onUpdateFieldsData({ ...fieldsData, featured_image_alt: e.target.value })}
                     placeholder="Describe image purpose..."
-                    className="h-8 text-xs bg-background"
+                    className="h-7 text-[10.5px] bg-background font-normal"
                   />
                 </div>
 
-                <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                <div className="flex justify-between items-center text-[9.5px] text-muted-foreground">
                   <button
                     type="button"
                     onClick={() => setShowUrlInput((v) => !v)}
-                    className="text-primary hover:underline cursor-pointer"
+                    className="text-primary hover:underline cursor-pointer font-medium"
                   >
                     Change Image URL
                   </button>
                   <button
                     type="button"
                     onClick={handleRemoveFeaturedImage}
-                    className="text-destructive hover:underline cursor-pointer flex items-center gap-0.5"
+                    className="text-destructive hover:underline cursor-pointer flex items-center gap-0.5 font-medium"
                   >
                     <Trash2 className="h-2.5 w-2.5" />
                     <span>Remove image</span>
@@ -465,8 +465,8 @@ export function ArticleDetailsSidebar({
               </div>
             ) : (
               /* Empty Featured Image Dropzone */
-              <div className="space-y-2.5">
-                <label className="relative border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-muted/10 hover:bg-muted/20">
+              <div className="space-y-2">
+                <label className="relative border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-3.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors bg-muted/10 hover:bg-muted/20">
                   <input
                     type="file"
                     accept="image/*"
@@ -474,25 +474,25 @@ export function ArticleDetailsSidebar({
                     className="sr-only"
                     disabled={isUploading}
                   />
-                  <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                     {isUploading ? (
                       <span className="animate-spin text-xs">⏳</span>
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <Upload className="h-3.5 w-3.5" />
                     )}
                   </div>
                   <div className="text-center">
-                    <span className="font-semibold text-xs text-foreground block">
+                    <span className="font-medium text-[11px] text-foreground block">
                       {isUploading ? 'Uploading image...' : 'Set featured image'}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[9.5px] text-muted-foreground font-normal">
                       Click to upload (JPG, PNG, WebP)
                     </span>
                   </div>
                 </label>
 
                 {/* Direct URL Toggle */}
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-[10.5px]">
                   <button
                     type="button"
                     onClick={() => setShowUrlInput((v) => !v)}
@@ -503,18 +503,18 @@ export function ArticleDetailsSidebar({
                 </div>
 
                 {/* Stock Presets Cloud */}
-                <div className="space-y-1 pt-1">
-                  <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                <div className="space-y-1 pt-0.5">
+                  <span className="text-[9.5px] font-medium text-muted-foreground flex items-center gap-1">
                     <Sparkles className="h-2.5 w-2.5 text-amber-500" />
                     <span>Or choose high-res preset:</span>
                   </span>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1">
                     {PRESET_COVERS.map((preset) => (
                       <button
                         key={preset.url}
                         type="button"
                         onClick={() => handleSetFeaturedImage(preset.url)}
-                        className="text-left p-1.5 rounded border bg-background hover:bg-muted text-[10px] truncate transition-colors cursor-pointer"
+                        className="text-left p-1 rounded border bg-background hover:bg-muted text-[9.5px] truncate transition-colors cursor-pointer font-normal"
                         title={preset.label}
                       >
                         {preset.label}
@@ -527,19 +527,19 @@ export function ArticleDetailsSidebar({
 
             {/* Custom URL Input modal / dropdown */}
             {showUrlInput && (
-              <div className="p-2.5 rounded-lg border bg-muted/30 space-y-2 mt-2">
-                <label className="text-[10px] font-semibold text-foreground">Paste Image URL:</label>
+              <div className="p-2 rounded-lg border bg-muted/30 space-y-1.5 mt-1.5">
+                <label className="text-[9.5px] font-medium text-foreground">Paste Image URL:</label>
                 <div className="flex gap-1.5">
                   <Input
                     value={customImageUrl}
                     onChange={(e) => setCustomImageUrl(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="h-7 text-xs bg-background flex-1"
+                    className="h-6.5 text-[10px] bg-background flex-1 font-normal"
                   />
                   <Button
                     type="button"
                     size="sm"
-                    className="h-7 text-[10px] px-2.5"
+                    className="h-6.5 text-[9.5px] px-2 font-medium"
                     onClick={() => handleSetFeaturedImage(customImageUrl)}
                     disabled={!customImageUrl.trim()}
                   >
@@ -559,12 +559,12 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('categories')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Folder className="h-3.5 w-3.5 text-amber-500" />
             <span>Categories</span>
-            <span className="text-[10px] font-normal text-muted-foreground">
+            <span className="text-[9.5px] font-normal text-muted-foreground">
               ({selectedCategories.length} selected)
             </span>
           </div>
@@ -576,19 +576,19 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.categories && (
-          <div className="px-3.5 pb-4 space-y-2.5 pt-1">
+          <div className="px-3 pb-3 space-y-2 pt-0.5">
             {/* Search Categories */}
             {categoriesList.length > 5 && (
               <Input
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
                 placeholder="Search categories..."
-                className="h-7 text-xs bg-background mb-2"
+                className="h-6.5 text-[10.5px] bg-background mb-1.5 font-normal"
               />
             )}
 
             {/* Checkbox List */}
-            <div className="space-y-1.5 max-h-48 overflow-y-auto thin-scrollbar pr-1">
+            <div className="space-y-1 max-h-44 overflow-y-auto thin-scrollbar pr-1">
               {categoriesList
                 .filter((c) =>
                   c.name.toLowerCase().includes(categorySearch.toLowerCase())
@@ -599,17 +599,17 @@ export function ArticleDetailsSidebar({
                     <label
                       key={cat.id}
                       className={cn(
-                        'flex items-center gap-2 p-1.5 rounded-md transition-colors cursor-pointer text-xs select-none',
+                        'flex items-center gap-1.5 p-1 rounded-md transition-colors cursor-pointer text-[10.5px] select-none',
                         isChecked
-                          ? 'bg-primary/10 text-foreground font-semibold'
-                          : 'hover:bg-muted text-muted-foreground'
+                          ? 'bg-primary/10 text-foreground font-medium'
+                          : 'hover:bg-muted text-muted-foreground font-normal'
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleToggleCategory(cat.id)}
-                        className="h-3.5 w-3.5 accent-primary rounded cursor-pointer"
+                        className="h-3 w-3 accent-primary rounded cursor-pointer"
                       />
                       <span className="truncate flex-1">{cat.name}</span>
                     </label>
@@ -622,29 +622,29 @@ export function ArticleDetailsSidebar({
               <button
                 type="button"
                 onClick={() => setShowAddCat(true)}
-                className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 pt-1 cursor-pointer"
+                className="text-[10px] text-primary hover:underline font-medium flex items-center gap-1 pt-0.5 cursor-pointer"
               >
                 <Plus className="h-3 w-3" />
                 <span>Add New Category</span>
               </button>
             ) : (
-              <form onSubmit={handleAddNewCategory} className="space-y-2 pt-2 border-t">
+              <form onSubmit={handleAddNewCategory} className="space-y-1.5 pt-1.5 border-t">
                 <Input
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="New category name..."
-                  className="h-7 text-xs bg-background"
+                  className="h-6.5 text-[10.5px] bg-background font-normal"
                   autoFocus
                 />
                 <div className="flex items-center gap-1.5">
-                  <Button type="submit" size="sm" className="h-7 text-[10px] px-3">
+                  <Button type="submit" size="sm" className="h-6.5 text-[9.5px] px-2.5 font-medium">
                     Add Category
                   </Button>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-[10px] px-2"
+                    className="h-6.5 text-[9.5px] px-2 font-normal"
                     onClick={() => setShowAddCat(false)}
                   >
                     Cancel
@@ -663,12 +663,12 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('tags')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Tag className="h-3.5 w-3.5 text-emerald-500" />
             <span>Tags</span>
-            <span className="text-[10px] font-normal text-muted-foreground">
+            <span className="text-[9.5px] font-normal text-muted-foreground">
               ({tagsList.length})
             </span>
           </div>
@@ -680,7 +680,7 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.tags && (
-          <div className="px-3.5 pb-4 space-y-3 pt-1">
+          <div className="px-3 pb-3 space-y-2.5 pt-0.5">
             {/* Tag Input */}
             <div className="flex gap-1.5">
               <Input
@@ -688,13 +688,13 @@ export function ArticleDetailsSidebar({
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
                 placeholder="Add tag and press Enter..."
-                className="h-7 text-xs bg-background flex-1"
+                className="h-7 text-[10.5px] bg-background flex-1 font-normal"
               />
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-7 text-[10px] px-2.5"
+                className="h-7 text-[9.5px] px-2 font-medium"
                 onClick={() => handleAddTag(tagInput)}
                 disabled={!tagInput.trim()}
               >
@@ -704,11 +704,11 @@ export function ArticleDetailsSidebar({
 
             {/* Active Tag Pills */}
             {tagsList.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {tagsList.map((tg) => (
                   <span
                     key={tg}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted border text-foreground"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-normal bg-muted border text-foreground"
                   >
                     <span>{tg}</span>
                     <button
@@ -726,7 +726,7 @@ export function ArticleDetailsSidebar({
 
             {/* Popular Tags Suggestion Cloud */}
             <div className="space-y-1 pt-1 border-t">
-              <span className="text-[10px] font-semibold text-muted-foreground">
+              <span className="text-[9.5px] font-medium text-muted-foreground">
                 Choose from most used tags:
               </span>
               <div className="flex flex-wrap gap-1">
@@ -735,7 +735,7 @@ export function ArticleDetailsSidebar({
                     key={pt}
                     type="button"
                     onClick={() => handleAddTag(pt)}
-                    className="text-[10px] px-1.5 py-0.5 rounded border bg-background hover:bg-primary/10 hover:border-primary/40 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    className="text-[9.5px] px-1.5 py-0.5 rounded border bg-background hover:bg-primary/10 hover:border-primary/40 text-muted-foreground hover:text-primary transition-colors cursor-pointer font-normal"
                   >
                     +{pt}
                   </button>
@@ -753,7 +753,7 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('excerpt')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <FileText className="h-3.5 w-3.5 text-violet-500" />
@@ -767,15 +767,15 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.excerpt && (
-          <div className="px-3.5 pb-4 space-y-2 pt-1">
+          <div className="px-3 pb-3 space-y-1.5 pt-0.5">
             <textarea
               rows={3}
               value={fieldsData.summary || ''}
               onChange={(e) => onUpdateFieldsData({ ...fieldsData, summary: e.target.value })}
               placeholder="Write an excerpt (optional)..."
-              className="w-full rounded-md border bg-background p-2.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+              className="w-full rounded-md border bg-background p-2 text-[10.5px] resize-none focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed font-normal"
             />
-            <p className="text-[10px] text-muted-foreground leading-normal">
+            <p className="text-[9.5px] text-muted-foreground leading-normal font-normal">
               Excerpts are optional hand-crafted summaries used across article listings, feeds, and social previews.
             </p>
           </div>
@@ -789,7 +789,7 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('discussion')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
@@ -803,7 +803,7 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.discussion && (
-          <div className="px-3.5 pb-4 space-y-2.5 pt-1">
+          <div className="px-3 pb-3 space-y-2 pt-0.5">
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -812,8 +812,8 @@ export function ArticleDetailsSidebar({
                 className="h-3.5 w-3.5 accent-primary rounded cursor-pointer mt-0.5"
               />
               <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground block">Allow Comments</span>
-                <span className="text-[10px] text-muted-foreground block">
+                <span className="text-[10.5px] font-medium text-foreground block">Allow Comments</span>
+                <span className="text-[9.5px] text-muted-foreground block font-normal">
                   Enables reader comments &amp; discussion thread on this post.
                 </span>
               </div>
@@ -827,10 +827,10 @@ export function ArticleDetailsSidebar({
                 className="h-3.5 w-3.5 accent-primary rounded cursor-pointer mt-0.5"
               />
               <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground block">
+                <span className="text-[10.5px] font-medium text-foreground block">
                   Allow Pingbacks &amp; Trackbacks
                 </span>
-                <span className="text-[10px] text-muted-foreground block">
+                <span className="text-[9.5px] text-muted-foreground block font-normal">
                   Accept notifications when other blogs link to this post.
                 </span>
               </div>
@@ -846,7 +846,7 @@ export function ArticleDetailsSidebar({
         <button
           type="button"
           onClick={() => toggleSection('monetization')}
-          className="w-full flex items-center justify-between p-3.5 font-bold text-foreground text-xs hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center justify-between p-2.5 font-medium text-foreground text-[11px] hover:bg-muted/40 transition-colors"
         >
           <div className="flex items-center gap-2">
             <DollarSign className="h-3.5 w-3.5 text-amber-500" />
@@ -860,13 +860,13 @@ export function ArticleDetailsSidebar({
         </button>
 
         {openSections.monetization && (
-          <div className="px-3.5 pb-4 space-y-3 pt-1">
+          <div className="px-3 pb-3 space-y-2.5 pt-0.5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5">
-                <label htmlFor="disableAds" className="font-semibold text-xs cursor-pointer">
+                <label htmlFor="disableAds" className="font-medium text-[10.5px] cursor-pointer">
                   Disable Ads on this Article
                 </label>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[9.5px] text-muted-foreground font-normal">
                   Suppresses in-article banners for sensitive or sponsored content.
                 </p>
               </div>
@@ -875,19 +875,19 @@ export function ArticleDetailsSidebar({
                 type="checkbox"
                 checked={Boolean(fieldsData.disableAds)}
                 onChange={(e) => onUpdateFieldsData({ ...fieldsData, disableAds: e.target.checked })}
-                className="h-4 w-4 accent-amber-500 rounded cursor-pointer mt-0.5"
+                className="h-3.5 w-3.5 accent-amber-500 rounded cursor-pointer mt-0.5"
               />
             </div>
 
             {!fieldsData.disableAds && (
-              <div className="pt-2 border-t space-y-1">
-                <label className="text-[10px] font-semibold text-muted-foreground">
+              <div className="pt-1.5 border-t space-y-1">
+                <label className="text-[9.5px] font-medium text-muted-foreground">
                   In-Article Frequency
                 </label>
                 <select
                   value={fieldsData.adInjectionRule || 'default'}
                   onChange={(e) => onUpdateFieldsData({ ...fieldsData, adInjectionRule: e.target.value })}
-                  className="w-full h-7 rounded border bg-background px-2 text-[11px] focus:ring-1 focus:ring-primary"
+                  className="w-full h-6.5 rounded border bg-background px-2 text-[10px] font-normal focus:ring-1 focus:ring-primary"
                 >
                   <option value="default">Use Global Rules (P2, P5, P9)</option>
                   <option value="conservative">Conservative (P3 Only)</option>
