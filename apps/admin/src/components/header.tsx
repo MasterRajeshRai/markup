@@ -54,7 +54,11 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-[100] flex h-16 items-center justify-between border-b bg-card/95 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-colors shadow-2xs">
+    <>
+      {/* Topbar layout spacer to prevent page content shift */}
+      <div className="h-16 shrink-0 pointer-events-none" aria-hidden="true" />
+
+      <header className="fixed top-0 left-0 lg:left-72 right-0 z-30 flex h-16 items-center justify-between border-b bg-card/95 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-all shadow-2xs">
       {/* Left: Sidebar Toggle & Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
         <Button
@@ -163,5 +167,6 @@ export function Header() {
         </Button>
       </div>
     </header>
+  </>
   );
 }
