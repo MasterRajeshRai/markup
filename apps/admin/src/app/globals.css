@@ -261,22 +261,66 @@
     }
   }
 
-  /* Admin Dashboard 15px Typography Normalization */
-  .admin-root .text-\[11px\],
-  .admin-root .text-\[12px\],
-  .admin-root .text-\[13px\],
-  .admin-root .text-\[13\.5px\],
-  .admin-root .text-\[14px\],
-  .admin-root .text-\[15px\],
-  .admin-root .text-xs,
-  .admin-root .text-sm {
+  /* Admin Main Body 15px Typography Normalization - matches sidebar 15px primary text */
+  main,
+  .admin-main,
+  main p,
+  .admin-main p,
+  main table,
+  .admin-main table,
+  main th,
+  .admin-main th,
+  main td,
+  .admin-main td,
+  main input,
+  .admin-main input,
+  main select,
+  .admin-main select,
+  main textarea,
+  .admin-main textarea,
+  main button,
+  .admin-main button,
+  main label,
+  .admin-main label,
+  main li,
+  .admin-main li {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  main .text-xs,
+  .admin-main .text-xs,
+  main .text-sm,
+  .admin-main .text-sm,
+  main .text-base,
+  .admin-main .text-base,
+  main .text-\[13px\],
+  .admin-main .text-\[13px\],
+  main .text-\[13\.5px\],
+  .admin-main .text-\[13\.5px\],
+  main .text-\[14px\],
+  .admin-main .text-\[14px\],
+  main .text-\[15px\],
+  .admin-main .text-\[15px\] {
     font-size: 15px !important;
     line-height: 1.5 !important;
   }
 
-  .admin-root .text-\[9px\],
-  .admin-root .text-\[9\.5px\],
-  .admin-root .text-\[10px\] {
+  /* Micro badges, pill counters, and subtle metadata maintain clean sub-hierarchy */
+  main .text-\[9px\],
+  .admin-main .text-\[9px\],
+  main .text-\[9\.5px\],
+  .admin-main .text-\[9\.5px\],
+  main .text-\[10px\],
+  .admin-main .text-\[10px\],
+  main .text-\[11px\],
+  .admin-main .text-\[11px\],
+  main .text-\[12px\],
+  .admin-main .text-\[12px\],
+  main .text-2xs,
+  .admin-main .text-2xs,
+  main .text-3xs,
+  .admin-main .text-3xs {
     font-size: 12.5px !important;
     line-height: 1.4 !important;
   }
