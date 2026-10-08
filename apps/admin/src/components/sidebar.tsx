@@ -529,12 +529,15 @@ export function Sidebar() {
         />
       )}
 
+      {/* Desktop placeholder spacer to keep page content aligned next to fixed sidebar */}
+      <div className="hidden lg:block w-68 lg:w-72 shrink-0 pointer-events-none" aria-hidden="true" />
+
       <aside
         suppressHydrationWarning
         className={cn(
           'w-68 lg:w-72 border-r bg-card flex flex-col h-screen max-h-screen select-none overflow-hidden shrink-0 transition-transform duration-300 ease-in-out',
-          'fixed inset-y-0 left-0 lg:sticky lg:top-0 lg:self-start lg:translate-x-0',
-          isMobileOpen ? 'translate-x-0 shadow-2xl z-[80]' : '-translate-x-full lg:translate-x-0 z-40'
+          'fixed inset-y-0 left-0 z-40',
+          isMobileOpen ? 'translate-x-0 shadow-2xl z-[80]' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Top Brand Header */}
