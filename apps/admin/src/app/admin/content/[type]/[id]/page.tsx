@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BlockEditor } from '@/components/block-editor/block-editor';
 import { ArticleSEOSidebar, analyzeSEO } from '@/components/seo-analyzer';
+import { ArticleDetailsSidebar } from '@/components/article-details-sidebar';
 import {
   ArrowLeft,
   Save,
@@ -234,7 +235,7 @@ export default function EntryEditorPage() {
 
   // Canvas & Sidebar Tab State
   const [activeCanvasTab, setActiveCanvasTab] = useState<'blocks' | 'fields' | 'revisions' | 'comments'>('blocks');
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'seo' | 'document' | 'comments'>('seo');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'document' | 'seo'>('document');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [loading, setLoading] = useState(false);
@@ -900,24 +901,38 @@ export default function EntryEditorPage() {
 
         {/* ── Right Column: Collapsible Inspector Sidebar ─────────────────── */}
         {isSidebarOpen && (
-          <div className="fixed top-16 right-0 bottom-0 z-30 sm:static sm:top-auto sm:bottom-auto sm:z-auto w-full sm:w-[440px] md:w-[480px] lg:w-[520px] xl:w-[560px] shrink-0 flex flex-col border-l bg-card h-full overflow-hidden shadow-2xl sm:shadow-lg animate-in slide-in-from-right-4 duration-200">
-            {/* Sidebar Top Switcher: SEO vs Document Settings */}
+          <div className="fixed top-16 right-0 bottom-0 z-30 sm:static sm:top-auto sm:bottom-auto sm:z-auto w-full sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[380px] shrink-0 flex flex-col border-l bg-card h-full overflow-hidden shadow-2xl sm:shadow-lg animate-in slide-in-from-right-4 duration-200">
+            {/* Sidebar Top Switcher: Details vs Rank Markup */}
             <div className="flex items-center border-b bg-muted/30 px-3 py-1.5 shrink-0 gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('document')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
+                  activeSidebarTab === 'document'
+                    ? 'bg-card text-foreground shadow-xs border'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <FileText className="h-3.5 w-3.5 text-blue-500" />
+                <span>Details</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setActiveSidebarTab('seo')}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
+                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer',
                   activeSidebarTab === 'seo'
                     ? 'bg-card text-foreground shadow-xs border'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                <Zap className="h-3.5 w-3.5 text-amber-500 fill-current" />
+                <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                 <span>Rank Markup</span>
                 <span className={cn(
                   'ml-1 text-[10px] font-bold px-1.5 py-0.2 rounded-full',
-                  liveSeoScore >= 80 ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'
+                  liveSeoScore >= 80 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                 )}>
                   {liveSeoScore}
                 </span>
@@ -925,43 +940,33 @@ export default function EntryEditorPage() {
 
               <button
                 type="button"
-                onClick={() => setActiveSidebarTab('document')}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
-                  activeSidebarTab === 'document'
-                    ? 'bg-card text-foreground shadow-xs border'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Sliders className="h-3.5 w-3.5 text-blue-500" />
-                <span>Details</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveSidebarTab('comments')}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
-                  activeSidebarTab === 'comments'
-                    ? 'bg-card text-foreground shadow-xs border'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <MessageSquare className="h-3.5 w-3.5 text-amber-500" />
-                <span>Comments</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setIsSidebarOpen(false)}
-                className="h-7 w-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+                className="h-7 w-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 cursor-pointer"
                 title="Collapse Sidebar"
               >
                 <PanelRightClose className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Sidebar Tab 1: Live Rank Markup SEO Inspector */}
+            {/* Sidebar Tab 1: WordPress-style Document & Article Details */}
+            {activeSidebarTab === 'document' && (
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <ArticleDetailsSidebar
+                  status={status}
+                  onStatusChange={setStatus}
+                  scheduledDate={scheduledDate}
+                  onScheduledDateChange={setScheduledDate}
+                  slug={slug}
+                  onSlugChange={setSlug}
+                  typeSlug={typeSlug}
+                  fieldsData={fieldsData}
+                  onUpdateFieldsData={setFieldsData}
+                  title={title}
+                />
+              </div>
+            )}
+
+            {/* Sidebar Tab 2: Clean Live Rank Markup SEO Inspector */}
             {activeSidebarTab === 'seo' && (
               <div className="flex-1 overflow-hidden flex flex-col">
                 <ArticleSEOSidebar
@@ -972,167 +977,6 @@ export default function EntryEditorPage() {
                   onUpdateSeo={handleUpdateSeo}
                   onUpdateSlug={(s) => setSlug(s)}
                   className="border-0"
-                />
-              </div>
-            )}
-
-            {/* Sidebar Tab 2: Document & Publishing Settings */}
-            {activeSidebarTab === 'document' && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-foreground">Publication Settings</h3>
-                  <p className="text-[11px] text-muted-foreground">Manage workflow status, dates, and permalinks.</p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Workflow Status</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full h-8 rounded-md border bg-background px-2 text-xs focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="DRAFT">Draft</option>
-                    <option value="IN_REVIEW">In Review</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="SCHEDULED">Scheduled</option>
-                    <option value="PUBLISHED">Published</option>
-                    <option value="ARCHIVED">Archived</option>
-                  </select>
-                </div>
-
-                {status === 'SCHEDULED' && (
-                  <div className="space-y-1.5 p-3 rounded-lg border bg-violet-500/8 border-violet-500/20">
-                    <label className="font-semibold text-violet-700 dark:text-violet-400 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>Schedule Go-Live Date</span>
-                    </label>
-                    <Input
-                      type="datetime-local"
-                      value={scheduledDate}
-                      onChange={(e) => setScheduledDate(e.target.value)}
-                      className="h-8 text-xs bg-background"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">URL Slug Permlink</label>
-                  <Input
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="h-8 text-xs font-mono"
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    Public URL: https://yoursite.com/{typeSlug}/{slug}
-                  </span>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Author</label>
-                  <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/20">
-                    <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
-                      AM
-                    </div>
-                    <span className="font-medium text-xs">Alex Morgan (Admin)</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-foreground">Content Locale</label>
-                  <div className="flex items-center gap-1.5 p-2 rounded-md border bg-background font-mono text-[11px]">
-                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>en-US (Default)</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-2 border-t">
-                  <label className="font-semibold text-foreground">Summary Excerpt</label>
-                  <textarea
-                    rows={3}
-                    value={fieldsData.summary || ''}
-                    onChange={(e) => setFieldsData({ ...fieldsData, summary: e.target.value })}
-                    placeholder="Short excerpt for blog cards..."
-                    className="w-full rounded border bg-background p-2 text-xs"
-                  />
-                </div>
-
-                {/* Article-Level Monetization & AdSense Settings */}
-                <div className="space-y-3 pt-3 border-t">
-                  <div className="flex items-center justify-between">
-                    <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
-                      <DollarSign className="h-3.5 w-3.5 text-amber-500" />
-                      <span>Monetization &amp; Ads</span>
-                    </label>
-                    <Link
-                      href="/admin/ads"
-                      target="_blank"
-                      className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5"
-                    >
-                      Global Config <ExternalLink className="h-2.5 w-2.5" />
-                    </Link>
-                  </div>
-
-                  <div className="p-3 rounded-lg border bg-muted/20 space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <label htmlFor="disableAds" className="font-semibold text-xs cursor-pointer">
-                          Disable Ads on this Article
-                        </label>
-                        <p className="text-[10px] text-muted-foreground leading-normal">
-                          Suppresses all banner and in-article ad slots for sponsored, legal, or sensitive articles.
-                        </p>
-                      </div>
-                      <input
-                        id="disableAds"
-                        type="checkbox"
-                        checked={Boolean(fieldsData.disableAds)}
-                        onChange={(e) => setFieldsData({ ...fieldsData, disableAds: e.target.checked })}
-                        className="h-4 w-4 accent-amber-500 rounded cursor-pointer mt-0.5"
-                      />
-                    </div>
-
-                    {!fieldsData.disableAds && (
-                      <div className="pt-2 border-t space-y-1">
-                        <label className="text-[10px] font-semibold text-muted-foreground">In-Article Frequency</label>
-                        <select
-                          value={fieldsData.adInjectionRule || 'default'}
-                          onChange={(e) => setFieldsData({ ...fieldsData, adInjectionRule: e.target.value })}
-                          className="w-full h-7 rounded border bg-background px-2 text-[11px] focus:ring-1 focus:ring-primary"
-                        >
-                          <option value="default">Use Global Rules (P2, P5, P9)</option>
-                          <option value="conservative">Conservative (P3 Only)</option>
-                          <option value="aggressive">High Yield (P1, P3, P5, P7)</option>
-                          <option value="header_only">Header &amp; Sidebar Only (No Mid-Article)</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sidebar Tab 3: Comments & Reader Feedback Inspector */}
-            {activeSidebarTab === 'comments' && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-                <div className="flex items-center justify-between pb-2 border-b">
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground">Reader Discussion</h3>
-                    <p className="text-[11px] text-muted-foreground">Comments on this article</p>
-                  </div>
-                  <Link
-                    href="/admin/comments"
-                    className="text-xs text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    <span>All Comments</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </Link>
-                </div>
-
-                <CommentSection
-                  contentEntryId={entryId}
-                  contentEntryTitle={title}
-                  contentEntrySlug={slug}
-                  className="w-full text-xs"
                 />
               </div>
             )}

@@ -10,7 +10,7 @@ import {
   Globe, Target, Copy, Check, Clock, Sparkles, BookOpen, Share2,
   Code2, Save, X, RefreshCw, Twitter, Facebook, Zap, Sliders,
   Smartphone, Monitor, Star, FileCheck, Gauge, ExternalLink, Link2,
-  Layers, Award,
+  Layers, Award, Plus,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1331,10 +1331,23 @@ export function ArticleSEOSidebar({
   onClose,
   className,
 }: ArticleSEOSidebarProps) {
-  const [tab, setTab] = useState<'checks' | 'serp' | 'social' | 'schema' | 'stats' | 'directives'>('checks');
+  const [tab, setTab] = useState<'checks' | 'serp' | 'social' | 'advanced'>('checks');
   const [serpDevice, setSerpDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [newKeywordInput, setNewKeywordInput] = useState('');
+  const [showAddKeyword, setShowAddKeyword] = useState(false);
   const [activeKeywordIdx, setActiveKeywordIdx] = useState(0);
+
+  // Accordion states for checks groups
+  const [openCheckGroups, setOpenCheckGroups] = useState<Record<string, boolean>>({
+    basic: true,
+    additional: true,
+    title: true,
+    readability: true,
+  });
+
+  const toggleCheckGroup = (group: string) => {
+    setOpenCheckGroups((prev) => ({ ...prev, [group]: !prev[group] }));
+  };
 
   // Manage up to 5 keywords
   const keywordsList: string[] = useMemo(() => {
@@ -1383,6 +1396,7 @@ export function ArticleSEOSidebar({
     });
     setActiveKeywordIdx(next.length - 1);
     setNewKeywordInput('');
+    setShowAddKeyword(false);
   };
 
   const handleRemoveKeyword = (indexToRemove: number) => {
@@ -1406,48 +1420,78 @@ export function ArticleSEOSidebar({
     setActiveKeywordIdx(0);
   };
 
+  // Group checks into logical categories
+  const allChecks = activeAnalysis?.checks || [];
+  const basicChecks = allChecks.filter((c) =>
+    ['kw_title', 'kw_slug', 'kw_meta', 'kw_intro', 'kw_content', 'content_length'].includes(c.id)
+  );
+  const additionalChecks = allChecks.filter((c) =>
+    ['kw_headings', 'img_alt', 'ext_links', 'int_links'].includes(c.id)
+  );
+  const titleChecks = allChecks.filter((c) =>
+    ['title_length', 'title_sentiment', 'title_power', 'title_number'].includes(c.id)
+  );
+  const readabilityChecks = multiResult.readabilityChecks || [];
+
   const goodCount = (c: SEOCheck[] = []) => c.filter((x) => x.status === 'good').length;
   const badCount = (c: SEOCheck[] = []) => c.filter((x) => x.status === 'bad').length;
 
-  const totalBad = badCount(activeAnalysis?.checks) + badCount(multiResult.readabilityChecks);
-  const totalGood = goodCount(activeAnalysis?.checks) + goodCount(multiResult.readabilityChecks);
+  const totalBad = badCount(allChecks) + badCount(readabilityChecks);
+  const totalGood = goodCount(allChecks) + goodCount(readabilityChecks);
+
+  const overallScoreColor =
+    multiResult.overallScore >= 80
+      ? 'text-emerald-500'
+      : multiResult.overallScore >= 50
+      ? 'text-amber-500'
+      : 'text-red-500';
+
+  const overallScoreBg =
+    multiResult.overallScore >= 80
+      ? 'bg-emerald-500/10 border-emerald-500/30'
+      : multiResult.overallScore >= 50
+      ? 'bg-amber-500/10 border-amber-500/30'
+      : 'bg-red-500/10 border-red-500/30';
+
+  const overallScoreLabel =
+    multiResult.overallScore >= 80
+      ? 'Good SEO'
+      : multiResult.overallScore >= 50
+      ? 'Needs Improvement'
+      : 'Poor SEO';
 
   return (
-    <div className={cn('flex flex-col h-full bg-card border-l text-xs', className)}>
+    <div className={cn('flex flex-col h-full bg-card overflow-hidden text-xs', className)}>
       {/* ── Top Header Bar ───────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b bg-muted/20 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b bg-muted/20 shrink-0">
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-md bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
             <Zap className="h-3.5 w-3.5 fill-current" />
           </div>
-          <div>
-            <div className="font-bold text-foreground text-xs flex items-center gap-1">
-              <span>Rank Markup</span>
-              <span className="text-[9px] px-1 py-0.2 rounded bg-primary/10 text-primary font-mono font-bold">PRO</span>
-            </div>
-            <div className="text-[10px] text-muted-foreground">Multi-Keyword Optimization</div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-foreground text-xs">Rank Markup</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+              PRO
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              'px-2 py-0.5 rounded-full font-bold text-[11px] border flex items-center gap-1',
-              multiResult.overallScore >= 80
-                ? 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                : multiResult.overallScore >= 50
-                ? 'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                : 'bg-red-500/12 text-red-600 dark:text-red-400 border-red-500/30'
+              'px-2 py-0.5 rounded-full font-bold text-[11px] border flex items-center gap-1.5 transition-colors',
+              overallScoreBg,
+              overallScoreColor
             )}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
             <span>{multiResult.overallScore}/100</span>
           </div>
 
           {onClose && (
             <button
               onClick={onClose}
-              className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
               title="Close Rank Markup sidebar"
             >
               <X className="h-3.5 w-3.5" />
@@ -1456,476 +1500,701 @@ export function ArticleSEOSidebar({
         </div>
       </div>
 
-      {/* ── Pillar Content & Score Rings Row ─────────────────────────────── */}
-      <div className="px-3 py-2.5 border-b bg-background/50 space-y-2 shrink-0">
-        <div className="flex items-center justify-between text-[11px]">
-          <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-foreground">
-            <input
-              type="checkbox"
-              checked={isPillar}
-              onChange={(e) => onUpdateSeo({ isPillarContent: e.target.checked })}
-              className="rounded accent-primary h-3.5 w-3.5"
-            />
-            <Star className={cn('h-3.5 w-3.5', isPillar ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground')} />
-            <span>Pillar / Cornerstone Post</span>
-          </label>
-          <span className="text-[10px] text-muted-foreground">
-            {isPillar ? 'Stricter 1500w+ rules' : 'Standard 600w+'}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-around pt-1">
-          <ScoreRing score={activeAnalysis?.score || 0} label="SEO Score" size={68} />
-          <div className="w-px h-12 bg-border" />
-          <ScoreRing score={multiResult.readabilityScore} label="Readability" size={68} />
-          <div className="w-px h-12 bg-border" />
-          <div className="text-center">
-            <div className={cn('text-lg font-black', fleschLabel(multiResult.fleschScore).color)}>
-              {multiResult.fleschScore}
+      {/* ── Scrollable Inspector Body ────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto thin-scrollbar">
+        {/* ── 1. Hero Score & Metric Telemetry Card ──────────────────────── */}
+        <div className="p-3 border-b bg-muted/10 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={cn(
+                  'h-11 w-11 rounded-full border-2 flex flex-col items-center justify-center shrink-0 font-black text-sm',
+                  overallScoreBg,
+                  overallScoreColor
+                )}
+              >
+                <span>{multiResult.overallScore}</span>
+                <span className="text-[8px] font-normal opacity-70 leading-none">/100</span>
+              </div>
+              <div>
+                <div className={cn('font-bold text-xs leading-tight', overallScoreColor)}>
+                  {overallScoreLabel}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {totalGood} Passed · {totalBad} Needs Attention
+                </div>
+              </div>
             </div>
-            <div className="text-[9px] text-muted-foreground font-medium">Flesch Ease</div>
-            <div className={cn('text-[9px] font-bold mt-0.5', fleschLabel(multiResult.fleschScore).color)}>
-              {fleschLabel(multiResult.fleschScore).label}
+
+            {/* Pillar Content Switch */}
+            <button
+              type="button"
+              onClick={() => onUpdateSeo({ isPillarContent: !isPillar })}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold border transition-all cursor-pointer select-none',
+                isPillar
+                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold'
+                  : 'bg-background hover:bg-muted text-muted-foreground'
+              )}
+              title="Cornerstone pillar post (1,500+ words required)"
+            >
+              <Star className={cn('h-3 w-3', isPillar ? 'fill-current' : '')} />
+              <span>Pillar Post</span>
+            </button>
+          </div>
+
+          {/* Mini Health Breakdown Pills */}
+          <div className="grid grid-cols-3 gap-1.5 pt-1 text-center">
+            <div className="p-1.5 rounded-lg border bg-background/60">
+              <div className="text-[9px] text-muted-foreground">SEO Score</div>
+              <div className={cn('font-bold text-xs', overallScoreColor)}>
+                {activeAnalysis?.score || 0}
+              </div>
+            </div>
+            <div className="p-1.5 rounded-lg border bg-background/60">
+              <div className="text-[9px] text-muted-foreground">Readability</div>
+              <div className="font-bold text-xs text-blue-500">
+                {multiResult.readabilityScore}
+              </div>
+            </div>
+            <div className="p-1.5 rounded-lg border bg-background/60">
+              <div className="text-[9px] text-muted-foreground">Flesch Ease</div>
+              <div className={cn('font-bold text-xs', fleschLabel(multiResult.fleschScore).color)}>
+                {multiResult.fleschScore}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── 5-Keywords Manager Section ───────────────────────────────────── */}
-      <div className="p-3 border-b bg-card space-y-2.5 shrink-0">
-        <div className="flex items-center justify-between">
-          <label className="text-[11px] font-bold text-foreground flex items-center gap-1">
-            <Target className="h-3 w-3 text-primary" />
-            <span>Focus Keywords</span>
-            <span className="text-[10px] text-muted-foreground font-normal">
-              ({keywordsList.length}/5)
-            </span>
-          </label>
+        {/* ── 2. Focus Keywords Management & Instant Checklist ─────────────── */}
+        <div className="p-3 border-b bg-card space-y-2.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5 text-primary" />
+              <span>Focus Keywords</span>
+              <span className="text-[10px] text-muted-foreground font-normal">
+                ({keywordsList.length}/5)
+              </span>
+            </label>
 
-          {activeAnalysis && activeKw && (
-            <span
-              className={cn(
-                'text-[10px] font-semibold px-1.5 py-0.2 rounded',
-                activeAnalysis.density >= 0.5 && activeAnalysis.density <= 2.5
-                  ? 'bg-emerald-500/10 text-emerald-600'
-                  : 'bg-amber-500/10 text-amber-600'
-              )}
-            >
-              {activeAnalysis.count}x ({activeAnalysis.density.toFixed(1)}%)
-            </span>
-          )}
-        </div>
-
-        {/* Keyword Pills Strip */}
-        <div className="flex flex-wrap gap-1.5">
-          {keywordsList.map((kwItem, idx) => {
-            const isSelected = idx === activeKeywordIdx;
-            const kwScore = multiResult.keywordAnalyses[kwItem]?.score || 0;
-            const isPrimaryKw = idx === 0;
-
-            return (
-              <div
-                key={kwItem}
+            {activeAnalysis && activeKw && (
+              <span
                 className={cn(
-                  'group flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-all cursor-pointer',
-                  isSelected
-                    ? 'border-primary bg-primary/10 text-foreground font-bold shadow-xs'
-                    : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                  'text-[10px] font-semibold px-1.5 py-0.2 rounded',
+                  activeAnalysis.density >= 0.5 && activeAnalysis.density <= 2.5
+                    ? 'bg-emerald-500/10 text-emerald-600'
+                    : 'bg-amber-500/10 text-amber-600'
                 )}
-                onClick={() => setActiveKeywordIdx(idx)}
               >
-                {isPrimaryKw ? (
-                  <span title="Primary Focus Keyword">
-                    <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                {activeAnalysis.count}x ({activeAnalysis.density.toFixed(1)}%)
+              </span>
+            )}
+          </div>
+
+          {/* Keyword Tag Chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {keywordsList.map((kwItem, idx) => {
+              const isSelected = idx === activeKeywordIdx;
+              const kwScore = multiResult.keywordAnalyses[kwItem]?.score || 0;
+              const isPrimaryKw = idx === 0;
+
+              return (
+                <div
+                  key={kwItem}
+                  onClick={() => setActiveKeywordIdx(idx)}
+                  className={cn(
+                    'group flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-all cursor-pointer',
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-foreground font-bold shadow-xs'
+                      : 'border-border bg-background hover:bg-muted text-muted-foreground'
+                  )}
+                >
+                  {isPrimaryKw ? (
+                    <span title="Primary Focus Keyword">
+                      <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetPrimary(idx);
+                      }}
+                      className="opacity-40 group-hover:opacity-100 hover:text-amber-500 transition-opacity"
+                      title="Promote to Primary Keyword"
+                    >
+                      <Star className="h-3 w-3" />
+                    </button>
+                  )}
+
+                  <span className="truncate max-w-[130px]">{kwItem}</span>
+
+                  <span
+                    className={cn(
+                      'text-[9px] font-mono px-1 rounded-full font-bold',
+                      kwScore >= 80
+                        ? 'bg-emerald-500/15 text-emerald-600'
+                        : kwScore >= 50
+                        ? 'bg-amber-500/15 text-amber-600'
+                        : 'bg-red-500/15 text-red-600'
+                    )}
+                  >
+                    {kwScore}
                   </span>
-                ) : (
+
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSetPrimary(idx);
+                      handleRemoveKeyword(idx);
                     }}
-                    className="opacity-40 group-hover:opacity-100 hover:text-amber-500 transition-opacity"
-                    title="Promote to Primary Keyword"
+                    className="opacity-40 group-hover:opacity-100 hover:text-destructive transition-opacity ml-0.5 cursor-pointer"
+                    title="Remove keyword"
                   >
-                    <Star className="h-3 w-3" />
+                    <X className="h-2.5 w-2.5" />
                   </button>
-                )}
+                </div>
+              );
+            })}
+          </div>
 
-                <span className="truncate max-w-[180px]">{kwItem}</span>
+          {/* Add Keyword Form */}
+          {keywordsList.length < 5 && (
+            <div>
+              {!showAddKeyword ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAddKeyword(true)}
+                  className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>
+                    {keywordsList.length === 0 ? 'Set Focus Keyword' : 'Add Secondary Keyword'}
+                  </span>
+                </button>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAddKeyword(newKeywordInput);
+                  }}
+                  className="flex items-center gap-1.5"
+                >
+                  <Input
+                    value={newKeywordInput}
+                    onChange={(e) => setNewKeywordInput(e.target.value)}
+                    placeholder="Enter keyword..."
+                    className="h-7 text-[11px] bg-background flex-1"
+                    autoFocus
+                  />
+                  <Button type="submit" size="sm" className="h-7 text-[10px] px-2.5">
+                    Add
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] px-2"
+                    onClick={() => setShowAddKeyword(false)}
+                  >
+                    Cancel
+                  </Button>
+                </form>
+              )}
+            </div>
+          )}
 
-                <span
+          {/* Quick 5-Point Presence Checklist Strip */}
+          {activeAnalysis && activeKw && (
+            <div className="p-2 rounded-lg border bg-muted/20 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+                <span>Keyword Presence:</span>
+                <span className="font-mono text-[9px] text-primary">{activeKw}</span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 text-center font-medium text-[9px]">
+                <div
                   className={cn(
-                    'text-[9px] font-mono px-1 rounded-full font-bold',
-                    kwScore >= 80 ? 'bg-emerald-500/15 text-emerald-600' : kwScore >= 50 ? 'bg-amber-500/15 text-amber-600' : 'bg-red-500/15 text-red-600'
+                    'py-1 rounded border transition-colors',
+                    activeAnalysis.inTitle
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                      : 'bg-background border-border text-muted-foreground/60'
                   )}
                 >
-                  {kwScore}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveKeyword(idx);
-                  }}
-                  className="opacity-40 group-hover:opacity-100 hover:text-destructive transition-opacity ml-0.5"
-                  title="Remove keyword"
+                  {activeAnalysis.inTitle ? '✓' : '—'} Title
+                </div>
+                <div
+                  className={cn(
+                    'py-1 rounded border transition-colors',
+                    activeAnalysis.inSlug
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                      : 'bg-background border-border text-muted-foreground/60'
+                  )}
                 >
-                  <X className="h-2.5 w-2.5" />
-                </button>
+                  {activeAnalysis.inSlug ? '✓' : '—'} URL
+                </div>
+                <div
+                  className={cn(
+                    'py-1 rounded border transition-colors',
+                    activeAnalysis.inMeta
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                      : 'bg-background border-border text-muted-foreground/60'
+                  )}
+                >
+                  {activeAnalysis.inMeta ? '✓' : '—'} Meta
+                </div>
+                <div
+                  className={cn(
+                    'py-1 rounded border transition-colors',
+                    activeAnalysis.inIntro
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                      : 'bg-background border-border text-muted-foreground/60'
+                  )}
+                >
+                  {activeAnalysis.inIntro ? '✓' : '—'} Intro
+                </div>
+                <div
+                  className={cn(
+                    'py-1 rounded border transition-colors',
+                    activeAnalysis.inHeadings
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                      : 'bg-background border-border text-muted-foreground/60'
+                  )}
+                >
+                  {activeAnalysis.inHeadings ? '✓' : '—'} Headings
+                </div>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
 
-        {/* Add Keyword Input (if < 5) */}
-        {keywordsList.length < 5 && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddKeyword(newKeywordInput);
-            }}
-            className="flex items-center gap-1.5"
-          >
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-              <Input
-                value={newKeywordInput}
-                onChange={(e) => setNewKeywordInput(e.target.value)}
-                placeholder={
-                  keywordsList.length === 0
-                    ? 'Enter Primary Focus Keyword...'
-                    : `Add Secondary Keyword (${keywordsList.length + 1}/5)...`
-                }
-                className="pl-7 pr-2 h-7 text-[11px] bg-background"
-              />
-            </div>
-            <Button type="submit" size="sm" variant="outline" className="h-7 text-[10px] px-2">
-              Add
-            </Button>
-          </form>
-        )}
-
-        {/* Active Keyword Presence Check Badges */}
-        {activeAnalysis && activeKw ? (
-          <div className="flex flex-wrap gap-1 pt-0.5">
-            <span
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
-                activeAnalysis.inTitle ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
-              )}
-            >
-              {activeAnalysis.inTitle ? '✓' : '✕'} Title
-            </span>
-            <span
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
-                activeAnalysis.inSlug ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
-              )}
-            >
-              {activeAnalysis.inSlug ? '✓' : '✕'} URL
-            </span>
-            <span
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
-                activeAnalysis.inMeta ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
-              )}
-            >
-              {activeAnalysis.inMeta ? '✓' : '✕'} Meta
-            </span>
-            <span
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
-                activeAnalysis.inIntro ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
-              )}
-            >
-              {activeAnalysis.inIntro ? '✓' : '✕'} First 100w
-            </span>
-            <span
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[9px] font-medium border flex items-center gap-0.5',
-                activeAnalysis.inHeadings ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-muted/50 border-border text-muted-foreground'
-              )}
-            >
-              {activeAnalysis.inHeadings ? '✓' : '✕'} Headings
-            </span>
-          </div>
-        ) : null}
-
-        {/* Suggested LSI Terms */}
-        {multiResult.suggestedKeywords.length > 0 && keywordsList.length < 5 && (
-          <div className="pt-0.5">
-            <div className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1 mb-1">
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              <span>Suggested related terms:</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {multiResult.suggestedKeywords.slice(0, 5).map((sk) => (
-                <button
-                  key={sk}
-                  type="button"
-                  onClick={() => handleAddKeyword(sk)}
-                  className="px-1.5 py-0.5 text-[10px] rounded border bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors text-muted-foreground"
-                >
-                  +{sk}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Navigation Sub-Tabs Strip ────────────────────────────────────── */}
-      <div className="flex border-b bg-muted/10 shrink-0 px-2 overflow-x-auto">
-        {[
-          { key: 'checks', label: 'Checks', badge: totalBad ? `${totalBad}` : null },
-          { key: 'serp', label: 'SERP' },
-          { key: 'social', label: 'Social' },
-          { key: 'schema', label: 'Schema' },
-          { key: 'stats', label: 'Stats' },
-          { key: 'directives', label: 'Directives' },
-        ].map((t) => (
+        {/* ── 3. Four Segmented Clean Sub-Tabs ────────────────────────────── */}
+        <div className="grid grid-cols-4 border-b bg-muted/20 shrink-0 text-center select-none">
           <button
-            key={t.key}
-            onClick={() => setTab(t.key as any)}
+            type="button"
+            onClick={() => setTab('checks')}
             className={cn(
-              'px-2.5 py-2 text-[11px] font-medium border-b-2 -mb-px transition-colors flex items-center gap-1 whitespace-nowrap',
-              tab === t.key
-                ? 'border-primary text-foreground font-bold'
+              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              tab === 'checks'
+                ? 'border-primary text-foreground bg-card'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
-            <span>{t.label}</span>
-            {t.badge && (
-              <span className="px-1 py-0.2 rounded-full text-[9px] bg-red-500/15 text-red-500 font-bold">
-                {t.badge}
-              </span>
-            )}
+            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+            <span>Checks</span>
           </button>
-        ))}
-      </div>
 
-      {/* ── Tab Content Panels ───────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {/* TAB 1: CHECKS */}
-        {tab === 'checks' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-[11px] border-b pb-2">
-              <span className="font-bold text-foreground">
-                Optimization for: <span className="text-primary font-mono">{activeKw || 'General'}</span>
-              </span>
-              <div className="text-[10px] text-muted-foreground">
-                <span className="text-emerald-500 font-bold">{totalGood} Passed</span> ·{' '}
-                <span className="text-red-500 font-bold">{totalBad} Issues</span>
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => setTab('serp')}
+            className={cn(
+              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              tab === 'serp'
+                ? 'border-primary text-foreground bg-card'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Globe className="h-3 w-3 text-blue-500" />
+            <span>SERP</span>
+          </button>
 
-            {/* Keyword Checks */}
-            <div className="space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Target className="h-3 w-3 text-primary" />
-                <span>Keyword Requirements ({activeAnalysis?.checks.length || 0})</span>
-              </div>
-              {(activeAnalysis?.checks || []).map((c, idx) => (
-                <CheckItem key={c.id} check={c} idx={idx} />
-              ))}
-            </div>
+          <button
+            type="button"
+            onClick={() => setTab('social')}
+            className={cn(
+              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              tab === 'social'
+                ? 'border-primary text-foreground bg-card'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Share2 className="h-3 w-3 text-violet-500" />
+            <span>Social</span>
+          </button>
 
-            {/* Readability Checks */}
-            <div className="space-y-1.5 pt-2 border-t">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <BookOpen className="h-3 w-3 text-blue-500" />
-                <span>Readability & Structure ({multiResult.readabilityChecks.length})</span>
-              </div>
-              {multiResult.readabilityChecks.map((c, idx) => (
-                <CheckItem key={c.id} check={c} idx={idx} />
-              ))}
-            </div>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => setTab('advanced')}
+            className={cn(
+              'py-2 text-[11px] font-semibold border-b-2 transition-all flex items-center justify-center gap-1 cursor-pointer',
+              tab === 'advanced'
+                ? 'border-primary text-foreground bg-card'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Code2 className="h-3 w-3 text-amber-500" />
+            <span>Advanced</span>
+          </button>
+        </div>
 
-        {/* TAB 2: SERP PREVIEW */}
-        {tab === 'serp' && (
-          <div className="space-y-3">
-            <SERPPreview
-              title={seoTitle}
-              meta={seoDesc}
-              slug={slug}
-              keyword={activeKw}
-              device={serpDevice}
-              onDeviceChange={setSerpDevice}
-            />
-
-            <div className="space-y-2.5 pt-2 border-t">
-              <div>
-                <div className="flex justify-between items-center text-[11px] font-semibold mb-1">
-                  <span>SEO Title Tag</span>
-                  <span
-                    className={cn(
-                      seoTitle.length >= 50 && seoTitle.length <= 60
-                        ? 'text-emerald-500'
-                        : seoTitle.length > 60
-                        ? 'text-red-500'
-                        : 'text-amber-500'
+        {/* ── 4. Tab Panels ────────────────────────────────────────────────── */}
+        <div className="p-3 space-y-3">
+          {/* TAB 1: CATEGORIZED ACCORDION CHECKS */}
+          {tab === 'checks' && (
+            <div className="space-y-3">
+              {/* Group 1: Basic SEO */}
+              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleCheckGroup('basic')}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5 text-primary" />
+                    <span>Basic SEO Requirements</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                      {goodCount(basicChecks)}/{basicChecks.length} Passed
+                    </Badge>
+                    {openCheckGroups.basic ? (
+                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
-                  >
-                    {seoTitle.length}/60 chars
-                  </span>
-                </div>
-                <Input
-                  value={seoTitle}
-                  onChange={(e) => onUpdateSeo({ title: e.target.value })}
-                  placeholder={title || 'Page Title (50-60 characters)'}
-                  className="h-8 text-xs bg-background"
-                />
+                  </div>
+                </button>
+                {openCheckGroups.basic && (
+                  <div className="p-2 space-y-1.5 border-t">
+                    {basicChecks.map((c, idx) => (
+                      <CheckItem key={c.id} check={c} idx={idx} />
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div>
-                <div className="flex justify-between items-center text-[11px] font-semibold mb-1">
-                  <span>Meta Description</span>
-                  <span
-                    className={cn(
-                      seoDesc.length >= 120 && seoDesc.length <= 160
-                        ? 'text-emerald-500'
-                        : seoDesc.length > 160
-                        ? 'text-red-500'
-                        : 'text-amber-500'
+              {/* Group 2: Additional SEO */}
+              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleCheckGroup('additional')}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Additional Optimization</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                      {goodCount(additionalChecks)}/{additionalChecks.length} Passed
+                    </Badge>
+                    {openCheckGroups.additional ? (
+                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
-                  >
-                    {seoDesc.length}/160 chars
-                  </span>
-                </div>
-                <textarea
-                  rows={3}
-                  value={seoDesc}
-                  onChange={(e) => onUpdateSeo({ description: e.target.value })}
-                  placeholder="Compelling summary snippet (120-160 characters)..."
-                  className="w-full rounded-md border bg-background p-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                />
+                  </div>
+                </button>
+                {openCheckGroups.additional && (
+                  <div className="p-2 space-y-1.5 border-t">
+                    {additionalChecks.map((c, idx) => (
+                      <CheckItem key={c.id} check={c} idx={idx} />
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {onUpdateSlug && (
-                <div>
-                  <label className="text-[11px] font-semibold block mb-1">URL Permlink Slug</label>
+              {/* Group 3: Title Readability */}
+              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleCheckGroup('title')}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <FileCheck className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Title Readability</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                      {goodCount(titleChecks)}/{titleChecks.length} Passed
+                    </Badge>
+                    {openCheckGroups.title ? (
+                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                </button>
+                {openCheckGroups.title && (
+                  <div className="p-2 space-y-1.5 border-t">
+                    {titleChecks.map((c, idx) => (
+                      <CheckItem key={c.id} check={c} idx={idx} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Group 4: Content Readability */}
+              <div className="rounded-xl border overflow-hidden bg-card shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => toggleCheckGroup('readability')}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/30 font-semibold text-xs hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5 text-violet-500" />
+                    <span>Content Readability</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px] font-mono px-1.5 py-0">
+                      {goodCount(readabilityChecks)}/{readabilityChecks.length} Passed
+                    </Badge>
+                    {openCheckGroups.readability ? (
+                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                </button>
+                {openCheckGroups.readability && (
+                  <div className="p-2 space-y-1.5 border-t">
+                    {readabilityChecks.map((c, idx) => (
+                      <CheckItem key={c.id} check={c} idx={idx} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: SERP SNIPPET PREVIEW & EDITORS */}
+          {tab === 'serp' && (
+            <div className="space-y-3">
+              <SERPPreview
+                title={seoTitle}
+                meta={seoDesc}
+                slug={slug}
+                keyword={activeKw}
+                device={serpDevice}
+                onDeviceChange={setSerpDevice}
+              />
+
+              <div className="space-y-3 pt-2 border-t">
+                {/* SEO Title Input with length bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[11px] font-semibold">
+                    <span>SEO Title Tag</span>
+                    <span
+                      className={cn(
+                        seoTitle.length >= 50 && seoTitle.length <= 60
+                          ? 'text-emerald-500'
+                          : seoTitle.length > 60
+                          ? 'text-red-500'
+                          : 'text-amber-500'
+                      )}
+                    >
+                      {seoTitle.length}/60 chars
+                    </span>
+                  </div>
                   <Input
-                    value={slug}
-                    onChange={(e) => onUpdateSlug(e.target.value)}
-                    placeholder="article-slug"
+                    value={seoTitle}
+                    onChange={(e) => onUpdateSeo({ title: e.target.value })}
+                    placeholder={title || 'Page Title (50-60 characters)'}
+                    className="h-8 text-xs bg-background"
+                  />
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-1">
+                    <div
+                      className={cn(
+                        'h-full transition-all',
+                        seoTitle.length >= 50 && seoTitle.length <= 60
+                          ? 'bg-emerald-500'
+                          : seoTitle.length > 60
+                          ? 'bg-red-500'
+                          : 'bg-amber-500'
+                      )}
+                      style={{ width: `${Math.min(100, (seoTitle.length / 60) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Slug Input */}
+                {onUpdateSlug && (
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold block">URL Permlink Slug</label>
+                    <Input
+                      value={slug}
+                      onChange={(e) => onUpdateSlug(e.target.value)}
+                      placeholder="article-slug"
+                      className="h-8 text-xs font-mono bg-background"
+                    />
+                  </div>
+                )}
+
+                {/* Meta Description Input with length bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[11px] font-semibold">
+                    <span>Meta Description</span>
+                    <span
+                      className={cn(
+                        seoDesc.length >= 120 && seoDesc.length <= 160
+                          ? 'text-emerald-500'
+                          : seoDesc.length > 160
+                          ? 'text-red-500'
+                          : 'text-amber-500'
+                      )}
+                    >
+                      {seoDesc.length}/160 chars
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={seoDesc}
+                    onChange={(e) => onUpdateSeo({ description: e.target.value })}
+                    placeholder="Compelling summary snippet (120-160 characters)..."
+                    className="w-full rounded-md border bg-background p-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+                  />
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-1">
+                    <div
+                      className={cn(
+                        'h-full transition-all',
+                        seoDesc.length >= 120 && seoDesc.length <= 160
+                          ? 'bg-emerald-500'
+                          : seoDesc.length > 160
+                          ? 'bg-red-500'
+                          : 'bg-amber-500'
+                      )}
+                      style={{ width: `${Math.min(100, (seoDesc.length / 160) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: SOCIAL CARDS */}
+          {tab === 'social' && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold block">
+                  Social Image URL (Open Graph)
+                </label>
+                <Input
+                  value={ogImg}
+                  onChange={(e) => onUpdateSeo({ ogImage: e.target.value })}
+                  placeholder="https://.../cover-1200x630.jpg"
+                  className="h-8 text-xs font-mono bg-background"
+                />
+              </div>
+
+              <SocialPreview
+                title={seoTitle}
+                meta={seoDesc}
+                slug={slug}
+                ogImage={ogImg}
+                siteName={siteName}
+              />
+            </div>
+          )}
+
+          {/* TAB 4: ADVANCED SCHEMA, DIRECTIVES & STATS */}
+          {tab === 'advanced' && (
+            <div className="space-y-4">
+              {/* Schema Generator */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <Code2 className="h-3.5 w-3.5 text-primary" />
+                  <span>Structured Schema Markup</span>
+                </div>
+                <SchemaPanel
+                  inputs={{
+                    title: seoTitle,
+                    description: seoDesc,
+                    slug,
+                    content,
+                    imageUrl: ogImg,
+                    siteName,
+                  }}
+                />
+              </div>
+
+              {/* Robots & Canonical Directives */}
+              <div className="space-y-3 pt-3 border-t">
+                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-blue-500" />
+                  <span>Robots Directives &amp; Canonical</span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-muted-foreground text-[10px] block">
+                    Robots Meta Tag
+                  </label>
+                  <select
+                    value={robots}
+                    onChange={(e) => onUpdateSeo({ robots: e.target.value })}
+                    className="w-full h-8 rounded border bg-background px-2 text-xs"
+                  >
+                    <option value="index, follow">index, follow (Standard Default)</option>
+                    <option value="noindex, follow">noindex, follow (Do not index, follow links)</option>
+                    <option value="noindex, nofollow">noindex, nofollow (Complete exclusion)</option>
+                    <option value="index, nofollow">index, nofollow (Index page, ignore links)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-muted-foreground text-[10px] block">
+                    Canonical URL Override
+                  </label>
+                  <Input
+                    value={canonical}
+                    onChange={(e) => onUpdateSeo({ canonical: e.target.value })}
+                    placeholder="https://example.com/canonical-url"
                     className="h-8 text-xs font-mono bg-background"
                   />
+                  <p className="text-[10px] text-muted-foreground">
+                    Leave blank to use the canonical permalink.
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
 
-        {/* TAB 3: SOCIAL PREVIEW */}
-        {tab === 'social' && (
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] font-semibold block mb-1">Social Featured Image URL (Open Graph)</label>
-              <Input
-                value={ogImg}
-                onChange={(e) => onUpdateSeo({ ogImage: e.target.value })}
-                placeholder="https://.../cover-1200x630.jpg"
-                className="h-8 text-xs font-mono bg-background"
-              />
-            </div>
-            <SocialPreview
-              title={seoTitle}
-              meta={seoDesc}
-              slug={slug}
-              ogImage={ogImg}
-              siteName={siteName}
-            />
-          </div>
-        )}
+              {/* Telemetry Metrics */}
+              <div className="space-y-2 pt-3 border-t">
+                <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <Gauge className="h-3.5 w-3.5 text-violet-500" />
+                  <span>Content Telemetry &amp; Metrics</span>
+                </div>
 
-        {/* TAB 4: SCHEMA GENERATOR */}
-        {tab === 'schema' && (
-          <SchemaPanel
-            inputs={{
-              title: seoTitle,
-              description: seoDesc,
-              slug,
-              content,
-              imageUrl: ogImg,
-              siteName,
-            }}
-          />
-        )}
-
-        {/* TAB 5: CONTENT STATS CHUNK */}
-        {tab === 'stats' && (
-          <div className="space-y-3">
-            <div className="text-[11px] font-bold text-foreground">Content Metrics & Telemetry</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">Word Count</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.wordCount}</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">Reading Time</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.readingTimeMin} min</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">Headings</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.headingCount}</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">Paragraphs</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.paragraphCount}</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">Internal Links</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.internalLinkCount}</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20">
-                <div className="text-muted-foreground text-[10px]">External Links</div>
-                <div className="text-lg font-black text-foreground">{multiResult.stats.externalLinkCount}</div>
-              </div>
-              <div className="p-2.5 rounded-lg border bg-muted/20 col-span-2">
-                <div className="text-muted-foreground text-[10px]">Images with Alt Text</div>
-                <div className="text-base font-black text-foreground">
-                  {multiResult.stats.imagesWithAltCount} / {multiResult.stats.imageCount} images
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">Words</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.wordCount}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">Read Time</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.readingTimeMin} min
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">Headings</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.headingCount}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">Paragraphs</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.paragraphCount}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">Internal Links</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.internalLinkCount}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-muted/20">
+                    <div className="text-muted-foreground text-[10px]">External Links</div>
+                    <div className="text-base font-bold text-foreground">
+                      {multiResult.stats.externalLinkCount}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* TAB 6: DIRECTIVES */}
-        {tab === 'directives' && (
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="font-semibold block mb-1">Robots Meta Directive</label>
-              <select
-                value={robots}
-                onChange={(e) => onUpdateSeo({ robots: e.target.value })}
-                className="w-full h-8 rounded border bg-background px-2 text-xs"
-              >
-                <option value="index, follow">index, follow (Standard Default)</option>
-                <option value="noindex, follow">noindex, follow (Do not index, follow links)</option>
-                <option value="noindex, nofollow">noindex, nofollow (Complete exclusion)</option>
-                <option value="index, nofollow">index, nofollow (Index page, ignore links)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="font-semibold block mb-1">Canonical URL Override</label>
-              <Input
-                value={canonical}
-                onChange={(e) => onUpdateSeo({ canonical: e.target.value })}
-                placeholder="https://example.com/canonical-url"
-                className="h-8 text-xs font-mono bg-background"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Leave blank to automatically use the canonical permalink.
-              </p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -2018,7 +2287,7 @@ export function SEOAnalyzerWithEditor() {
       </div>
 
       {/* Rank Markup Sidebar Right */}
-      <div className="w-full sm:w-[440px] md:w-[480px] lg:w-[520px] xl:w-[560px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-xl border shadow-xs">
+      <div className="w-full sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[380px] shrink-0 flex flex-col min-h-0 overflow-hidden rounded-xl border shadow-xs">
         <ArticleSEOSidebar
           title={title}
           slug={slug}
