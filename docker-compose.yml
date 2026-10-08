@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: headless-postgres
+    container_name: markup-postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -11,30 +11,58 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: headless-redis
+    container_name: markup-redis
     restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   admin:
     build:
       context: .
       dockerfile: apps/admin/Dockerfile
-    container_name: headless-admin
+    container_name: markup-admin
     restart: always
     environment:
       DATABASE_URL: "postgresql://postgres:password@postgres:5432/headless_cms?schema=public"
       JWT_SECRET: "enterprise-headless-cms-secret-jwt-key-minimum-32-chars"
       REDIS_URL: "redis://redis:6379"
       PORT: 3000
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_API_URL: "http://localhost:3000/api/v1"
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web-demo:
+    build:
+      context: .
+      dockerfile: apps/web-demo/Dockerfile
+    container_name: markup-web-demo
+    restart: always
+    environment:
+      PORT: 3001
+      NEXT_PUBLIC_API_URL: "http://admin:3000/api/v1"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - admin
 
 volumes:
   postgres_data:
