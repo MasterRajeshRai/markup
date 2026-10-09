@@ -5,8 +5,11 @@ import {
   sendCampaignBroadcast,
   deleteCampaign,
 } from '@/lib/newsletter-service';
+import { guard } from '@/lib/security/guard';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const campaigns = await getCampaigns();
     return NextResponse.json({ success: true, data: campaigns });
@@ -16,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
 
@@ -33,6 +38,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

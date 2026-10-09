@@ -4,6 +4,7 @@ import { resolveSiteContext } from '@/lib/site-context';
 import { loadComments } from '@/lib/comments-store';
 import { getNewsletterStats } from '@/lib/newsletter-service';
 import { getAdUnits, getAdsConfig } from '@/lib/ads-service';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,8 @@ function getTimeBuckets(timeframe: Timeframe): TimeBucket[] {
 }
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, {});
+  if (!sec.ok) return sec.response;
   const startTime = performance.now();
   try {
     const site = await resolveSiteContext(req);

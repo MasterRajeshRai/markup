@@ -2,10 +2,13 @@ import { prisma } from '@headless/database';
 import { resolveSiteContext } from '@/lib/site-context';
 import { getMockFolders, addMockFolder, deleteMockFolder } from '@/lib/mock-media-store';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { permission: 'media.read' });
+  if (!sec.ok) return sec.response;
   try {
     const site = await resolveSiteContext(req);
     const siteId = site?.id || 'site_default_01';
@@ -25,6 +28,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'media.update' });
+  if (!sec.ok) return sec.response;
   try {
     const site = await resolveSiteContext(req);
     const siteId = site?.id || 'site_default_01';
@@ -59,6 +64,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sec = await guard(req, { permission: 'media.update' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

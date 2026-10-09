@@ -1,6 +1,7 @@
 import { prisma } from '@headless/database';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'media.read', apiKeyScope: 'content:read' });
+  if (!sec.ok) return sec.response;
   try {
     const { id } = await params;
     const site = await resolveSiteContext(req);

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSliders, saveSlider, duplicateSlider } from '@/lib/slider-service';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'sliders.read', apiKeyScope: 'content:read' });
+  if (!sec.ok) return sec.response;
   try {
     const sliders = await getSliders();
     
@@ -35,6 +38,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'sliders.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
 

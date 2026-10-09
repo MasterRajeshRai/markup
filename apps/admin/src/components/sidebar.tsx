@@ -264,6 +264,13 @@ const SECTIONS: NavSection[] = [
     title: 'Security & Access',
     items: [
       {
+        title: 'Security Center',
+        href: '/admin/security',
+        icon: ShieldCheck,
+        iconColor: 'text-emerald-400',
+        requiredPermission: 'settings.manage',
+      },
+      {
         title: 'Users',
         href: '/admin/users',
         icon: Users,

@@ -1,6 +1,7 @@
 import { prisma } from '@headless/database';
 import { NextRequest, NextResponse } from 'next/server';
 import os from 'os';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,8 @@ function withTimeout<T>(promise: Promise<T>, ms = 1500): Promise<T> {
 }
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { permission: 'settings.manage' });
+  if (!sec.ok) return sec.response;
   const memory = process.memoryUsage();
   const runtimeInfo = {
     nodeVersion: process.version,

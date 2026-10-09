@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
   const openApiSpec = {
     openapi: '3.0.3',
     info: {

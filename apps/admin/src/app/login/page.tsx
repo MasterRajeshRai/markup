@@ -32,18 +32,22 @@ function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Mode: 'login' | 'forgot' | 'reset'
+  // Mode: 'login' | 'forgot' | 'reset' | 'mfa'
   const initialMode = searchParams.get('mode') === 'reset' ? 'reset' : 'login';
   const initialToken = searchParams.get('token') || '';
   const initialEmail = searchParams.get('email') || 'admin@headless.io';
   const redirectPath = searchParams.get('redirect') || '/admin';
 
-  const [mode, setMode] = useState<'login' | 'forgot' | 'reset'>(initialMode);
+  const [mode, setMode] = useState<'login' | 'forgot' | 'reset' | 'mfa'>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('AdminPass123!');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockActive, setCapsLockActive] = useState(false);
+
+  // MFA Challenge state
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   // Reset password states
   const [resetToken, setResetToken] = useState(initialToken);
@@ -85,6 +89,13 @@ function LoginPage() {
         return;
       }
 
+      if (data.mfaRequired && data.mfaToken) {
+        setMfaToken(data.mfaToken);
+        setMode('mfa');
+        setLoading(false);
+        return;
+      }
+
       setSuccessMessage('Authentication verified. Redirecting to control plane...');
       setTimeout(() => {
         router.push(redirectPath);
@@ -92,6 +103,44 @@ function LoginPage() {
       }, 600);
     } catch {
       setError('Network error while connecting to authentication service.');
+      setLoading(false);
+    }
+  };
+
+  // MFA Challenge handler
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaToken) {
+      setError('Two-factor session expired. Please sign in again.');
+      setMode('login');
+      return;
+    }
+
+    setError(null);
+    setSuccessMessage(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/v1/auth/mfa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mfaToken, code: mfaCode.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Invalid verification code');
+        setLoading(false);
+        return;
+      }
+
+      setSuccessMessage('Two-factor credentials verified. Redirecting...');
+      setTimeout(() => {
+        router.push(redirectPath);
+        router.refresh();
+      }, 600);
+    } catch {
+      setError('Network error while verifying 2FA challenge.');
       setLoading(false);
     }
   };
@@ -364,6 +413,68 @@ function LoginPage() {
                   </button>
                 </div>
               </div>
+            </form>
+          )}
+
+          {/* MODE: TWO-FACTOR AUTHENTICATION CHALLENGE */}
+          {mode === 'mfa' && (
+            <form onSubmit={handleMfaVerify} className="space-y-4">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-slate-300 leading-relaxed">
+                  Two-Factor Authentication is active for this account. Enter the 6-digit verification code from your authenticator app (Google Authenticator, Authy) or an 8-character backup code.
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                  <span>Authentication Code</span>
+                  <span className="text-[10px] text-slate-500">TOTP or Backup Code</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  required
+                  autoComplete="one-time-code"
+                  maxLength={16}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  placeholder="123456"
+                  className="w-full px-3.5 py-2.5 text-center font-mono text-lg tracking-widest bg-slate-950 border border-slate-800 rounded-lg text-amber-400 placeholder-slate-600 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !mfaCode.trim()}
+                className="w-full py-2.5 px-4 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Verify & Continue</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setMfaCode('');
+                  setError(null);
+                  setSuccessMessage(null);
+                }}
+                className="flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 w-full pt-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Return to Sign In</span>
+              </button>
             </form>
           )}
 

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadSettings, saveSettings } from '@/lib/comments-store';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, {});
+  if (!sec.ok) return sec.response;
   try {
     const settings = loadSettings();
     return NextResponse.json({ settings });
@@ -16,6 +19,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  const sec = await guard(req, { permission: 'comments.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const current = loadSettings();

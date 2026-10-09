@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bulkUpdateStatus } from '@/lib/comments-store';
 import { CommentStatus } from '@headless/core';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'comments.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { ids, status } = body;

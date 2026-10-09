@@ -1,5 +1,6 @@
 import { prisma, Prisma } from '@headless/database';
 import { signWebhookPayload } from '@headless/core';
+import { assertSafeOutboundUrl, UnsafeUrlError } from '@/lib/security/ssrf';
 
 export interface DispatchWebhookParams {
   siteId: string;
@@ -68,8 +69,12 @@ export async function executeWebhookDelivery(
   let responseBody: string | null = null;
   let errorMsg: string | null = null;
   let success = false;
+  let isSsrfBlocked = false;
 
   try {
+    // 1. SSRF validation: ensure destination does not resolve to private, loopback, or metadata addresses
+    await assertSafeOutboundUrl(url);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
@@ -86,7 +91,12 @@ export async function executeWebhookDelivery(
     responseBody = text.slice(0, 1000); // truncate response for storage
     success = res.ok;
   } catch (err: unknown) {
-    errorMsg = err instanceof Error ? err.message : String(err);
+    if (err instanceof UnsafeUrlError) {
+      isSsrfBlocked = true;
+      errorMsg = `[SSRF Blocked] ${err.message}`;
+    } else {
+      errorMsg = err instanceof Error ? err.message : String(err);
+    }
   }
 
   const durationMs = Date.now() - startTime;
@@ -111,8 +121,8 @@ export async function executeWebhookDelivery(
     // Database offline
   }
 
-  // Retry with exponential backoff if failed and attempts < 3
-  if (!success && attempt < 3) {
+  // Retry with exponential backoff if failed and attempts < 3 (never retry SSRF blocked targets)
+  if (!success && !isSsrfBlocked && attempt < 3) {
     const backoffSeconds = Math.pow(2, attempt) * 5; // 10s, 20s
     setTimeout(() => {
       executeWebhookDelivery(webhookId, url, secret, event, payload, attempt + 1).catch(() => {});

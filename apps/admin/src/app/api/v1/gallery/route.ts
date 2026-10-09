@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { galleryService } from '@/lib/gallery-service';
+import { galleryService } from '@/lib/gallery-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+  const sec = await guard(request, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(request.url);
     const albumSlug = searchParams.get('album') || searchParams.get('slug');
@@ -44,6 +48,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'media.update' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     
@@ -76,6 +82,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const sec = await guard(request, { permission: 'media.update' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     if (!body.slug) {
@@ -95,6 +103,8 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const sec = await guard(request, { permission: 'media.update' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');

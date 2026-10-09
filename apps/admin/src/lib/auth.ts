@@ -1,5 +1,5 @@
 import { prisma, type User } from '@headless/database';
-import { hasPermission, type PermissionAction, type UserAuthContext } from '@headless/core';
+import { hasPermission, hashToken, type PermissionAction, type UserAuthContext } from '@headless/core';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
@@ -42,8 +42,11 @@ export async function getAdminSession(req?: NextRequest): Promise<AdminAuthSessi
   }
 
   try {
-    const session = await prisma.session.findUnique({
-      where: { token },
+    const hashed = hashToken(token);
+    const session = await prisma.session.findFirst({
+      where: {
+        OR: [{ token: hashed }, { token }],
+      },
       include: {
         user: {
           include: {
@@ -64,6 +67,11 @@ export async function getAdminSession(req?: NextRequest): Promise<AdminAuthSessi
         },
       },
     });
+
+    // Auto-migrate legacy unhashed token at rest
+    if (session && session.token === token) {
+      prisma.session.update({ where: { id: session.id }, data: { token: hashed } }).catch(() => {});
+    }
 
     if (session && session.expiresAt >= new Date() && session.user.isActive) {
       // Flatten roles and permissions

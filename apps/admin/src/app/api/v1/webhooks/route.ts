@@ -2,6 +2,7 @@ import { prisma, Prisma } from '@headless/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
+import { parseOutboundUrl } from '@/lib/security/ssrf';
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -69,9 +70,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      new URL(url);
-    } catch {
-      return NextResponse.json({ error: 'Invalid webhook URL format' }, { status: 400 });
+      parseOutboundUrl(url);
+    } catch (urlErr: any) {
+      return NextResponse.json({ error: `Invalid or prohibited webhook URL: ${urlErr.message}` }, { status: 400 });
     }
 
     const signingSecret = secret || crypto.randomBytes(24).toString('hex');

@@ -12,8 +12,11 @@ import {
   setAdsTxtContent,
   getAdsAnalytics,
 } from '@/lib/ads-service';
+import { guard } from '@/lib/security/guard';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'ads.manage', apiKeyScope: 'content:read' });
+  if (!sec.ok) return sec.response;
   const settings = getAdsConfig();
   const adUnits = getAdUnits();
   const adsTxt = getAdsTxt();
@@ -29,6 +32,8 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const sec = await guard(req, { permission: 'ads.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { settings, adUnits, adsTxt } = body;
@@ -56,6 +61,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'ads.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { name, slotId, placement, format, deviceTargeting, customFallbackHtml } = body;
@@ -90,6 +97,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sec = await guard(req, { permission: 'ads.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

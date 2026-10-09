@@ -4,8 +4,12 @@ import {
   getCampaigns,
   subscribePublic,
 } from '@/lib/newsletter-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.read' });
+  if (!sec.ok) return sec.response;
   try {
     const stats = await getNewsletterStats();
     const campaigns = await getCampaigns();
@@ -21,6 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { public: true, rate: RATE_LIMITS.publicWrite });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     const result = await subscribePublic(body);

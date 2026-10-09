@@ -6,10 +6,14 @@ import {
 } from '@/lib/comments-store';
 import { resolveSiteContext } from '@/lib/site-context';
 import { CommentStatus } from '@headless/core';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
   try {
     const site = await resolveSiteContext(req).catch(() => null);
     const { searchParams } = req.nextUrl;
@@ -48,6 +52,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.publicWrite });
+  if (!sec.ok) return sec.response;
   try {
     const site = await resolveSiteContext(req).catch(() => null);
     const body = await req.json();

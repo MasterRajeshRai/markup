@@ -1171,10 +1171,19 @@ export function SERPPreview({
   const t = (title || 'Page Title').slice(0, 60) + (title.length > 60 ? '…' : '');
   const d = (meta || 'Add a compelling meta description to describe your page and attract organic clicks from search results.').slice(0, 160) + (meta.length > 160 ? '…' : '');
 
-  const highlight = (text: string) => {
-    if (!keyword) return text;
-    const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(re, '<strong class="font-bold text-foreground">$1</strong>');
+  const renderHighlighted = (text: string) => {
+    if (!keyword || !keyword.trim()) return text;
+    const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = text.split(new RegExp(`(${escapedKw})`, 'gi'));
+    return parts.map((part, i) =>
+      part.toLowerCase() === keyword.toLowerCase() ? (
+        <strong key={i} className="font-bold text-foreground">
+          {part}
+        </strong>
+      ) : (
+        part
+      )
+    );
   };
 
   return (
@@ -1217,14 +1226,12 @@ export function SERPPreview({
             </div>
             <span className="truncate">{url}</span>
           </div>
-          <div
-            className="text-[17px] leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-normal line-clamp-1"
-            dangerouslySetInnerHTML={{ __html: highlight(t) }}
-          />
-          <div
-            className="text-xs text-muted-foreground leading-relaxed line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: highlight(d) }}
-          />
+          <div className="text-[17px] leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-normal line-clamp-1">
+            {renderHighlighted(t)}
+          </div>
+          <div className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+            {renderHighlighted(d)}
+          </div>
         </div>
       ) : (
         <div className="p-3 rounded-2xl bg-background border shadow-xs space-y-2 text-left max-w-sm mx-auto">
@@ -1237,14 +1244,12 @@ export function SERPPreview({
               <div className="text-[10px] text-muted-foreground truncate">{url}</div>
             </div>
           </div>
-          <div
-            className="text-[16px] font-medium leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: highlight(t) }}
-          />
-          <div
-            className="text-xs text-muted-foreground leading-snug line-clamp-3"
-            dangerouslySetInnerHTML={{ __html: highlight(d) }}
-          />
+          <div className="text-[16px] font-medium leading-snug text-blue-600 dark:text-blue-400 hover:underline cursor-pointer line-clamp-2">
+            {renderHighlighted(t)}
+          </div>
+          <div className="text-xs text-muted-foreground leading-snug line-clamp-3">
+            {renderHighlighted(d)}
+          </div>
         </div>
       )}
 

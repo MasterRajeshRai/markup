@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export interface FormSubmission {
   id: string;
@@ -100,6 +102,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'forms.read' });
+  if (!sec.ok) return sec.response;
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   const statusFilter = searchParams.get('status') || 'ALL';
@@ -129,6 +133,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.publicWrite });
+  if (!sec.ok) return sec.response;
   try {
     const { id } = await params;
     const body = await req.json();
@@ -168,6 +174,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'forms.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { id } = await params;
     const body = await req.json();

@@ -4,6 +4,7 @@ import {
   executeMediaPipeline,
   DEFAULT_CROP_PRESETS,
   toSeoFriendlyName,
+  detectImageMagicBytes,
   type CropPresetDefinition,
 } from '@headless/core/server';
 import { getAdminSession } from '@/lib/auth';
@@ -11,6 +12,9 @@ import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
 import { dispatchWebhooks } from '@/lib/webhooks';
 import { addMockMedia, upsertMockJob } from '@/lib/mock-media-store';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
+import { sanitizeFilename } from '@/lib/security/sanitize';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
@@ -29,14 +33,16 @@ const localStorage = new LocalStorageDriver({
   publicPathPrefix: process.env.STORAGE_PUBLIC_URL || '/uploads',
 });
 
-// Allowed safe MIME types for upload
+// Dangerous extensions that could execute scripts if requested directly
+const DANGEROUS_EXTENSIONS = /\.(html?|svg|xhtml|xml|php\d*|pht|phtml|phar|exe|dll|bat|cmd|sh|cgi|pl|py|jar|jsp|asp|aspx|vbs|js|mjs|cjs|ts)$/i;
+
+// Allowed safe MIME types for upload (SVGs disallowed to prevent stored XSS attacks)
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
   'image/tiff',
-  'image/svg+xml',
   'video/mp4',
   'video/webm',
   'audio/mpeg',
@@ -61,16 +67,13 @@ const BITMAP_IMAGE_MIMES = new Set([
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'media.upload', rate: RATE_LIMITS.upload });
+  if (!sec.ok) return sec.response;
+  const adminSession = sec.session;
+
   try {
     const site = await resolveSiteContext(req);
     const siteId = site?.id || 'site_default_01';
-
-    let adminSession: any = null;
-    try {
-      adminSession = await getAdminSession(req);
-    } catch {
-      adminSession = null;
-    }
 
     const formData = await req.formData();
     const folderId = formData.get('folderId') as string | null;
@@ -131,6 +134,13 @@ export async function POST(req: NextRequest) {
     const jobsCreated: string[] = [];
 
     for (const file of files) {
+      if (DANGEROUS_EXTENSIONS.test(file.name)) {
+        return NextResponse.json(
+          { error: `File "${file.name}" has an unsafe file extension prohibited for security reasons.` },
+          { status: 400 }
+        );
+      }
+
       if (!ALLOWED_MIME_TYPES.has(file.type)) {
         return NextResponse.json(
           { error: `File type "${file.type}" is not supported or prohibited for security reasons.` },
@@ -147,8 +157,15 @@ export async function POST(req: NextRequest) {
 
       const buffer = Buffer.from(await file.arrayBuffer());
 
-      // If bitmap image, route through Auto-Crop -> JPEG -> WebP -> Cloudflare R2 Pipeline
+      // If bitmap image, verify magic bytes and route through Auto-Crop -> JPEG -> WebP -> Cloudflare R2 Pipeline
       if (BITMAP_IMAGE_MIMES.has(file.type)) {
+        const magic = detectImageMagicBytes(buffer);
+        if (!magic || !BITMAP_IMAGE_MIMES.has(magic.mimeType)) {
+          return NextResponse.json(
+            { error: `File content for "${file.name}" does not match a valid bitmap image.` },
+            { status: 400 }
+          );
+        }
         const tempFileId = crypto.randomUUID();
         const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         jobsCreated.push(jobId);
@@ -459,7 +476,17 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // Non-image upload: PDFs, docs, audio, video
-        const uploadResult = await localStorage.upload(buffer, file.name, file.type);
+        if (file.type === 'application/pdf') {
+          if (buffer.length < 5 || buffer.subarray(0, 5).toString('utf-8') !== '%PDF-') {
+            return NextResponse.json(
+              { error: `File "${file.name}" is not a valid PDF document.` },
+              { status: 400 }
+            );
+          }
+        }
+
+        const safeFilename = sanitizeFilename(file.name);
+        const uploadResult = await localStorage.upload(buffer, safeFilename, file.type);
         let mediaRecord: any = null;
 
         try {
@@ -469,13 +496,13 @@ export async function POST(req: NextRequest) {
                 siteId,
                 folderId: folderId || null,
                 filename: path.basename(uploadResult.path),
-                originalName: file.name,
+                originalName: safeFilename,
                 mimeType: file.type,
                 size: uploadResult.size,
                 storageDriver: 'local',
                 path: uploadResult.path,
                 publicUrl: uploadResult.publicUrl,
-                altText: file.name.replace(/\.[^/.]+$/, ''),
+                altText: safeFilename.replace(/\.[^/.]+$/, ''),
                 createdById: adminSession?.user?.id,
               },
             }),
@@ -485,12 +512,12 @@ export async function POST(req: NextRequest) {
           mediaRecord = {
             id: `med_${Date.now()}`,
             filename: path.basename(uploadResult.path),
-            originalName: file.name,
+            originalName: safeFilename,
             mimeType: file.type,
             size: uploadResult.size,
             storageDriver: 'local',
             publicUrl: uploadResult.publicUrl,
-            altText: file.name.replace(/\.[^/.]+$/, ''),
+            altText: safeFilename.replace(/\.[^/.]+$/, ''),
             variants: [],
             mediaVariants: [],
             folderId: folderId || null,
@@ -513,7 +540,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[MediaUploadPOST] Error:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to process file upload' },
+      { error: 'Failed to process file upload. Please verify file integrity and try again.' },
       { status: 500 }
     );
   }

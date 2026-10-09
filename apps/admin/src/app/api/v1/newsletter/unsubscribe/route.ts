@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unsubscribePublic } from '@/lib/newsletter-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export async function GET(request: NextRequest) {
+  const sec = await guard(request, { public: true, rate: RATE_LIMITS.publicWrite });
+  if (!sec.ok) return sec.response;
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email');
 
@@ -40,6 +44,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { public: true, rate: RATE_LIMITS.publicWrite });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     if (!body.email) {

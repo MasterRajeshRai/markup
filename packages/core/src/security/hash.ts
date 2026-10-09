@@ -1,37 +1,92 @@
 import crypto from 'crypto';
 
-const PBKDF2_ITERATIONS = 100_000;
+/** Iteration count for newly created hashes (OWASP guidance for PBKDF2-HMAC-SHA512 is 210k). */
+const PBKDF2_ITERATIONS = 210_000;
+/** Iteration count used by the legacy `salt:hash` format. */
+const LEGACY_PBKDF2_ITERATIONS = 100_000;
 const KEY_LENGTH = 64;
 const DIGEST = 'sha512';
+const HASH_PREFIX = 'pbkdf2-sha512';
 
-/**
- * Hash a password securely using PBKDF2 with SHA-512 and random salt
- */
-export async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex');
+function derive(password: string, salt: string, iterations: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH, DIGEST, (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
+    crypto.pbkdf2(password, salt, iterations, KEY_LENGTH, DIGEST, (err, derivedKey) => {
+      if (err) return reject(err);
+      resolve(derivedKey);
     });
   });
 }
 
+/** Parses either `pbkdf2-sha512$<iterations>$<salt>$<hash>` or the legacy `<salt>:<hash>`. */
+function parseStoredHash(stored: string): { iterations: number; salt: string; key: string } | null {
+  if (typeof stored !== 'string') return null;
+  if (stored.startsWith(`${HASH_PREFIX}$`)) {
+    const [, iter, salt, key] = stored.split('$');
+    const iterations = parseInt(iter, 10);
+    if (!salt || !key || !Number.isFinite(iterations) || iterations < 1000) return null;
+    return { iterations, salt, key };
+  }
+  const [salt, key] = stored.split(':');
+  if (!salt || !key) return null;
+  return { iterations: LEGACY_PBKDF2_ITERATIONS, salt, key };
+}
+
 /**
- * Verify a password against a stored salt:hash string using timing-safe comparison
+ * Hash a password securely using PBKDF2 with SHA-512 and random salt.
+ * Output is self-describing so the work factor can be raised later.
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derivedKey = await derive(password, salt, PBKDF2_ITERATIONS);
+  return `${HASH_PREFIX}$${PBKDF2_ITERATIONS}$${salt}$${derivedKey.toString('hex')}`;
+}
+
+/**
+ * Verify a password against a stored hash using timing-safe comparison.
+ * Accepts both the current versioned format and the legacy `salt:hash` format.
  */
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  const [salt, key] = storedHash.split(':');
-  if (!salt || !key) return false;
+  const parsed = parseStoredHash(storedHash);
+  if (!parsed) return false;
 
-  return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH, DIGEST, (err, derivedKey) => {
-      if (err) reject(err);
-      const keyBuffer = Buffer.from(key, 'hex');
-      const match = crypto.timingSafeEqual(keyBuffer, derivedKey);
-      resolve(match);
-    });
-  });
+  const derivedKey = await derive(password, parsed.salt, parsed.iterations);
+  const keyBuffer = Buffer.from(parsed.key, 'hex');
+  if (keyBuffer.length !== derivedKey.length) return false;
+  return crypto.timingSafeEqual(keyBuffer, derivedKey);
+}
+
+/**
+ * True when a stored hash uses a weaker/legacy format and should be re-hashed on next successful login.
+ */
+export function passwordNeedsRehash(storedHash: string): boolean {
+  const parsed = parseStoredHash(storedHash);
+  if (!parsed) return true;
+  return !storedHash.startsWith(`${HASH_PREFIX}$`) || parsed.iterations < PBKDF2_ITERATIONS;
+}
+
+/**
+ * Burn roughly the same CPU time as a real verification. Used for unknown users so response
+ * timing does not reveal whether an account exists.
+ */
+export async function dummyPasswordVerify(password: string): Promise<void> {
+  await derive(password, 'dummy-salt-for-timing-equalisation', PBKDF2_ITERATIONS);
+}
+
+/**
+ * Hash a session / reset token for storage at rest. Tokens are 256-bit random, so an unsalted
+ * SHA-256 is sufficient; a database leak then does not yield usable credentials.
+ */
+export function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(`token:${token}`).digest('hex');
+}
+
+/**
+ * Constant-time string comparison (safe for differing lengths).
+ */
+export function safeEqual(a: string, b: string): boolean {
+  const ha = crypto.createHash('sha256').update(a).digest();
+  const hb = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(ha, hb);
 }
 
 /**

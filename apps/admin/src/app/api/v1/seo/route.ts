@@ -1,5 +1,7 @@
 import { prisma } from '@headless/database';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +24,8 @@ let fallbackSeoSettings = {
 };
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
   try {
     const site = await withTimeout(prisma.site.findFirst());
     if (!site) {
@@ -53,6 +57,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const sec = await guard(req, { permission: 'seo.manage' });
+  if (!sec.ok) return sec.response;
   let body: any = {};
   try {
     body = await req.json();

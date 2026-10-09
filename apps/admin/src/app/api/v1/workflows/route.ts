@@ -1,5 +1,6 @@
 import { prisma } from '@headless/database';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,8 @@ const fallbackWorkflows = [
 ];
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { permission: 'workflows.read' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const siteId = searchParams.get('siteId');
@@ -74,6 +77,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'workflows.manage' });
+  if (!sec.ok) return sec.response;
   let body: any = {};
   try {
     body = await req.json();
@@ -126,6 +131,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sec = await guard(req, { permission: 'workflows.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { graphql, buildSchema } from 'graphql';
+import { graphql, buildSchema, GraphQLError } from 'graphql';
 import { getAdsConfig, getAdUnits } from '@/lib/ads-service';
+import { getAdminSession, requirePermission } from '@/lib/auth';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 // ── GraphQL Schema Definition ────────────────────────────────────────────────
 const schema = buildSchema(`
@@ -164,32 +167,50 @@ const MOCK_MEDIA = [
 
 // ── Root Resolvers ───────────────────────────────────────────────────────────
 const root = {
-  entries: ({ type, status, limit, search }: any) => {
+  entries: ({ type, status, limit, search }: any, context: any) => {
     let result = [...MOCK_ENTRIES];
+    // Unauthenticated callers can only see published content
+    if (!context?.session) {
+      result = result.filter((e) => e.status === 'PUBLISHED');
+    }
     if (type) result = result.filter((e) => e.typeSlug === type);
-    if (status) result = result.filter((e) => e.status === status);
+    if (status) {
+      if (!context?.session && status !== 'PUBLISHED') {
+        return [];
+      }
+      result = result.filter((e) => e.status === status);
+    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((e) => e.title.toLowerCase().includes(q) || e.summary.toLowerCase().includes(q));
     }
-    if (limit && limit > 0) result = result.slice(0, limit);
+    if (limit && limit > 0) result = result.slice(0, Math.min(limit, 100));
     return result;
   },
-  entry: ({ id, slug }: any) => {
-    return MOCK_ENTRIES.find((e) => (id && e.id === id) || (slug && e.slug === slug)) || null;
+  entry: ({ id, slug }: any, context: any) => {
+    const item = MOCK_ENTRIES.find((e) => (id && e.id === id) || (slug && e.slug === slug)) || null;
+    if (item && !context?.session && item.status !== 'PUBLISHED') {
+      return null;
+    }
+    return item;
   },
   contentTypes: () => MOCK_CONTENT_TYPES,
   media: ({ limit }: any) => {
-    if (limit && limit > 0) return MOCK_MEDIA.slice(0, limit);
+    if (limit && limit > 0) return MOCK_MEDIA.slice(0, Math.min(limit, 100));
     return MOCK_MEDIA;
   },
-  systemHealth: () => ({
-    status: 'HEALTHY',
-    database: 'PostgreSQL 16 (Connected)',
-    storageDriver: 'Cloudflare R2 (S3 API)',
-    version: '1.4.0-enterprise',
-    uptimeSeconds: Math.floor(process.uptime()),
-  }),
+  systemHealth: (_args: any, context: any) => {
+    if (!context?.session || !context?.canManageSettings) {
+      throw new GraphQLError('Forbidden: Missing settings.manage permission for systemHealth');
+    }
+    return {
+      status: 'HEALTHY',
+      database: 'PostgreSQL 16 (Connected)',
+      storageDriver: 'Cloudflare R2 (S3 API)',
+      version: '1.4.0-enterprise',
+      uptimeSeconds: Math.floor(process.uptime()),
+    };
+  },
   adUnits: ({ placement, isActive }: { placement?: string; isActive?: boolean }) => {
     let units = getAdUnits();
     if (placement) units = units.filter((u) => u.placement === placement);
@@ -197,7 +218,10 @@ const root = {
     return units;
   },
   adsConfig: () => getAdsConfig(),
-  publishEntry: ({ id }: { id: string }) => {
+  publishEntry: ({ id }: { id: string }, context: any) => {
+    if (!context?.session || !context?.canPublish) {
+      throw new GraphQLError('Forbidden: Missing content.publish permission');
+    }
     const entry = MOCK_ENTRIES.find((e) => e.id === id);
     if (entry) {
       entry.status = 'PUBLISHED';
@@ -206,7 +230,10 @@ const root = {
     }
     return null;
   },
-  unpublishEntry: ({ id }: { id: string }) => {
+  unpublishEntry: ({ id }: { id: string }, context: any) => {
+    if (!context?.session || !context?.canPublish) {
+      throw new GraphQLError('Forbidden: Missing content.publish permission');
+    }
     const entry = MOCK_ENTRIES.find((e) => e.id === id);
     if (entry) {
       entry.status = 'DRAFT';
@@ -218,6 +245,9 @@ const root = {
 
 // ── Route Handlers ───────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
+
   try {
     const body = await req.json();
     const { query, variables } = body;
@@ -226,10 +256,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ errors: [{ message: 'GraphQL query is required' }] }, { status: 400 });
     }
 
+    if (typeof query === 'string' && query.length > 10_000) {
+      return NextResponse.json(
+        { errors: [{ message: 'Query length exceeds maximum allowed limit (10,000 characters)' }] },
+        { status: 400 }
+      );
+    }
+
+    const session = await getAdminSession(req);
+    const canPublish = session ? requirePermission(session, 'content.publish').authorized : false;
+    const canManageSettings = session ? requirePermission(session, 'settings.manage').authorized : false;
+
     const response = await graphql({
       schema,
       source: query,
       rootValue: root,
+      contextValue: {
+        session,
+        canPublish,
+        canManageSettings,
+      },
       variableValues: variables,
     });
 
@@ -243,7 +289,20 @@ export async function POST(req: NextRequest) {
 }
 
 // Interactive GraphiQL HTML Playground when accessed via browser GET
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
+
+  // In production, restrict GraphiQL playground to authenticated admins unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_GRAPHIQL !== 'true') {
+    const session = await getAdminSession(req);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: GraphiQL playground is restricted to authenticated administrators in production.' },
+        { status: 401 }
+      );
+    }
+  }
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

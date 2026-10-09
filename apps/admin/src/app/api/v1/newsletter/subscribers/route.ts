@@ -4,8 +4,11 @@ import {
   saveSubscriber,
   deleteSubscriber,
 } from '@/lib/newsletter-service';
+import { guard } from '@/lib/security/guard';
 
 export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || undefined;
@@ -20,6 +23,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     const subscriber = await saveSubscriber(body);
@@ -30,6 +35,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

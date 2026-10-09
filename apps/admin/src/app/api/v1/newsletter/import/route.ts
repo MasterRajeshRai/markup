@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { importSubscribers } from '@/lib/newsletter-service';
+import { guard } from '@/lib/security/guard';
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'newsletter.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     if (!body.rawText) {

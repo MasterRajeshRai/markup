@@ -1,10 +1,14 @@
 import { authenticateUser } from '@/lib/auth-service';
 import { recordAuditLog } from '@/lib/audit';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.login });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { email, password, rememberMe } = body;
@@ -29,6 +33,14 @@ export async function POST(req: NextRequest) {
       ipAddress,
       userAgent
     );
+
+    if (result.mfaRequired) {
+      return NextResponse.json({
+        success: true,
+        mfaRequired: true,
+        mfaToken: result.mfaToken,
+      });
+    }
 
     if (!result.success || !result.token || !result.user) {
       const status = result.lockedUntil ? 429 : 401;

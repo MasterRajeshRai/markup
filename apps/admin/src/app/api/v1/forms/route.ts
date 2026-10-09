@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 export interface FormField {
   id: string;
@@ -106,7 +107,9 @@ let MOCK_FORMS: FormItem[] = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'forms.read', apiKeyScope: 'content:read' });
+  if (!sec.ok) return sec.response;
   return NextResponse.json({
     success: true,
     forms: MOCK_FORMS,
@@ -116,6 +119,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'forms.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { name, slug, description, submitButtonText, successMessage, enableHoneypot, fields } = body;
@@ -151,6 +156,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const sec = await guard(req, { permission: 'forms.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { id, name, slug, description, submitButtonText, successMessage, enableHoneypot, fields, status } = body;
@@ -180,6 +187,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sec = await guard(req, { permission: 'forms.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

@@ -6,8 +6,11 @@ import {
   getEmailDeliveryLogs,
   sendEmail,
 } from '@/lib/email-service';
+import { guard } from '@/lib/security/guard';
 
 export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'email.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const settings = await getEmailSettings();
     const templates = await getEmailTemplates();
@@ -29,6 +32,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const sec = await guard(request, { permission: 'email.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     const updated = await updateEmailSettings(body);
@@ -47,6 +52,8 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'email.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     if (!body.to || !body.subject) {

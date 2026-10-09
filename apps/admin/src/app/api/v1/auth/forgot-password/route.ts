@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPasswordResetRequest } from '@/lib/auth-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { public: true, rate: RATE_LIMITS.passwordReset });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { email } = body;

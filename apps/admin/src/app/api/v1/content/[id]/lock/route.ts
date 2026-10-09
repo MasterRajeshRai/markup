@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 interface LockRecord {
   entryId: string;
@@ -45,6 +46,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'content.update' });
+  if (!sec.ok) return sec.response;
   const { id } = await params;
   cleanExpired(id);
 
@@ -72,6 +75,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'content.update' });
+  if (!sec.ok) return sec.response;
   try {
     const { id } = await params;
     const body = await req.json();
@@ -140,6 +145,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sec = await guard(req, { permission: 'content.update' });
+  if (!sec.ok) return sec.response;
   try {
     const { id } = await params;
     const { searchParams } = new URL(req.url);

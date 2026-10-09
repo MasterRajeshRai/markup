@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, getEmailSettings } from '@/lib/email-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export async function POST(request: NextRequest) {
+  const sec = await guard(request, { permission: 'email.manage', rate: RATE_LIMITS.email });
+  if (!sec.ok) return sec.response;
   try {
     const body = await request.json();
     const toEmail = body.to || 'test@example.com';

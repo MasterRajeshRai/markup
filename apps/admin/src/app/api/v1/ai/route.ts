@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAiProvider } from '@headless/core';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const sec = await guard(request, { permission: 'content.update', rate: RATE_LIMITS.ai });
+  if (!sec.ok) return sec.response;
   return NextResponse.json({
     status: 'ready',
     providers: ['mock', 'gemini', 'openai'],
@@ -13,6 +17,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'content.update', rate: RATE_LIMITS.ai });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { action, provider = 'mock', apiKey, model, ...options } = body;

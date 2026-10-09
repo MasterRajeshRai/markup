@@ -1,5 +1,6 @@
 import { prisma } from '@headless/database';
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,8 @@ const DEFAULT_INTEGRATIONS = [
 let inMemoryIntegrations = [...DEFAULT_INTEGRATIONS];
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { permission: 'integrations.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const site = await withTimeout(prisma.site.findFirst());
     const settings = (site?.settings as Record<string, any>) || {};
@@ -82,6 +85,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'integrations.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { action, integrationId, enabled, config } = body;

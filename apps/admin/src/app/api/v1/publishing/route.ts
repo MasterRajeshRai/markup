@@ -2,6 +2,7 @@ import { prisma, EntryStatus } from '@headless/database';
 import { NextRequest, NextResponse } from 'next/server';
 import { runScheduledTasks } from '@/lib/scheduler';
 import { dispatchWebhooks } from '@/lib/webhooks';
+import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,8 @@ const fallbackExpiring: any[] = [];
 const fallbackArchived: any[] = [];
 
 export async function GET(req: NextRequest) {
+  const sec = await guard(req, { permission: 'publishing.read' });
+  if (!sec.ok) return sec.response;
   try {
     const { searchParams } = new URL(req.url);
     const siteId = searchParams.get('siteId');
@@ -129,6 +132,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sec = await guard(req, { permission: 'publishing.manage' });
+  if (!sec.ok) return sec.response;
   try {
     const body = await req.json();
     const { action, entryIds = [], scheduledPublishAt, scheduledUnpublishAt } = body;

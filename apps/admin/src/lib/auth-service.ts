@@ -1,12 +1,23 @@
 import { prisma } from '@headless/database';
-import { hashPassword, verifyPassword, generateSessionToken } from '@headless/core';
+import {
+  hashPassword,
+  verifyPassword,
+  generateSessionToken,
+  hashToken,
+  dummyPasswordVerify,
+  passwordNeedsRehash,
+} from '@headless/core';
 import { sendEmail } from '@/lib/email-service';
+import { checkPasswordStrength } from '@/lib/security/password-policy';
+import { signShortToken, verifyShortToken, encryptSecret, decryptSecret } from '@/lib/security/crypto-box';
+import { verifyTotp, generateTotpSecret, generateBackupCodes, buildOtpAuthUri } from '@/lib/security/totp';
 import crypto from 'crypto';
 
 export interface UserSessionData {
   id: string;
   userId: string;
-  token: string;
+  token?: string;
+  tokenHash: string;
   ipAddress?: string;
   userAgent?: string;
   device?: string;
@@ -27,9 +38,20 @@ export interface AuthUser {
 }
 
 export interface PasswordResetToken {
-  token: string;
+  tokenHash: string;
   email: string;
   expiresAt: Date;
+}
+
+export interface AuthenticateResult {
+  success: boolean;
+  token?: string;
+  user?: AuthUser;
+  expiresAt?: Date;
+  error?: string;
+  lockedUntil?: Date;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -245,14 +267,7 @@ export async function authenticateUser(
   rememberMe: boolean = false,
   ipAddress?: string,
   userAgent?: string
-): Promise<{
-  success: boolean;
-  token?: string;
-  user?: AuthUser;
-  expiresAt?: Date;
-  error?: string;
-  lockedUntil?: Date;
-}> {
+): Promise<AuthenticateResult> {
   const email = emailInput.toLowerCase().trim();
   const sessionDays = rememberMe ? 30 : 7;
   const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
@@ -266,113 +281,156 @@ export async function authenticateUser(
         })
       );
 
-    if (lockout && lockout.lockedUntil && lockout.lockedUntil > new Date()) {
-      const waitMinutes = Math.ceil((lockout.lockedUntil.getTime() - Date.now()) / (1000 * 60));
-      return {
-        success: false,
-        error: `Account temporarily locked due to excessive failed attempts. Please retry in ${waitMinutes} minutes.`,
-        lockedUntil: lockout.lockedUntil,
-      };
-    }
+      if (lockout && lockout.lockedUntil && lockout.lockedUntil > new Date()) {
+        const waitMinutes = Math.ceil((lockout.lockedUntil.getTime() - Date.now()) / (1000 * 60));
+        return {
+          success: false,
+          error: `Account temporarily locked due to excessive failed attempts. Please retry in ${waitMinutes} minutes.`,
+          lockedUntil: lockout.lockedUntil,
+        };
+      }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: {
-                  include: {
-                    permission: true,
+      const dbUser = await prisma.user.findUnique({
+        where: { email },
+        include: {
+          userRoles: {
+            include: {
+              role: {
+                include: {
+                  rolePermissions: {
+                    include: {
+                      permission: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (dbUser) {
-      if (!dbUser.isActive) {
-        return { success: false, error: 'Your account has been deactivated. Please contact an administrator.' };
-      }
+      if (!dbUser) {
+        // Equalize response timing so non-existent emails don't return faster
+        await dummyPasswordVerify(passwordInput);
+        if (process.env.NODE_ENV === 'production') {
+          return { success: false, error: 'Invalid email or password' };
+        }
+      } else {
+        if (!dbUser.isActive) {
+          return { success: false, error: 'Your account has been deactivated. Please contact an administrator.' };
+        }
 
-      const match = await verifyPassword(passwordInput, dbUser.passwordHash);
-      if (!match) {
-        // Track failed attempt
-        const attempts = (lockout?.failedAttempts || 0) + 1;
-        const lockDate = attempts >= MAX_FAILED_ATTEMPTS ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000) : null;
-        await prisma.accountLockout.upsert({
-          where: { email },
-          update: { failedAttempts: attempts, lockedUntil: lockDate, lastAttemptAt: new Date() },
-          create: { email, failedAttempts: attempts, lockedUntil: lockDate, lastAttemptAt: new Date() },
+        const match = await verifyPassword(passwordInput, dbUser.passwordHash);
+        if (!match) {
+          // Track failed attempt
+          const attempts = (lockout?.failedAttempts || 0) + 1;
+          const lockDate = attempts >= MAX_FAILED_ATTEMPTS ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000) : null;
+          await prisma.accountLockout.upsert({
+            where: { email },
+            update: { failedAttempts: attempts, lockedUntil: lockDate, lastAttemptAt: new Date() },
+            create: { email, failedAttempts: attempts, lockedUntil: lockDate, lastAttemptAt: new Date() },
+          });
+
+          const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - attempts);
+          return {
+            success: false,
+            error: remaining > 0
+              ? `Invalid email or password. ${remaining} attempts remaining before temporary lockout.`
+              : `Account locked for ${LOCKOUT_MINUTES} minutes due to multiple failed login attempts.`,
+          };
+        }
+
+        // Successful password match: reset lockout
+        if (lockout && lockout.failedAttempts > 0) {
+          await prisma.accountLockout.update({
+            where: { email },
+            data: { failedAttempts: 0, lockedUntil: null },
+          });
+        }
+
+        // Rehash password if legacy format or low iteration count
+        if (passwordNeedsRehash(dbUser.passwordHash)) {
+          hashPassword(passwordInput)
+            .then((newHash) =>
+              prisma.user.update({
+                where: { id: dbUser.id },
+                data: { passwordHash: newHash },
+              })
+            )
+            .catch(() => {});
+        }
+
+        // Check 2FA requirement
+        if (dbUser.mfaEnabled && dbUser.mfaSecret) {
+          const mfaToken = signShortToken(
+            {
+              userId: dbUser.id,
+              email: dbUser.email,
+              rememberMe,
+              ipAddress,
+              userAgent,
+            },
+            300 // 5 minutes validity
+          );
+          return {
+            success: true,
+            mfaRequired: true,
+            mfaToken,
+          };
+        }
+
+        // Generate secure session token, store hashed at rest
+        const token = generateSessionToken();
+
+        await prisma.session.create({
+          data: {
+            userId: dbUser.id,
+            token: hashToken(token),
+            ipAddress,
+            userAgent,
+            expiresAt,
+          },
         });
 
-        const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - attempts);
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        const roles = dbUser.userRoles.map((ur) => ur.role.slug);
+        const permissions = dbUser.userRoles.flatMap((ur) =>
+          ur.role.rolePermissions.map((rp) => rp.permission.action)
+        );
+
         return {
-          success: false,
-          error: remaining > 0
-            ? `Invalid email or password. ${remaining} attempts remaining before temporary lockout.`
-            : `Account locked for ${LOCKOUT_MINUTES} minutes due to multiple failed login attempts.`,
+          success: true,
+          token,
+          expiresAt,
+          user: {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            avatarUrl: dbUser.avatarUrl,
+            role: roles[0] || 'admin',
+            permissions,
+            isActive: dbUser.isActive,
+            twoFactorEnabled: dbUser.mfaEnabled,
+          },
         };
       }
-
-      // Successful password match: reset lockout
-      if (lockout && lockout.failedAttempts > 0) {
-        await prisma.accountLockout.update({
-          where: { email },
-          data: { failedAttempts: 0, lockedUntil: null },
-        });
-      }
-
-      // Generate secure session token
-      const token = generateSessionToken();
-
-      await prisma.session.create({
-        data: {
-          userId: dbUser.id,
-          token,
-          ipAddress,
-          userAgent,
-          expiresAt,
-        },
-      });
-
-      await prisma.user.update({
-        where: { id: dbUser.id },
-        data: { lastLoginAt: new Date() },
-      });
-
-      const roles = dbUser.userRoles.map((ur) => ur.role.slug);
-      const permissions = dbUser.userRoles.flatMap((ur) =>
-        ur.role.rolePermissions.map((rp) => rp.permission.action)
-      );
-
-      return {
-        success: true,
-        token,
-        expiresAt,
-        user: {
-          id: dbUser.id,
-          email: dbUser.email,
-          name: dbUser.name,
-          avatarUrl: dbUser.avatarUrl,
-          role: roles[0] || 'admin',
-          permissions,
-          isActive: dbUser.isActive,
-        },
-      };
+    } catch {
+      // Database unavailable: fallback to resilient in-memory store
     }
-  } catch {
-    // Database unavailable: fallback to resilient in-memory store
   }
-}
 
   // -------------------------------------------------------------------------
   // Resilient In-Memory Fallback (Guarantees uninterrupted local development)
+  // Strictly blocked in production to prevent account takeover bypass.
   // -------------------------------------------------------------------------
+  if (process.env.NODE_ENV === 'production') {
+    return { success: false, error: 'Invalid email or password' };
+  }
+
   const mockUser = MOCK_USERS.find((u) => u.email === email);
   if (!mockUser) {
     return { success: false, error: 'Invalid email or password' };
@@ -387,7 +445,7 @@ export async function authenticateUser(
     };
   }
 
-  // Check known demo passwords or hash verification
+  // Check known demo passwords or hash verification (development only)
   let isPasswordValid = false;
   if (
     (email === 'admin@headless.io' && passwordInput === 'AdminPass123!') ||
@@ -422,11 +480,31 @@ export async function authenticateUser(
   mockUser.failedAttempts = 0;
   mockUser.lockedUntil = null;
 
+  // Check 2FA requirement for mock user
+  if (mockUser.twoFactorEnabled && mockUser.twoFactorSecret) {
+    const mfaToken = signShortToken(
+      {
+        userId: mockUser.id,
+        email: mockUser.email,
+        rememberMe,
+        ipAddress,
+        userAgent,
+      },
+      300
+    );
+    return {
+      success: true,
+      mfaRequired: true,
+      mfaToken,
+    };
+  }
+
   const token = generateSessionToken();
   const sessionRecord: UserSessionData = {
     id: `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     userId: mockUser.id,
     token,
+    tokenHash: hashToken(token),
     ipAddress,
     userAgent,
     device: parseUserAgent(userAgent),
@@ -449,6 +527,7 @@ export async function authenticateUser(
       role: mockUser.role,
       permissions: mockUser.permissions,
       isActive: mockUser.isActive,
+      twoFactorEnabled: mockUser.twoFactorEnabled,
     },
   };
 }
@@ -459,22 +538,28 @@ export async function authenticateUser(
 export async function validateSessionToken(token: string): Promise<AuthUser | null> {
   if (!token) return null;
 
+  const hashed = hashToken(token);
+
   // Try Prisma Database
   if (canAttemptDb()) {
     try {
       const session = await runWithDbTimeout(() =>
-        prisma.session.findUnique({
-          where: { token },
+        prisma.session.findFirst({
+          where: {
+            OR: [{ token: hashed }, { token }],
+          },
           include: {
-        user: {
-          include: {
-            userRoles: {
+            user: {
               include: {
-                role: {
+                userRoles: {
                   include: {
-                    rolePermissions: {
+                    role: {
                       include: {
-                        permission: true,
+                        rolePermissions: {
+                          include: {
+                            permission: true,
+                          },
+                        },
                       },
                     },
                   },
@@ -482,9 +567,13 @@ export async function validateSessionToken(token: string): Promise<AuthUser | nu
               },
             },
           },
-        },
-      },
-    }));
+        })
+      );
+
+      // Auto-migrate legacy unhashed token in DB
+      if (session && session.token === token) {
+        prisma.session.update({ where: { id: session.id }, data: { token: hashed } }).catch(() => {});
+      }
 
       if (session && session.expiresAt > new Date() && session.user.isActive) {
         const roles = session.user.userRoles.map((ur) => ur.role.slug);
@@ -500,6 +589,7 @@ export async function validateSessionToken(token: string): Promise<AuthUser | nu
           role: roles[0] || 'admin',
           permissions,
           isActive: session.user.isActive,
+          twoFactorEnabled: session.user.mfaEnabled,
         };
       }
     } catch {
@@ -507,8 +597,8 @@ export async function validateSessionToken(token: string): Promise<AuthUser | nu
     }
   }
 
-  // In-Memory Session Lookup
-  const mockSession = MOCK_SESSIONS.find((s) => s.token === token);
+  // In-Memory Session Lookup (dev only)
+  const mockSession = MOCK_SESSIONS.find((s) => s.token === token || s.tokenHash === hashed);
   if (mockSession && mockSession.expiresAt > new Date()) {
     mockSession.lastActiveAt = new Date();
     const user = MOCK_USERS.find((u) => u.id === mockSession.userId);
@@ -521,6 +611,7 @@ export async function validateSessionToken(token: string): Promise<AuthUser | nu
         role: user.role,
         permissions: user.permissions,
         isActive: user.isActive,
+        twoFactorEnabled: user.twoFactorEnabled,
       };
     }
   }
@@ -532,14 +623,19 @@ export async function validateSessionToken(token: string): Promise<AuthUser | nu
  * Invalidates a session token.
  */
 export async function invalidateSession(token: string, allForUser: boolean = false): Promise<boolean> {
+  const hashed = hashToken(token);
   if (canAttemptDb()) {
     try {
-      const session = await runWithDbTimeout(() => prisma.session.findUnique({ where: { token } }));
+      const session = await runWithDbTimeout(() =>
+        prisma.session.findFirst({
+          where: { OR: [{ token: hashed }, { token }] },
+        })
+      );
       if (session) {
         if (allForUser) {
           await prisma.session.deleteMany({ where: { userId: session.userId } });
         } else {
-          await prisma.session.delete({ where: { token } });
+          await prisma.session.delete({ where: { id: session.id } });
         }
         return true;
       }
@@ -548,12 +644,12 @@ export async function invalidateSession(token: string, allForUser: boolean = fal
     }
   }
 
-  const existing = MOCK_SESSIONS.find((s) => s.token === token);
+  const existing = MOCK_SESSIONS.find((s) => s.token === token || s.tokenHash === hashed);
   if (existing) {
     if (allForUser) {
       MOCK_SESSIONS = MOCK_SESSIONS.filter((s) => s.userId !== existing.userId);
     } else {
-      MOCK_SESSIONS = MOCK_SESSIONS.filter((s) => s.token !== token);
+      MOCK_SESSIONS = MOCK_SESSIONS.filter((s) => s.token !== token && s.tokenHash !== hashed);
     }
     return true;
   }
@@ -562,16 +658,66 @@ export async function invalidateSession(token: string, allForUser: boolean = fal
 }
 
 /**
+ * Revokes a specific session by its unique ID for a given user.
+ */
+export async function revokeSessionById(userId: string, sessionId: string): Promise<boolean> {
+  if (canAttemptDb()) {
+    try {
+      await runWithDbTimeout(() =>
+        prisma.session.deleteMany({
+          where: { id: sessionId, userId },
+        })
+      );
+      return true;
+    } catch {
+      // Fallback
+    }
+  }
+  MOCK_SESSIONS = MOCK_SESSIONS.filter((s) => !(s.id === sessionId && s.userId === userId));
+  return true;
+}
+
+/**
+ * Revokes all sessions for a user EXCEPT the current session.
+ */
+export async function revokeAllOtherSessions(userId: string, currentToken: string): Promise<boolean> {
+  const currentHash = hashToken(currentToken);
+  if (canAttemptDb()) {
+    try {
+      await runWithDbTimeout(() =>
+        prisma.session.deleteMany({
+          where: {
+            userId,
+            token: { notIn: [currentHash, currentToken] },
+          },
+        })
+      );
+      return true;
+    } catch {
+      // Fallback
+    }
+  }
+  MOCK_SESSIONS = MOCK_SESSIONS.filter(
+    (s) => s.userId !== userId || s.token === currentToken || s.tokenHash === currentHash
+  );
+  return true;
+}
+
+/**
  * Generates a password reset token and sends an email via Resend.
  */
-export async function createPasswordResetRequest(emailInput: string, origin: string): Promise<{ success: boolean; message: string; demoResetUrl?: string }> {
+export async function createPasswordResetRequest(
+  emailInput: string,
+  origin: string
+): Promise<{ success: boolean; message: string; demoResetUrl?: string }> {
   const email = emailInput.toLowerCase().trim();
   const resetToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(resetToken);
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-  // Store token
+  // Store token hashed at rest
   MOCK_RESET_TOKENS = MOCK_RESET_TOKENS.filter((t) => t.email !== email && t.expiresAt > new Date());
-  MOCK_RESET_TOKENS.push({ token: resetToken, email, expiresAt });
+  MOCK_RESET_TOKENS.push({ tokenHash, email, expiresAt });
 
   const resetUrl = `${origin}/login?mode=reset&token=${resetToken}&email=${encodeURIComponent(email)}`;
 
@@ -580,7 +726,7 @@ export async function createPasswordResetRequest(emailInput: string, origin: str
     await sendEmail({
       to: email,
       subject: 'Reset Your Headless CMS Account Password',
-      templateSlug: 'tpl_welcome_newsletter', // or custom auth template
+      templateSlug: 'tpl_welcome_newsletter',
       variables: {
         recipientName: email.split('@')[0],
         actionUrl: resetUrl,
@@ -594,21 +740,35 @@ export async function createPasswordResetRequest(emailInput: string, origin: str
   return {
     success: true,
     message: `Password reset instructions have been sent to ${email}.`,
-    demoResetUrl: resetUrl,
+    // Only reveal demo URL in development mode
+    demoResetUrl: process.env.NODE_ENV !== 'production' ? resetUrl : undefined,
   };
 }
 
 /**
  * Resets user password using a verified reset token.
  */
-export async function resetPasswordWithToken(token: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+export async function resetPasswordWithToken(
+  token: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
   if (newPassword.length < 8) {
     return { success: false, error: 'Password must be at least 8 characters long.' };
   }
 
-  const validRecord = MOCK_RESET_TOKENS.find((r) => r.token === token && r.expiresAt > new Date());
+  const tokenHash = hashToken(token);
+  const validRecord = MOCK_RESET_TOKENS.find(
+    (r) => r.tokenHash === tokenHash && r.expiresAt > new Date()
+  );
+
   if (!validRecord) {
     return { success: false, error: 'Password reset link has expired or is invalid. Please request a new one.' };
+  }
+
+  // Password policy check
+  const strength = checkPasswordStrength(newPassword, { email: validRecord.email });
+  if (!strength.ok) {
+    return { success: false, error: strength.errors[0] };
   }
 
   const newHash = await hashPassword(newPassword);
@@ -616,12 +776,16 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
   // Update in Database if available
   if (canAttemptDb()) {
     try {
-      await runWithDbTimeout(() =>
+      const user = await runWithDbTimeout(() =>
         prisma.user.update({
           where: { email: validRecord.email },
           data: { passwordHash: newHash },
         })
       );
+      // Revoke all existing sessions on password reset
+      if (user) {
+        await runWithDbTimeout(() => prisma.session.deleteMany({ where: { userId: user.id } }));
+      }
     } catch {
       // In-memory fallback
     }
@@ -633,10 +797,12 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
     mockUser.passwordHash = newHash;
     mockUser.failedAttempts = 0;
     mockUser.lockedUntil = null;
+    // Revoke mock sessions
+    MOCK_SESSIONS = MOCK_SESSIONS.filter((s) => s.userId !== mockUser.id);
   }
 
-  // Consume token
-  MOCK_RESET_TOKENS = MOCK_RESET_TOKENS.filter((t) => t.token !== token);
+  // Consume token (single use)
+  MOCK_RESET_TOKENS = MOCK_RESET_TOKENS.filter((t) => t.tokenHash !== tokenHash);
 
   return { success: true };
 }
@@ -644,9 +810,19 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
 /**
  * Changes password for an already authenticated user.
  */
-export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+export async function changeUserPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
   if (newPassword.length < 8) {
     return { success: false, error: 'New password must be at least 8 characters long.' };
+  }
+
+  // Strength check
+  const strength = checkPasswordStrength(newPassword);
+  if (!strength.ok) {
+    return { success: false, error: strength.errors[0] };
   }
 
   // Verify current password first
@@ -671,7 +847,7 @@ export async function changeUserPassword(userId: string, currentPassword: string
   const mockUser = MOCK_USERS.find((u) => u.id === userId);
   if (mockUser) {
     const isCurrentValid =
-      currentPassword === 'AdminPass123!' ||
+      (process.env.NODE_ENV !== 'production' && currentPassword === 'AdminPass123!') ||
       (await verifyPassword(currentPassword, mockUser.passwordHash));
 
     if (!isCurrentValid) {
@@ -685,10 +861,23 @@ export async function changeUserPassword(userId: string, currentPassword: string
   return { success: false, error: 'User not found' };
 }
 
+export interface SessionDisplayInfo {
+  id: string;
+  userId: string;
+  ipAddress: string;
+  userAgent: string;
+  device: string;
+  expiresAt: Date;
+  createdAt: Date;
+  lastActiveAt: Date;
+  isCurrent: boolean;
+}
+
 /**
- * Returns active sessions for a user.
+ * Returns active sessions for a user without leaking tokens to the caller.
  */
-export async function getUserSessions(userId: string, currentToken?: string): Promise<UserSessionData[]> {
+export async function getUserSessions(userId: string, currentToken?: string): Promise<SessionDisplayInfo[]> {
+  const currentHash = currentToken ? hashToken(currentToken) : null;
   if (canAttemptDb()) {
     try {
       const sessions = await runWithDbTimeout(() =>
@@ -702,13 +891,16 @@ export async function getUserSessions(userId: string, currentToken?: string): Pr
         return sessions.map((s) => ({
           id: s.id,
           userId: s.userId,
-          token: s.token,
           ipAddress: s.ipAddress || '127.0.0.1',
           userAgent: s.userAgent || 'Chrome / MacOS',
           device: parseUserAgent(s.userAgent || ''),
           expiresAt: s.expiresAt,
           createdAt: s.createdAt,
           lastActiveAt: s.createdAt,
+          isCurrent: Boolean(
+            (currentHash && s.token === currentHash) ||
+            (currentToken && s.token === currentToken)
+          ),
         }));
       }
     } catch {
@@ -716,6 +908,314 @@ export async function getUserSessions(userId: string, currentToken?: string): Pr
     }
   }
 
-  return MOCK_SESSIONS.filter((s) => s.userId === userId && s.expiresAt > new Date());
+  return MOCK_SESSIONS.filter((s) => s.userId === userId && s.expiresAt > new Date()).map((s) => ({
+    id: s.id,
+    userId: s.userId,
+    ipAddress: s.ipAddress || '127.0.0.1',
+    userAgent: s.userAgent || 'Chrome / MacOS',
+    device: s.device || parseUserAgent(s.userAgent),
+    expiresAt: s.expiresAt,
+    createdAt: s.createdAt,
+    lastActiveAt: s.lastActiveAt,
+    isCurrent: Boolean((currentToken && s.token === currentToken) || (currentHash && s.tokenHash === currentHash)),
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Multi-Factor Authentication (MFA / 2FA) Operations
+// ---------------------------------------------------------------------------
+
+/**
+ * Verifies a 2FA TOTP or backup code and creates a full session upon success.
+ */
+export async function verifyMfaChallenge(
+  mfaToken: string,
+  code: string
+): Promise<AuthenticateResult> {
+  const payload = verifyShortToken<{
+    userId: string;
+    email: string;
+    rememberMe?: boolean;
+    ipAddress?: string;
+    userAgent?: string;
+  }>(mfaToken);
+
+  if (!payload) {
+    return { success: false, error: 'MFA challenge expired or invalid. Please log in again.' };
+  }
+
+  const { userId, rememberMe, ipAddress, userAgent } = payload;
+  const sessionDays = rememberMe ? 30 : 7;
+  const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
+
+  // 1. Try DB user
+  if (canAttemptDb()) {
+    try {
+      const dbUser = await runWithDbTimeout(() =>
+        prisma.user.findUnique({
+          where: { id: userId },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+      );
+
+      if (dbUser && dbUser.mfaEnabled && dbUser.mfaSecret) {
+        let isCodeValid = false;
+        const decrypted = decryptSecret(dbUser.mfaSecret) || dbUser.mfaSecret;
+        let secretB32 = decrypted;
+        let backupCodes: string[] = [];
+
+        try {
+          const parsed = JSON.parse(decrypted);
+          if (parsed.secret) {
+            secretB32 = parsed.secret;
+            backupCodes = Array.isArray(parsed.backupCodes) ? parsed.backupCodes : [];
+          }
+        } catch {
+          // Plain secret string
+        }
+
+        const cleanCode = code.trim();
+        // Check TOTP code
+        if (verifyTotp(secretB32, cleanCode) !== null) {
+          isCodeValid = true;
+        } else if (backupCodes.includes(cleanCode)) {
+          // One-time backup code match: consume code
+          isCodeValid = true;
+          const remainingBackup = backupCodes.filter((c) => c !== cleanCode);
+          const reencrypted = encryptSecret(JSON.stringify({ secret: secretB32, backupCodes: remainingBackup }));
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { mfaSecret: reencrypted },
+          });
+        }
+
+        if (!isCodeValid) {
+          return { success: false, error: 'Invalid verification code or backup code' };
+        }
+
+        const token = generateSessionToken();
+        await prisma.session.create({
+          data: {
+            userId: dbUser.id,
+            token: hashToken(token),
+            ipAddress,
+            userAgent,
+            expiresAt,
+          },
+        });
+
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        const roles = dbUser.userRoles.map((ur) => ur.role.slug);
+        const permissions = dbUser.userRoles.flatMap((ur) =>
+          ur.role.rolePermissions.map((rp) => rp.permission.action)
+        );
+
+        return {
+          success: true,
+          token,
+          expiresAt,
+          user: {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            avatarUrl: dbUser.avatarUrl,
+            role: roles[0] || 'admin',
+            permissions,
+            isActive: dbUser.isActive,
+            twoFactorEnabled: true,
+          },
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Mock user fallback (dev only)
+  if (process.env.NODE_ENV === 'production') {
+    return { success: false, error: 'Verification failed' };
+  }
+
+  const mockUser = MOCK_USERS.find((u) => u.id === userId);
+  if (!mockUser || !mockUser.twoFactorSecret) {
+    return { success: false, error: 'User not found or MFA not configured' };
+  }
+
+  const cleanCode = code.trim();
+  let valid = false;
+  if (verifyTotp(mockUser.twoFactorSecret, cleanCode) !== null) {
+    valid = true;
+  } else if (mockUser.backupCodes && mockUser.backupCodes.includes(cleanCode)) {
+    valid = true;
+    mockUser.backupCodes = mockUser.backupCodes.filter((c) => c !== cleanCode);
+  }
+
+  if (!valid) {
+    return { success: false, error: 'Invalid verification code' };
+  }
+
+  const token = generateSessionToken();
+  const sessionRecord: UserSessionData = {
+    id: `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    userId: mockUser.id,
+    token,
+    tokenHash: hashToken(token),
+    ipAddress,
+    userAgent,
+    device: parseUserAgent(userAgent),
+    expiresAt,
+    createdAt: new Date(),
+    lastActiveAt: new Date(),
+  };
+  MOCK_SESSIONS.push(sessionRecord);
+
+  return {
+    success: true,
+    token,
+    expiresAt,
+    user: {
+      id: mockUser.id,
+      email: mockUser.email,
+      name: mockUser.name,
+      avatarUrl: mockUser.avatarUrl,
+      role: mockUser.role,
+      permissions: mockUser.permissions,
+      isActive: mockUser.isActive,
+      twoFactorEnabled: true,
+    },
+  };
+}
+
+/**
+ * Initiates MFA setup by generating a new TOTP secret and provisioning URI.
+ */
+export async function setupUserMfa(
+  userId: string
+): Promise<{ secret: string; otpauthUri: string } | null> {
+  let email = 'admin@headless.io';
+
+  if (canAttemptDb()) {
+    try {
+      const user = await runWithDbTimeout(() => prisma.user.findUnique({ where: { id: userId } }));
+      if (user) email = user.email;
+    } catch {
+      // Fallback
+    }
+  } else {
+    const mockUser = MOCK_USERS.find((u) => u.id === userId);
+    if (mockUser) email = mockUser.email;
+  }
+
+  const secret = generateTotpSecret(20);
+  const otpauthUri = buildOtpAuthUri(secret, email, 'Markup CMS');
+  return { secret, otpauthUri };
+}
+
+/**
+ * Validates the initial TOTP code to confirm enrollment and saves encrypted secret + backup codes.
+ */
+export async function enableUserMfa(
+  userId: string,
+  secretB32: string,
+  code: string
+): Promise<{ success: boolean; backupCodes?: string[]; error?: string }> {
+  const match = verifyTotp(secretB32, code);
+  if (match === null) {
+    return { success: false, error: 'Verification code is invalid. Check the time on your authenticator device.' };
+  }
+
+  const backupCodes = generateBackupCodes(8);
+  const payload = JSON.stringify({ secret: secretB32, backupCodes });
+  const encrypted = encryptSecret(payload);
+
+  if (canAttemptDb()) {
+    try {
+      await runWithDbTimeout(() =>
+        prisma.user.update({
+          where: { id: userId },
+          data: {
+            mfaEnabled: true,
+            mfaSecret: encrypted,
+          },
+        })
+      );
+      return { success: true, backupCodes };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const mockUser = MOCK_USERS.find((u) => u.id === userId);
+  if (mockUser) {
+    mockUser.twoFactorEnabled = true;
+    mockUser.twoFactorSecret = secretB32;
+    mockUser.backupCodes = backupCodes;
+    return { success: true, backupCodes };
+  }
+
+  return { success: false, error: 'User not found' };
+}
+
+/**
+ * Disables MFA after verifying user's current password.
+ */
+export async function disableUserMfa(
+  userId: string,
+  currentPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  if (canAttemptDb()) {
+    try {
+      const user = await runWithDbTimeout(() => prisma.user.findUnique({ where: { id: userId } }));
+      if (!user) return { success: false, error: 'User not found' };
+
+      const match = await verifyPassword(currentPassword, user.passwordHash);
+      if (!match) return { success: false, error: 'Current password is incorrect' };
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          mfaEnabled: false,
+          mfaSecret: null,
+        },
+      });
+      return { success: true };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const mockUser = MOCK_USERS.find((u) => u.id === userId);
+  if (mockUser) {
+    const isCurrentValid =
+      (process.env.NODE_ENV !== 'production' && currentPassword === 'AdminPass123!') ||
+      (await verifyPassword(currentPassword, mockUser.passwordHash));
+
+    if (!isCurrentValid) return { success: false, error: 'Current password is incorrect' };
+
+    mockUser.twoFactorEnabled = false;
+    mockUser.twoFactorSecret = undefined;
+    mockUser.backupCodes = undefined;
+    return { success: true };
+  }
+
+  return { success: false, error: 'User not found' };
 }
 

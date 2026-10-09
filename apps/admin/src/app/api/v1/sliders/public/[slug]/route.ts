@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPublicSlider } from '@/lib/slider-service';
+import { guard } from '@/lib/security/guard';
+import { RATE_LIMITS } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +9,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const sec = await guard(_req, { public: true, rate: RATE_LIMITS.api });
+  if (!sec.ok) return sec.response;
   try {
     const { slug } = await params;
     const payload = await getPublicSlider(slug);
