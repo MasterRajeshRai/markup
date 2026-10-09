@@ -163,6 +163,7 @@ export default function MediaLibraryPage() {
   const [editingFocusKeyword, setEditingFocusKeyword] = useState('');
   const [metadataSaved, setMetadataSaved] = useState(false);
   const [isSavingMetadata, setIsSavingMetadata] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<'seo' | 'editorial' | 'storage'>('seo');
 
   // Available presets from API / defaults
   const [presets, setPresets] = useState<PresetItem[]>(DEFAULT_CROP_PRESETS);
@@ -1664,9 +1665,9 @@ export default function MediaLibraryPage() {
           }}
         >
           {selectedAsset && (
-            <DialogContent className="max-w-5xl max-h-[92vh] p-0 gap-0 overflow-hidden flex flex-col sm:rounded-2xl">
+            <DialogContent className="w-[96vw] max-w-[1440px] h-[92vh] max-h-[92vh] p-0 gap-0 overflow-hidden flex flex-col sm:rounded-2xl">
               {/* Modal Header with Previous / Next Asset Navigation */}
-              <DialogHeader className="px-6 py-3.5 border-b shrink-0 bg-card flex flex-row items-center justify-between space-y-0">
+              <DialogHeader className="px-6 py-3.5 border-b shrink-0 bg-card flex flex-row items-center justify-between space-y-0 pr-14">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Globe className="h-4 w-4 text-emerald-500 shrink-0" />
                   <DialogTitle className="text-base font-bold truncate">
@@ -1678,10 +1679,12 @@ export default function MediaLibraryPage() {
                   {liveSeo && (
                     <Badge
                       className={cn(
-                        'text-[10px] font-mono font-semibold',
-                        liveSeo.grade === 'Good'
+                        'text-[10px] font-mono font-semibold px-2 py-0.5',
+                        liveSeo.score >= 80
                           ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
-                          : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                          : liveSeo.score >= 50
+                          ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                          : 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
                       )}
                     >
                       Image SEO: {liveSeo.score}/100 ({liveSeo.grade})
@@ -1696,7 +1699,7 @@ export default function MediaLibraryPage() {
                     variant="outline"
                     onClick={handlePrevAsset}
                     disabled={filteredMedia.length <= 1}
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 p-0 cursor-pointer"
                     title="Previous Image (← Left Arrow)"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -1706,7 +1709,7 @@ export default function MediaLibraryPage() {
                     variant="outline"
                     onClick={handleNextAsset}
                     disabled={filteredMedia.length <= 1}
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 p-0 cursor-pointer"
                     title="Next Image (→ Right Arrow)"
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -1714,341 +1717,509 @@ export default function MediaLibraryPage() {
                 </div>
               </DialogHeader>
 
-              {/* Modal Body: 2 Columns (WordPress Attachment Details Layout) */}
-              <div className="flex-1 overflow-y-auto p-6 max-h-[calc(92vh-125px)]">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* Left Column: Visual Preview, Technical Specs, Variants */}
-                  <div className="lg:col-span-6 space-y-4">
-                    {/* Image Viewport Container */}
-                    <div className="rounded-xl border bg-slate-950 flex items-center justify-center h-72 sm:h-80 overflow-hidden relative shadow-inner select-none group">
-                      {selectedAsset.mimeType.startsWith('image/') ? (
-                        <img
-                          src={selectedAsset.publicUrl}
-                          alt={editingAltText || selectedAsset.altText || ''}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <File className="h-14 w-14 text-muted-foreground" />
-                      )}
+              {/* Modal Body: 2 Balanced Columns with Segmented Inspector */}
+              <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                {/* Left Column: Visual Stage, Full Preview, Action Bar & Variants */}
+                <div className="lg:col-span-7 flex flex-col min-h-0 border-r bg-muted/15 p-6 overflow-y-auto space-y-4">
+                  {/* Image Viewport Container */}
+                  <div className="rounded-xl border bg-slate-950 flex items-center justify-center h-80 sm:h-96 lg:h-[460px] overflow-hidden relative shadow-inner select-none group">
+                    {selectedAsset.mimeType.startsWith('image/') ? (
+                      <img
+                        src={selectedAsset.publicUrl}
+                        alt={editingAltText || selectedAsset.altText || ''}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <File className="h-16 w-16 text-muted-foreground" />
+                    )}
 
-                      {/* Dimensions Overlay */}
-                      {selectedAsset.width && selectedAsset.height && (
-                        <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-sm text-white/90 text-[10px] font-mono px-2 py-0.5 rounded border border-white/10">
-                          {selectedAsset.width} × {selectedAsset.height} px
-                        </div>
-                      )}
-
-                      {/* Format Badge Overlay */}
-                      <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-sm text-emerald-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-white/10 uppercase">
-                        {selectedAsset.mimeType === 'image/webp' ? 'WEBP' : selectedAsset.mimeType.split('/')[1]}
+                    {/* Dimensions Overlay */}
+                    {selectedAsset.width && selectedAsset.height && (
+                      <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-sm text-white/90 text-[11px] font-mono px-2.5 py-1 rounded-md border border-white/10">
+                        {selectedAsset.width} × {selectedAsset.height} px
                       </div>
+                    )}
 
-                      {/* Fullscreen New Tab Link */}
+                    {/* Format Badge Overlay */}
+                    <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-sm text-emerald-400 text-[11px] font-mono font-bold px-2.5 py-1 rounded-md border border-white/10 uppercase">
+                      {selectedAsset.mimeType === 'image/webp' ? 'WEBP' : selectedAsset.mimeType.split('/')[1]}
+                    </div>
+
+                    {/* Fullscreen New Tab Link */}
+                    <a
+                      href={selectedAsset.publicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-3 right-3 bg-black/75 hover:bg-black text-white/90 p-2 rounded-lg border border-white/10 transition-colors"
+                      title="Open Image in Full Resolution"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
+
+                  {/* Quick Tools & Downloads Toolbar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setPendingFiles([]);
+                          setPreviewUrl(selectedAsset.publicUrl);
+                          setCustomSeoName(selectedAsset.seoName || selectedAsset.filename.replace(/\.webp$/, ''));
+                          setFocalX(selectedAsset.focalX || 0.5);
+                          setFocalY(selectedAsset.focalY || 0.5);
+                          setIsUploadModalOpen(true);
+                        }}
+                        className="h-8 text-xs gap-1.5 cursor-pointer"
+                      >
+                        <Crosshair className="h-3.5 w-3.5 text-primary" />
+                        <span>Edit Focal Point</span>
+                      </Button>
+
                       <a
                         href={selectedAsset.publicUrl}
+                        download={selectedAsset.filename}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="absolute bottom-2.5 right-2.5 bg-black/75 hover:bg-black text-white/90 p-1.5 rounded-lg border border-white/10 transition-colors"
-                        title="Open Image in Full Resolution"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-medium hover:bg-muted transition-colors text-foreground"
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
                       </a>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyUrlToClipboard(selectedAsset.publicUrl)}
+                        className="h-8 text-xs gap-1.5 cursor-pointer"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>Copy URL</span>
+                      </Button>
                     </div>
 
-                    {/* Quick Tools & Downloads */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setPendingFiles([]);
-                            setPreviewUrl(selectedAsset.publicUrl);
-                            setCustomSeoName(selectedAsset.seoName || selectedAsset.filename.replace(/\.webp$/, ''));
-                            setFocalX(selectedAsset.focalX || 0.5);
-                            setFocalY(selectedAsset.focalY || 0.5);
-                            setIsUploadModalOpen(true);
-                          }}
-                          className="h-8 text-xs gap-1.5"
-                        >
-                          <Crosshair className="h-3.5 w-3.5 text-primary" />
-                          <span>Edit Focal Point</span>
-                        </Button>
+                    {selectedAsset.usageCount > 0 ? (
+                      <Badge variant="secondary" className="text-[10px] text-amber-500 bg-amber-500/10 border-amber-500/20">
+                        {selectedAsset.usageCount} content reference(s)
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px] text-emerald-500 bg-emerald-500/10 border-emerald-500/20">
+                        Zero active references
+                      </Badge>
+                    )}
+                  </div>
 
-                        <a
-                          href={selectedAsset.publicUrl}
-                          download={selectedAsset.filename}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-medium hover:bg-muted transition-colors text-foreground"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          <span>Download</span>
-                        </a>
-                      </div>
-
-                      {selectedAsset.usageCount > 0 ? (
-                        <Badge variant="secondary" className="text-[10px] text-amber-500 bg-amber-500/10 border-amber-500/20">
-                          {selectedAsset.usageCount} content reference(s)
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-[10px] text-emerald-500 bg-emerald-500/10 border-emerald-500/20">
-                          Zero active references
-                        </Badge>
-                      )}
+                  {/* Generated WebP Variants Grid */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+                        <Layers className="h-3.5 w-3.5 text-primary" />
+                        <span>Generated WebP Variants ({assetVariants.length})</span>
+                      </Label>
+                      <Badge variant="outline" className="text-[10px] font-mono">
+                        {selectedAsset.storageDriver === 'cloudflare_r2' ? 'Cloudflare R2' : 'R2 Mock'}
+                      </Badge>
                     </div>
 
-                    {/* Primary Delivery URL */}
-                    <div className="space-y-1">
-                      <Label className="text-[11px] font-semibold text-muted-foreground">Public Delivery URL</Label>
-                      <div className="flex gap-2">
-                        <Input readOnly value={selectedAsset.publicUrl} className="h-8 font-mono text-xs bg-muted/20" />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyUrlToClipboard(selectedAsset.publicUrl)}
-                          className="h-8 px-2.5"
-                          title="Copy Public URL"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
+                    {loadingVariants ? (
+                      <div className="text-xs text-muted-foreground py-3 text-center">Loading variants...</div>
+                    ) : assetVariants.length === 0 ? (
+                      <div className="text-xs text-muted-foreground py-2 text-center border rounded-lg bg-card">
+                        No crop variants generated for this asset.
                       </div>
-                    </div>
-
-                    {/* Generated WebP Variants */}
-                    <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-                          <Layers className="h-3.5 w-3.5 text-primary" />
-                          <span>Generated WebP Variants ({assetVariants.length})</span>
-                        </Label>
-                        <Badge variant="outline" className="text-[10px] font-mono">
-                          {selectedAsset.storageDriver === 'cloudflare_r2' ? 'Cloudflare R2' : 'R2 Mock'}
-                        </Badge>
-                      </div>
-
-                      {loadingVariants ? (
-                        <div className="text-xs text-muted-foreground py-3 text-center">Loading variants...</div>
-                      ) : assetVariants.length === 0 ? (
-                        <div className="text-xs text-muted-foreground py-2 text-center border rounded-lg">
-                          No crop variants generated for this asset.
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5 border rounded-lg p-2 bg-muted/20 max-h-36 overflow-y-auto">
-                          {assetVariants.map((v) => (
-                            <div
-                              key={v.id || v.presetSlug}
-                              className="flex items-center justify-between p-1.5 rounded-md bg-card border text-xs gap-2"
-                            >
-                              <div>
-                                <span className="font-semibold text-foreground capitalize mr-1">
-                                  {v.presetName || v.presetSlug}
-                                </span>
-                                <span className="text-[10px] font-mono text-muted-foreground">
-                                  ({v.width}×{v.height} px • {(v.fileSize / 1024).toFixed(1)} KB)
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => copyUrlToClipboard(v.publicUrl)}
-                                  className="h-6 w-6 p-0"
-                                  title="Copy URL"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                <a
-                                  href={v.publicUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-muted text-muted-foreground"
-                                  title="Open in new tab"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                        {assetVariants.map((v) => (
+                          <div
+                            key={v.id || v.presetSlug}
+                            className="flex items-center justify-between p-2 rounded-lg bg-card border text-xs gap-2 shadow-2xs hover:border-primary/40 transition-colors"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-foreground capitalize truncate text-[11px]">
+                                {v.presetName || v.presetSlug}
+                              </p>
+                              <p className="text-[10px] font-mono text-muted-foreground">
+                                {v.width}×{v.height} px • {(v.fileSize / 1024).toFixed(1)} KB
+                              </p>
                             </div>
-                          ))}
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => copyUrlToClipboard(v.publicUrl)}
+                                className="h-6 w-6 p-0 cursor-pointer"
+                                title="Copy Variant URL"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              <a
+                                href={v.publicUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-muted text-muted-foreground"
+                                title="Open variant in new tab"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column: Segmented Inspector with Tabs */}
+                <div className="lg:col-span-5 flex flex-col min-h-0 bg-card">
+                  {/* Top Meta Strip & Segmented Tabs Switcher */}
+                  <div className="p-4 border-b bg-muted/20 shrink-0 space-y-3">
+                    {/* File Quick Summary */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-foreground truncate" title={selectedAsset.filename}>
+                          {selectedAsset.filename}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground font-mono">
+                          <span>{selectedAsset.mimeType}</span>
+                          <span>•</span>
+                          <span>{(selectedAsset.size / 1024).toFixed(1)} KB</span>
+                          {selectedAsset.width && (
+                            <>
+                              <span>•</span>
+                              <span>{selectedAsset.width}×{selectedAsset.height}</span>
+                            </>
+                          )}
                         </div>
-                      )}
+                      </div>
+                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">
+                        {new Date(selectedAsset.createdAt).toLocaleDateString()}
+                      </Badge>
+                    </div>
+
+                    {/* Segmented Control Tabs */}
+                    <div className="grid grid-cols-3 gap-1 p-1 bg-muted/60 rounded-lg border text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setInspectorTab('seo')}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md font-medium text-xs transition-all cursor-pointer',
+                          inspectorTab === 'seo'
+                            ? 'bg-background text-foreground shadow-xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>Image SEO</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInspectorTab('editorial')}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md font-medium text-xs transition-all cursor-pointer',
+                          inspectorTab === 'editorial'
+                            ? 'bg-background text-foreground shadow-xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Editorial</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInspectorTab('storage')}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md font-medium text-xs transition-all cursor-pointer',
+                          inspectorTab === 'storage'
+                            ? 'bg-background text-foreground shadow-xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <HardDrive className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Storage & R2</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Right Column: WordPress Details & Live Image SEO Form */}
-                  <div className="lg:col-span-6 space-y-4">
-                    {/* WordPress File Info Block */}
-                    <div className="p-3 rounded-xl border bg-muted/20 text-xs space-y-1 text-muted-foreground">
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
-                        <div>
-                          <span className="font-semibold text-foreground">File name: </span>
-                          <span className="font-mono">{selectedAsset.filename}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-foreground">File type: </span>
-                          <span>{selectedAsset.mimeType}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-foreground">File size: </span>
-                          <span>{(selectedAsset.size / 1024).toFixed(1)} KB</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-foreground">Dimensions: </span>
-                          <span>{selectedAsset.width ? `${selectedAsset.width} × ${selectedAsset.height} px` : 'N/A'}</span>
-                        </div>
-                        <div className="col-span-2 pt-0.5">
-                          <span className="font-semibold text-foreground">Uploaded on: </span>
-                          <span>{new Date(selectedAsset.createdAt).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Rank Markup Live Image SEO Analysis Box */}
-                    {liveSeo && (
-                      <div className="p-3.5 rounded-xl border bg-gradient-to-br from-card to-muted/30 space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-emerald-500" />
-                            <span className="text-xs font-bold text-foreground">Rank Markup Image SEO</span>
-                          </div>
-                          <Badge
-                            className={cn(
-                              'text-xs font-mono font-bold px-2 py-0.5',
-                              liveSeo.score >= 80
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                                : liveSeo.score >= 50
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                            )}
-                          >
-                            Score: {liveSeo.score}/100 ({liveSeo.grade})
-                          </Badge>
-                        </div>
-
-                        {/* Progress Meter */}
-                        <Progress value={liveSeo.score} className="h-1.5" />
-
-                        {/* Live SEO Checklist */}
-                        <div className="space-y-1.5 pt-1 text-xs">
-                          {liveSeo.checks.map((chk) => (
-                            <div key={chk.id} className="flex items-start gap-2">
-                              {chk.status === 'passed' ? (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                              ) : chk.status === 'warning' ? (
-                                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                              ) : (
-                                <X className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
-                              )}
-                              <div className="text-[11px] leading-tight flex-1">
-                                <span className="font-medium text-foreground">{chk.title}: </span>
-                                <span className="text-muted-foreground">{chk.message}</span>
+                  {/* Scrollable Tab Contents */}
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
+                    {/* ------------------- TAB 1: IMAGE SEO ------------------- */}
+                    {inspectorTab === 'seo' && (
+                      <div className="space-y-4 animate-in fade-in-50 duration-200">
+                        {/* Rank Markup Live Image SEO Box */}
+                        {liveSeo && (
+                          <div className="p-3.5 rounded-xl border bg-gradient-to-br from-card to-muted/30 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Sparkles className="h-4 w-4 text-emerald-500" />
+                                <span className="text-xs font-bold text-foreground">Rank Markup Image SEO</span>
                               </div>
+                              <Badge
+                                className={cn(
+                                  'text-xs font-mono font-bold px-2 py-0.5',
+                                  liveSeo.score >= 80
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                    : liveSeo.score >= 50
+                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                                )}
+                              >
+                                Score: {liveSeo.score}/100 ({liveSeo.grade})
+                              </Badge>
                             </div>
-                          ))}
+
+                            {/* Progress Meter */}
+                            <Progress value={liveSeo.score} className="h-1.5" />
+
+                            {/* 2-Column Responsive Checklist Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                              {liveSeo.checks.map((chk) => (
+                                <div key={chk.id} className="flex items-start gap-1.5 p-1.5 rounded-md bg-card/60 border border-border/50">
+                                  {chk.status === 'passed' ? (
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                  ) : chk.status === 'warning' ? (
+                                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                  ) : (
+                                    <X className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+                                  )}
+                                  <div className="text-[11px] leading-tight min-w-0 flex-1">
+                                    <p className="font-semibold text-foreground truncate">{chk.title}</p>
+                                    <p className="text-[10px] text-muted-foreground line-clamp-2">{chk.message}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Focus Keyword */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="focusKeyword" className="text-xs font-semibold text-foreground">
+                              Target Focus Keyword
+                            </Label>
+                            <span className="text-[10px] text-muted-foreground">For Image SEO</span>
+                          </div>
+                          <Input
+                            id="focusKeyword"
+                            value={editingFocusKeyword}
+                            onChange={(e) => setEditingFocusKeyword(e.target.value)}
+                            placeholder="e.g. school campus, modern building..."
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* Alternative Text (Alt Text) */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="altText" className="text-xs font-semibold text-foreground flex items-center gap-1">
+                              <span>Alternative Text (Alt Text)</span>
+                              <span className="text-rose-500 font-bold">*</span>
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  'text-[10px] font-mono',
+                                  editingAltText.length > 125 ? 'text-amber-500 font-bold' : 'text-muted-foreground'
+                                )}
+                              >
+                                {editingAltText.length}/125 chars
+                              </span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleSuggestAlt}
+                                className="h-6 px-1.5 text-[10px] text-primary gap-1 cursor-pointer hover:bg-primary/10"
+                                title="Auto-generate alt text from filename"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                <span>Suggest Alt</span>
+                              </Button>
+                            </div>
+                          </div>
+
+                          <Textarea
+                            id="altText"
+                            rows={2}
+                            value={editingAltText}
+                            onChange={(e) => setEditingAltText(e.target.value)}
+                            placeholder="Describe the image purpose for screen readers and Google Image search..."
+                            className="text-xs resize-none"
+                          />
+                          <p className="text-[10px] text-muted-foreground leading-tight">
+                            Describe the purpose and subject of the image. Leave blank only if purely decorative (WCAG 2.1 AA).
+                          </p>
+                        </div>
+
+                        {/* Image Title */}
+                        <div className="space-y-1">
+                          <Label htmlFor="imgTitle" className="text-xs font-semibold text-foreground">
+                            Image Title
+                          </Label>
+                          <Input
+                            id="imgTitle"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            placeholder="Image title for galleries and indexers..."
+                            className="h-8 text-xs"
+                          />
                         </div>
                       </div>
                     )}
 
-                    {/* WordPress Image SEO & Metadata Fields Form */}
-                    <div className="space-y-3 pt-1">
-                      {/* 1. Alternative Text (Alt Text) */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="altText" className="text-xs font-semibold text-foreground flex items-center gap-1">
-                            <span>Alternative Text (Alt Text)</span>
-                            <span className="text-rose-500 font-bold">*</span>
+                    {/* ----------------- TAB 2: EDITORIAL & CONTENT ----------------- */}
+                    {inspectorTab === 'editorial' && (
+                      <div className="space-y-4 animate-in fade-in-50 duration-200">
+                        {/* Image Title */}
+                        <div className="space-y-1">
+                          <Label htmlFor="editImgTitle" className="text-xs font-semibold text-foreground">
+                            Title
                           </Label>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              {editingAltText.length}/125 chars
-                            </span>
+                          <Input
+                            id="editImgTitle"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            placeholder="Display title for this media asset..."
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* Caption */}
+                        <div className="space-y-1">
+                          <Label htmlFor="caption" className="text-xs font-semibold text-foreground">
+                            Caption
+                          </Label>
+                          <Textarea
+                            id="caption"
+                            rows={2}
+                            value={editingCaption}
+                            onChange={(e) => setEditingCaption(e.target.value)}
+                            placeholder="Caption displayed directly below the image on articles & pages..."
+                            className="text-xs resize-none"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Rendered inside the &lt;figcaption&gt; block when inserted into articles.
+                          </p>
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-1">
+                          <Label htmlFor="description" className="text-xs font-semibold text-foreground">
+                            Description
+                          </Label>
+                          <Textarea
+                            id="description"
+                            rows={3}
+                            value={editingDescription}
+                            onChange={(e) => setEditingDescription(e.target.value)}
+                            placeholder="Extended background, photographer credits, and archival notes..."
+                            className="text-xs resize-none"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Stored in attachment metadata, media feeds, and attachment archive pages.
+                          </p>
+                        </div>
+
+                        {/* Editorial Attribution Card */}
+                        <div className="p-3.5 rounded-xl border bg-muted/20 text-xs space-y-2">
+                          <p className="font-semibold text-foreground text-[11px]">Editorial Attribution</p>
+                          <div className="grid grid-cols-2 gap-2 text-[10px] text-muted-foreground">
+                            <div>
+                              <span className="font-medium text-foreground">Uploaded by: </span>
+                              <span>{selectedAsset.uploaderName || 'System Admin'}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">Original Name: </span>
+                              <span className="font-mono truncate block" title={selectedAsset.originalName}>{selectedAsset.originalName}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">Content Usage: </span>
+                              <span>{selectedAsset.usageCount} post reference(s)</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">Asset ID: </span>
+                              <span className="font-mono">{selectedAsset.id.slice(0, 10)}...</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ---------------- TAB 3: STORAGE & TECHNICAL ---------------- */}
+                    {inspectorTab === 'storage' && (
+                      <div className="space-y-4 animate-in fade-in-50 duration-200">
+                        {/* Delivery URL */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-foreground">Public Delivery URL (CDN)</Label>
+                          <div className="flex gap-2">
+                            <Input readOnly value={selectedAsset.publicUrl} className="h-8 font-mono text-xs bg-muted/20" />
                             <Button
-                              type="button"
                               size="sm"
-                              variant="ghost"
-                              onClick={handleSuggestAlt}
-                              className="h-6 px-1.5 text-[10px] text-primary gap-1"
-                              title="Auto-generate alt text from filename"
+                              variant="outline"
+                              onClick={() => copyUrlToClipboard(selectedAsset.publicUrl)}
+                              className="h-8 px-2.5 cursor-pointer"
+                              title="Copy Public URL"
                             >
-                              <Sparkles className="h-3 w-3" />
-                              <span>Suggest Alt</span>
+                              <Copy className="h-3.5 w-3.5" />
                             </Button>
+                            <a
+                              href={selectedAsset.publicUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-md border text-muted-foreground hover:text-foreground"
+                              title="Open in new tab"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
                           </div>
                         </div>
 
-                        <Textarea
-                          id="altText"
-                          rows={2}
-                          value={editingAltText}
-                          onChange={(e) => setEditingAltText(e.target.value)}
-                          placeholder="Describe the image purpose for screen readers and Google Image search..."
-                          className="text-xs resize-none"
-                        />
-                        <p className="text-[10px] text-muted-foreground leading-tight">
-                          Learn how to describe the purpose of the image. Leave empty only if the image is purely decorative.
-                        </p>
-                      </div>
-
-                      {/* 2. Image Title */}
-                      <div className="space-y-1">
-                        <Label htmlFor="imgTitle" className="text-xs font-semibold text-foreground">
-                          Title
-                        </Label>
-                        <Input
-                          id="imgTitle"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          placeholder="Image title for galleries and indexers..."
-                          className="h-8 text-xs"
-                        />
-                      </div>
-
-                      {/* 3. Caption */}
-                      <div className="space-y-1">
-                        <Label htmlFor="caption" className="text-xs font-semibold text-foreground">
-                          Caption
-                        </Label>
-                        <Input
-                          id="caption"
-                          value={editingCaption}
-                          onChange={(e) => setEditingCaption(e.target.value)}
-                          placeholder="Caption displayed directly below the image on pages..."
-                          className="h-8 text-xs"
-                        />
-                      </div>
-
-                      {/* 4. Description */}
-                      <div className="space-y-1">
-                        <Label htmlFor="description" className="text-xs font-semibold text-foreground">
-                          Description
-                        </Label>
-                        <Textarea
-                          id="description"
-                          rows={2}
-                          value={editingDescription}
-                          onChange={(e) => setEditingDescription(e.target.value)}
-                          placeholder="Extended description and context for search engines..."
-                          className="text-xs resize-none"
-                        />
-                      </div>
-
-                      {/* 5. Focus Keyword */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="focusKeyword" className="text-xs font-semibold text-foreground">
-                            Target Focus Keyword
-                          </Label>
-                          <span className="text-[10px] text-muted-foreground">For Image SEO</span>
+                        {/* Cloudflare R2 Specs */}
+                        <div className="p-3.5 rounded-xl border bg-muted/20 text-xs space-y-2">
+                          <div className="flex items-center justify-between border-b pb-2">
+                            <span className="font-bold text-foreground flex items-center gap-1.5">
+                              <HardDrive className="h-3.5 w-3.5 text-primary" />
+                              <span>Cloudflare R2 Object Storage</span>
+                            </span>
+                            <Badge variant="outline" className="text-[10px] font-mono text-emerald-500">
+                              Active
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px]">
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Driver</span>
+                              <span className="font-semibold text-foreground">{selectedAsset.storageDriver || 'cloudflare_r2'}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Bucket</span>
+                              <span className="font-mono text-foreground">{selectedAsset.storageBucket || 'r2-production-assets'}</span>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground block text-[10px]">Storage Key</span>
+                              <span className="font-mono text-foreground text-[10px] break-all">{selectedAsset.storageKey || selectedAsset.filename}</span>
+                            </div>
+                            {selectedAsset.r2ReferenceName && (
+                              <div className="col-span-2">
+                                <span className="text-muted-foreground block text-[10px]">R2 Reference ID</span>
+                                <span className="font-mono text-foreground text-[10px]">{selectedAsset.r2ReferenceName}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <Input
-                          id="focusKeyword"
-                          value={editingFocusKeyword}
-                          onChange={(e) => setEditingFocusKeyword(e.target.value)}
-                          placeholder="e.g. school campus, modern building..."
-                          className="h-8 text-xs"
-                        />
+
+                        {/* Zero-Retention Local Disk Policy */}
+                        <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs space-y-1">
+                          <p className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 text-[11px]">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Zero-Retention Local Disk Pipeline
+                          </p>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">
+                            Temporary original files are purged from disk immediately after multi-preset WebP conversion and Cloudflare R2 verification.
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
