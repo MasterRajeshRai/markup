@@ -8,6 +8,7 @@ import { generateTotpSecret, generateTotpCode, verifyTotp, generateBackupCodes }
 import { validatePasswordPolicy } from './lib/security/password-policy';
 import { encryptSecret, decryptSecret, signShortToken, verifyShortToken } from './lib/security/crypto-box';
 import { hashPassword, verifyPassword, safeEqual } from '../../../packages/core/src/security/hash';
+import { evaluateImageSeo, generateSmartAltFromFilename } from './lib/image-seo';
 
 describe('Security Suite: Invariants & Hardening', () => {
   describe('1. Rate Limiting', () => {
@@ -216,6 +217,47 @@ describe('Security Suite: Invariants & Hardening', () => {
       assert.equal(safeEqual('token-abc-123', 'token-abc-123'), true);
       assert.equal(safeEqual('token-abc-123', 'token-abc-999'), false);
       assert.equal(safeEqual('short', 'longer-string'), false);
+    });
+  });
+
+  describe('8. WordPress Image SEO Engine', () => {
+    it('accurately scores well-optimized WebP image with alt text and keyword', () => {
+      const result = evaluateImageSeo({
+        filename: 'delhi-school-campus-library.webp',
+        altText: 'Modern digital library at Prince Public School campus',
+        title: 'School Campus Digital Library',
+        focusKeyword: 'school campus',
+        size: 145 * 1024,
+        mimeType: 'image/webp',
+      });
+
+      assert.ok(result.score >= 80);
+      assert.equal(result.grade, 'Good');
+      assert.equal(result.gradeColor, 'emerald');
+      const passedAlt = result.checks.find((c) => c.id === 'alt_presence');
+      assert.equal(passedAlt?.status, 'passed');
+    });
+
+    it('identifies missing alt text and poor filenames', () => {
+      const result = evaluateImageSeo({
+        filename: 'IMG_0001.jpg',
+        altText: '',
+        size: 2500 * 1024,
+        mimeType: 'image/jpeg',
+      });
+
+      assert.ok(result.score < 50);
+      assert.equal(result.grade, 'Poor');
+      const failedAlt = result.checks.find((c) => c.id === 'alt_presence');
+      assert.equal(failedAlt?.status, 'failed');
+    });
+
+    it('generates clean smart alt text from messy filenames', () => {
+      const alt1 = generateSmartAltFromFilename('IMG_2026_modern_delhi_classroom.jpg');
+      assert.equal(alt1, 'Modern delhi classroom');
+
+      const alt2 = generateSmartAltFromFilename('Screenshot_prince_public_school_banner.png');
+      assert.equal(alt2, 'Prince public school banner');
     });
   });
 });

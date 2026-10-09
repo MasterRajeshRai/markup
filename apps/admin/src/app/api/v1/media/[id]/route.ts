@@ -63,7 +63,13 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { altText, caption, description, copyright, credit, focalPoint, folderId } = body;
+    const { altText, caption, description, copyright, credit, focalPoint, folderId, title, focusKeyword, metadata } = body;
+
+    const updatedMetadata = {
+      ...(typeof metadata === 'object' ? metadata : {}),
+      ...(title !== undefined ? { title } : {}),
+      ...(focusKeyword !== undefined ? { focusKeyword } : {}),
+    };
 
     try {
       const updated = await prisma.media.update({
@@ -76,11 +82,18 @@ export async function PATCH(
           credit: credit !== undefined ? credit : undefined,
           focalPoint: focalPoint !== undefined ? (focalPoint as Prisma.InputJsonValue) : undefined,
           folderId: folderId !== undefined ? folderId : undefined,
+          metadata: Object.keys(updatedMetadata).length > 0 ? (updatedMetadata as Prisma.InputJsonValue) : undefined,
         },
       });
       return NextResponse.json({ success: true, media: updated });
     } catch {
-      const updated = updateMockMedia(id, { altText, caption, description, folderId });
+      const updated = updateMockMedia(id, {
+        altText,
+        caption,
+        description,
+        folderId,
+        metadata: updatedMetadata,
+      });
       return NextResponse.json({ success: true, media: updated });
     }
   } catch (err) {
