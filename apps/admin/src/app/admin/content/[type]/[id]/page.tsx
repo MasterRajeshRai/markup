@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { BlockNode } from '@headless/core';
@@ -273,6 +273,16 @@ export default function EntryEditorPage() {
   // Live Interactive Preview State
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+  // WordPress Post Editor Title Textarea Auto-Resize Ref
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      titleTextareaRef.current.style.height = 'auto';
+      titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
+    }
+  }, [title, activeCanvasTab]);
+
   // Collaborative Presence & Conflict Locking
   const [lockInfo, setLockInfo] = useState<{ isLocked: boolean; holderName?: string; lockedAt?: string } | null>(null);
   const [activeCollaborators, setActiveCollaborators] = useState<Array<{ userId: string; userName: string }>>([]);
@@ -480,54 +490,62 @@ export default function EntryEditorPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden -m-4 sm:-m-6">
-      {/* ── Top Header Control Bar ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-card border-b shrink-0 z-10 gap-3">
-        {/* Left: Breadcrumbs & Title */}
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/admin/content">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+      {/* ── WordPress Post Editor Header Bar ───────────────────────────────── */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-card border-b shrink-0 z-10 gap-2 sm:gap-4">
+        {/* Left: WordPress-style Navigation, Breadcrumb & Document State */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Link href="/admin/content" title="View all articles">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden sm:inline">
-                {contentType?.name || 'Article'}
-              </span>
-              <span className="text-muted-foreground/40 hidden sm:inline">/</span>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Article Title..."
-                className="font-bold text-sm bg-transparent border-0 border-b border-transparent hover:border-border focus:border-primary focus:outline-none px-1 py-0.5 max-w-sm sm:max-w-md truncate"
-              />
-              <Badge
-                variant={
-                  status === 'PUBLISHED'
-                    ? 'success'
-                    : status === 'SCHEDULED'
-                    ? 'secondary'
-                    : status === 'APPROVED'
-                    ? 'default'
-                    : 'warning'
-                }
-                className="text-[10px] uppercase font-bold shrink-0"
-              >
-                {status}
-              </Badge>
-            </div>
-            <div className="text-[10px] text-muted-foreground font-mono truncate px-1">
-              /{typeSlug}/{slug}
-            </div>
+
+          <div className="flex items-center gap-2 min-w-0">
+            <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground hidden sm:inline-flex shrink-0">
+              {contentType?.name || 'Article'}
+            </Badge>
+
+            <span className="text-xs font-semibold text-foreground truncate max-w-[140px] sm:max-w-[240px] md:max-w-[320px]" title={title}>
+              {title || 'Add title'}
+            </span>
+
+            <Badge
+              variant={
+                status === 'PUBLISHED'
+                  ? 'success'
+                  : status === 'SCHEDULED'
+                  ? 'secondary'
+                  : status === 'APPROVED'
+                  ? 'default'
+                  : 'warning'
+              }
+              className="text-[10px] uppercase font-bold shrink-0"
+            >
+              {status}
+            </Badge>
+
+            {/* Subtle save state text like WordPress */}
+            <span className="text-[11px] text-muted-foreground hidden md:inline-flex items-center gap-1 font-sans">
+              {saving ? (
+                <>
+                  <Clock className="h-3 w-3 animate-spin text-primary" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="h-3 w-3 text-emerald-500" />
+                  <span>Saved</span>
+                </>
+              )}
+            </span>
           </div>
         </div>
 
-        {/* Right: Actions, Live SEO Score Badge, Collaborators and Sidebar Toggle */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right: Actions, Live SEO Score, Preview, Publish, Sidebar Toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Active Collaborators Presence Indicator */}
           <div
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 border text-[11px] text-muted-foreground shadow-2xs"
+            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/60 border text-[11px] text-muted-foreground shadow-2xs"
             title={activeCollaborators.length > 0 ? `Active: ${activeCollaborators.map(c => c.userName).join(', ')}` : 'You are editing solo'}
           >
             <Users className="h-3.5 w-3.5 text-blue-500 shrink-0" />
@@ -535,6 +553,7 @@ export default function EntryEditorPage() {
               {activeCollaborators.length > 1 ? `${activeCollaborators.length} Online` : 'Solo'}
             </span>
           </div>
+
           {/* Real-time SEO Score Badge Button */}
           <button
             type="button"
@@ -562,58 +581,70 @@ export default function EntryEditorPage() {
             </span>
           </button>
 
-          <Button variant="outline" size="sm" onClick={handlePreview} className="gap-1.5 text-xs h-8 hidden sm:flex">
+          {/* Save Draft Button (when not published) */}
+          {status !== 'PUBLISHED' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleSave('DRAFT')}
+              disabled={saving}
+              className="text-xs h-8 px-2 sm:px-3 text-muted-foreground hover:text-foreground cursor-pointer hidden sm:flex"
+            >
+              <span>Save draft</span>
+            </Button>
+          )}
+
+          {/* Preview Button */}
+          <Button variant="outline" size="sm" onClick={handlePreview} className="gap-1.5 text-xs h-8 hidden sm:flex cursor-pointer">
             <Eye className="h-3.5 w-3.5" />
             <span>Preview</span>
           </Button>
 
+          {/* Publish / Update Button */}
           {status !== 'PUBLISHED' ? (
             <Button
               size="sm"
               onClick={handlePublishNow}
               disabled={saving}
-              className="gap-1 sm:gap-1.5 text-xs h-8 px-2.5 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
+              className="gap-1 sm:gap-1.5 text-xs h-8 px-3 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer shadow-xs"
             >
               <Send className="h-3.5 w-3.5 shrink-0" />
               <span>Publish</span>
             </Button>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleSave('DRAFT')}
-              disabled={saving}
-              className="gap-1 text-xs h-8 px-2 sm:px-3 text-amber-600 hover:text-amber-700 cursor-pointer"
-            >
-              <RotateCcw className="h-3.5 w-3.5 shrink-0 sm:hidden" />
-              <span className="hidden sm:inline">Unpublish</span>
-              <span className="sm:hidden">Draft</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleSave('DRAFT')}
+                disabled={saving}
+                className="text-xs h-8 px-2 sm:px-2.5 text-muted-foreground hover:text-foreground cursor-pointer hidden md:flex"
+                title="Switch to draft status"
+              >
+                <span>Switch to draft</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSave()}
+                disabled={saving}
+                className="gap-1 sm:gap-1.5 text-xs h-8 px-3 sm:px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold cursor-pointer shadow-xs"
+              >
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span>{saving ? 'Updating...' : 'Update'}</span>
+              </Button>
+            </div>
           )}
 
-          <Button
-            size="sm"
-            onClick={() => handleSave()}
-            disabled={saving}
-            className="gap-1 sm:gap-1.5 text-xs h-8 px-2.5 sm:px-3 cursor-pointer"
-          >
-            <Save className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {saving ? 'Saving...' : (
-                <>
-                  Save<span className="hidden sm:inline"> Draft</span>
-                </>
-              )}
-            </span>
-          </Button>
-
-          {/* Sidebar Toggle Button */}
+          {/* Settings / Document Sidebar Toggle */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title={isSidebarOpen ? 'Collapse Sidebar' : 'Expand SEO & Settings Sidebar'}
+            className={cn(
+              'h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer',
+              isSidebarOpen && 'bg-accent text-accent-foreground'
+            )}
+            title={isSidebarOpen ? 'Close Settings Sidebar' : 'Open Document Settings & SEO Sidebar'}
           >
             {isSidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
           </Button>
@@ -732,10 +763,72 @@ export default function EntryEditorPage() {
           </div>
 
           {/* Canvas Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-6">
-            {/* TAB 1: VISUAL BLOCK EDITOR */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-background">
+            {/* TAB 1: VISUAL BLOCK EDITOR (WordPress Gutenberg Post Editor) */}
             {activeCanvasTab === 'blocks' && (
-              <div className="max-w-4xl mx-auto space-y-4">
+              <div className="max-w-4xl mx-auto space-y-6">
+                {/* WordPress Gutenberg Post Title & Permalink Bar */}
+                <div className="space-y-2 pt-2 pb-5 border-b border-border/40 group/title">
+                  <textarea
+                    ref={titleTextareaRef}
+                    rows={1}
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      if (titleTextareaRef.current) {
+                        titleTextareaRef.current.style.height = 'auto';
+                        titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
+                      }
+                    }}
+                    placeholder="Add title"
+                    className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight placeholder:text-muted-foreground/30 resize-none leading-[1.18] text-foreground p-0 transition-colors"
+                  />
+
+                  {/* Gutenberg Permalink Preview */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono group/permalink flex-wrap pt-0.5">
+                    <span className="text-muted-foreground/60 select-none">Permalink:</span>
+                    <span className="text-foreground/85 bg-muted/60 px-2 py-0.5 rounded border border-border/50 truncate max-w-xs sm:max-w-md">
+                      https://markup.digital/{typeSlug}/{slug}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newSlug = prompt('Edit URL slug:', slug);
+                        if (newSlug !== null && newSlug.trim()) {
+                          setSlug(newSlug.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-'));
+                        }
+                      }}
+                      className="text-[11px] text-primary hover:underline font-sans font-medium cursor-pointer"
+                      title="Edit permalink slug"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://markup.digital/${typeSlug}/${slug}`);
+                        setFeedback({ type: 'success', message: 'Permalink URL copied to clipboard!' });
+                        setTimeout(() => setFeedback(null), 2500);
+                      }}
+                      className="text-[11px] text-muted-foreground hover:text-foreground font-sans cursor-pointer ml-1"
+                      title="Copy link"
+                    >
+                      Copy
+                    </button>
+                    <a
+                      href={`/articles/${slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 font-sans cursor-pointer ml-1"
+                      title="Open preview in new tab"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      <span>View</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Gutenberg Visual Blocks Canvas */}
                 <BlockEditor blocks={blocks} onChange={setBlocks} />
               </div>
             )}
