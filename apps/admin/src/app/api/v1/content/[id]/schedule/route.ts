@@ -1,4 +1,4 @@
-import { prisma, EntryStatus } from '@headless/database';
+import { prisma, EntryStatus } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';

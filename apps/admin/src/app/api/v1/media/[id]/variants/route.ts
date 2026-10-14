@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
 import { guard } from '@/lib/security/guard';

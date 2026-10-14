@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import { NextRequest, NextResponse } from 'next/server';
 import { guard } from '@/lib/security/guard';
 import { RATE_LIMITS } from '@/lib/security/rate-limit';
@@ -15,7 +15,7 @@ function withTimeout<T>(promise: Promise<T>, ms = 2000): Promise<T> {
 let fallbackSeoSettings = {
   metaTitleTemplate: '%s | Markup Digital Platform',
   defaultMetaTitle: 'Markup Digital Portal',
-  defaultMetaDescription: 'Enterprise Headless CMS powered by Next.js and high-performance edge delivery.',
+  defaultMetaDescription: 'Enterprise Markup CMS powered by Next.js and high-performance edge delivery.',
   canonicalDomain: 'http://localhost:3000',
   defaultOgImage: '',
   twitterCardType: 'summary_large_image',

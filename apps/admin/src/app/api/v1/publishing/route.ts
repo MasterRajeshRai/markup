@@ -1,4 +1,4 @@
-import { prisma, EntryStatus } from '@headless/database';
+import { prisma, EntryStatus } from '@markup/database';
 import { NextRequest, NextResponse } from 'next/server';
 import { runScheduledTasks } from '@/lib/scheduler';
 import { dispatchWebhooks } from '@/lib/webhooks';
@@ -21,7 +21,7 @@ const fallbackScheduled = [
     status: EntryStatus.SCHEDULED,
     scheduledPublishAt: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
     contentType: { name: 'Articles', slug: 'articles' },
-    author: { name: 'Super Administrator', email: 'admin@headless.io' },
+    author: { name: 'Super Administrator', email: 'admin@markup.io' },
   },
 ];
 
@@ -32,7 +32,7 @@ const fallbackPendingReview = [
     slug: 'mastering-visual-block-composition',
     status: EntryStatus.IN_REVIEW,
     contentType: { name: 'Articles', slug: 'articles' },
-    author: { name: 'Marcus Vance', email: 'editor@headless.io' },
+    author: { name: 'Marcus Vance', email: 'editor@markup.io' },
     updatedAt: new Date().toISOString(),
   },
 ];

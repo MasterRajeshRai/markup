@@ -155,7 +155,7 @@ export default function IntegrationsPage() {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Connect your Headless CMS with third-party analytics, storage drivers, search indices, email providers, and AI engines.
+            Connect your Markup CMS with third-party analytics, storage drivers, search indices, email providers, and AI engines.
           </p>
         </div>
 

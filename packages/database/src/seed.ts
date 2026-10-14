@@ -4,12 +4,12 @@ import {
   generateApiKey,
   PERMISSIONS,
   DEFAULT_ROLES,
-} from '@headless/core';
+} from '@markup/core';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting Enterprise Headless CMS database seed...');
+  console.log('🌱 Starting Enterprise Markup CMS database seed...');
 
   // 1. Seed Permissions
   console.log('  -> Seeding granular permissions...');
@@ -70,22 +70,22 @@ async function main() {
 
   const usersData = [
     {
-      email: 'admin@headless.io',
+      email: 'admin@markup.io',
       name: 'Super Administrator',
       roleSlug: 'super_admin',
     },
     {
-      email: 'editor@headless.io',
+      email: 'editor@markup.io',
       name: 'Content Editor',
       roleSlug: 'editor',
     },
     {
-      email: 'author@headless.io',
+      email: 'author@markup.io',
       name: 'Staff Author',
       roleSlug: 'author',
     },
     {
-      email: 'reviewer@headless.io',
+      email: 'reviewer@markup.io',
       name: 'Chief Reviewer',
       roleSlug: 'reviewer',
     },
@@ -125,7 +125,7 @@ async function main() {
     }
   }
 
-  const adminUserId = userMap.get('admin@headless.io')!;
+  const adminUserId = userMap.get('admin@markup.io')!;
 
   // 4. Seed Default Site
   console.log('  -> Seeding default site & locales...');
@@ -344,7 +344,7 @@ async function main() {
       id: 'blk_hero_1',
       type: 'hero',
       data: {
-        badge: 'Enterprise Headless Platform',
+        badge: 'Enterprise Markup Platform',
         title: 'Universal Content Operating System',
         subtitle: 'Powering web apps, mobile apps, digital kiosks, and commerce with unparalleled API performance and visual block editing.',
         primaryCta: { label: 'Explore API Docs', url: '/api-docs' },
@@ -358,7 +358,7 @@ async function main() {
         columns: 3,
         items: [
           {
-            title: 'API-First & Headless',
+            title: 'API-First & Markup CMS',
             description: 'Ultra-fast REST & GraphQL-ready delivery with deep population controls, ETags, and edge caching.',
             icon: 'Zap',
           },
@@ -427,9 +427,9 @@ async function main() {
       publishedAt: new Date(),
       blocks: homeBlocks,
       seo: {
-        title: 'Markup Headless CMS | Acme Platform',
-        description: 'Enterprise API-first headless content management system.',
-        ogTitle: 'Acme Markup Headless CMS',
+        title: 'Markup CMS | Acme Platform',
+        description: 'Enterprise API-first markup content management system.',
+        ogTitle: 'Acme Markup CMS',
         robots: 'index, follow',
       },
     },
@@ -448,9 +448,9 @@ async function main() {
       },
       blocks: homeBlocks,
       seo: {
-        title: 'Markup Headless CMS | Acme Platform',
-        description: 'Enterprise API-first headless content management system.',
-        ogTitle: 'Acme Markup Headless CMS',
+        title: 'Markup CMS | Acme Platform',
+        description: 'Enterprise API-first markup content management system.',
+        ogTitle: 'Acme Markup CMS',
         robots: 'index, follow',
       },
     },
@@ -459,8 +459,8 @@ async function main() {
   // 7B. Articles
   const articlesSeed = [
     {
-      slug: 'getting-started-with-headless-architecture',
-      title: 'Getting Started with Modern Headless Architecture',
+      slug: 'getting-started-with-markup-architecture',
+      title: 'Getting Started with Modern Markup Architecture',
       summary: 'Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and developer velocity.',
       termSlug: 'architecture',
       blocks: [
@@ -468,7 +468,7 @@ async function main() {
           id: 'blk_p1',
           type: 'paragraph',
           data: {
-            text: 'Headless CMS platforms represent a foundational shift in how digital experiences are constructed. By decoupling the presentation layer from content authoring, engineering teams gain absolute freedom to select optimal technologies.',
+            text: 'Markup CMS platforms represent a foundational shift in how digital experiences are constructed. By decoupling the presentation layer from content authoring, engineering teams gain absolute freedom to select optimal technologies.',
           },
         },
         {
@@ -655,7 +655,7 @@ async function main() {
   const settingsData = [
     { key: 'site_title', value: 'Acme Digital Platform', category: SettingCategory.GENERAL, isPublic: true },
     { key: 'site_tagline', value: 'The Universal Content Platform', category: SettingCategory.GENERAL, isPublic: true },
-    { key: 'meta_description', value: 'Enterprise grade headless content management system.', category: SettingCategory.SEO, isPublic: true },
+    { key: 'meta_description', value: 'Enterprise grade markup content management system.', category: SettingCategory.SEO, isPublic: true },
     { key: 'analytics_id', value: 'G-ACME123456', category: SettingCategory.CODE_INJECTION, isPublic: true },
   ];
 
@@ -719,7 +719,7 @@ async function main() {
     });
   }
 
-  console.log('✅ Enterprise Headless CMS database successfully seeded!');
+  console.log('✅ Enterprise Markup CMS database successfully seeded!');
 }
 
 main()

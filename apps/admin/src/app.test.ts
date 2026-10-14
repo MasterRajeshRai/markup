@@ -1,7 +1,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { prisma, EntryStatus } from '@headless/database';
-import { verifyPassword, hashPassword, generateApiKey, computeRevisionDiff } from '@headless/core';
+import { prisma, EntryStatus } from '@markup/database';
+import { verifyPassword, hashPassword, generateApiKey, computeRevisionDiff } from '@markup/core';
 
 describe('Markup — Integration & API Verification Suite', () => {
   let testSiteId: string;
@@ -14,7 +14,7 @@ describe('Markup — Integration & API Verification Suite', () => {
     assert.ok(site, 'Seeded site "acme-portal" must exist');
     testSiteId = site.id;
 
-    const user = await prisma.user.findFirst({ where: { email: 'admin@headless.io' } });
+    const user = await prisma.user.findFirst({ where: { email: 'admin@markup.io' } });
     assert.ok(user, 'Seeded admin user must exist');
     adminUserId = user.id;
 
@@ -40,7 +40,7 @@ describe('Markup — Integration & API Verification Suite', () => {
   });
 
   test('Security & Auth: verifies seeded admin password and hashing', async () => {
-    const admin = await prisma.user.findUnique({ where: { email: 'admin@headless.io' } });
+    const admin = await prisma.user.findUnique({ where: { email: 'admin@markup.io' } });
     assert.ok(admin);
 
     const isValid = await verifyPassword('AdminPass123!', admin.passwordHash);

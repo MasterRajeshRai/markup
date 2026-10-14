@@ -78,7 +78,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, string> = {
 
 export const DEFAULT_ADMIN_USER: ClientUser = {
   id: 'usr_admin',
-  email: 'admin@headless.io',
+  email: 'admin@markup.io',
   name: 'Alex Morgan',
   avatarUrl: null,
   role: 'super_admin',

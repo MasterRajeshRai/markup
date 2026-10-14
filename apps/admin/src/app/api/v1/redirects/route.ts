@@ -1,5 +1,5 @@
-import { prisma } from '@headless/database';
-import { validateRedirect } from '@headless/core';
+import { prisma } from '@markup/database';
+import { validateRedirect } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       creator: {
         id: adminSession?.user?.id || 'usr_admin',
         name: adminSession?.user?.name || 'Administrator',
-        email: adminSession?.user?.email || 'admin@headless.io',
+        email: adminSession?.user?.email || 'admin@markup.io',
       },
     };
 

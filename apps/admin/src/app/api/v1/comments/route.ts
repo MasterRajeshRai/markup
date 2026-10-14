@@ -5,7 +5,7 @@ import {
   GetCommentsOptions,
 } from '@/lib/comments-store';
 import { resolveSiteContext } from '@/lib/site-context';
-import { CommentStatus } from '@headless/core';
+import { CommentStatus } from '@markup/core';
 import { guard } from '@/lib/security/guard';
 import { RATE_LIMITS } from '@/lib/security/rate-limit';
 

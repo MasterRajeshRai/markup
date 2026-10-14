@@ -10,7 +10,7 @@ const COMMON = new Set([
   'password', 'password1', 'password12', 'password123', 'passw0rd', 'p@ssw0rd', 'p@ssword', 'letmein', 'welcome',
   'welcome1', 'welcome123', 'admin', 'admin123', 'administrator', 'qwerty', 'qwerty123', 'qwertyuiop', 'abc123',
   'iloveyou', 'monkey', 'dragon', 'football', 'baseball', 'master', 'sunshine', 'princess', 'changeme', 'changeit',
-  'default', 'secret', 'letmein123', 'trustno1', 'markup', 'markup123', 'headless', 'headless123', 'cms', 'cms12345',
+  'default', 'secret', 'letmein123', 'trustno1', 'markup', 'markup123', 'markup', 'markup123', 'cms', 'cms12345',
   'adminpass123', 'editorpass123', 'authorpass123', 'reviewerpass123', 'developerpass123', 'contributorpass123',
 ]);
 

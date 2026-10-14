@@ -1,4 +1,4 @@
-import { prisma, ActorType, Prisma } from '@headless/database';
+import { prisma, ActorType, Prisma } from '@markup/database';
 import { NextRequest } from 'next/server';
 
 export interface RecordAuditParams {

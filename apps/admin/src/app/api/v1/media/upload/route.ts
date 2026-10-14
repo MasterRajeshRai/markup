@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import {
   LocalStorageDriver,
   executeMediaPipeline,
@@ -6,7 +6,7 @@ import {
   toSeoFriendlyName,
   detectImageMagicBytes,
   type CropPresetDefinition,
-} from '@headless/core/server';
+} from '@markup/core/server';
 import { getAdminSession } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';

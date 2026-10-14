@@ -11,27 +11,27 @@ import {
 
 describe('Secure User Authentication & Login System', () => {
   it('authenticates valid admin credentials and returns session token', async () => {
-    const result = await authenticateUser('admin@headless.io', 'AdminPass123!', true);
+    const result = await authenticateUser('admin@markup.io', 'AdminPass123!', true);
     assert.equal(result.success, true);
     assert.ok(result.token, 'Should return a cryptographically secure session token');
-    assert.equal(result.user?.email, 'admin@headless.io');
+    assert.equal(result.user?.email, 'admin@markup.io');
     assert.equal(result.user?.role, 'super_admin');
     assert.ok(result.expiresAt, 'Should include expiration date');
   });
 
   it('rejects incorrect passwords and returns descriptive error', async () => {
-    const result = await authenticateUser('admin@headless.io', 'WrongPassword999!');
+    const result = await authenticateUser('admin@markup.io', 'WrongPassword999!');
     assert.equal(result.success, false);
     assert.match(result.error || '', /Invalid email or password/);
   });
 
   it('validates active session tokens and returns user context', async () => {
-    const loginResult = await authenticateUser('editor@headless.io', 'EditorPass123!');
+    const loginResult = await authenticateUser('editor@markup.io', 'EditorPass123!');
     assert.ok(loginResult.token);
 
     const user = await validateSessionToken(loginResult.token);
     assert.ok(user, 'Session token should resolve to a valid user');
-    assert.equal(user?.email, 'editor@headless.io');
+    assert.equal(user?.email, 'editor@markup.io');
     assert.equal(user?.role, 'editor');
 
     // Invalid token returns null
@@ -40,7 +40,7 @@ describe('Secure User Authentication & Login System', () => {
   });
 
   it('invalidates sessions upon logout', async () => {
-    const loginResult = await authenticateUser('author@headless.io', 'AuthorPass123!');
+    const loginResult = await authenticateUser('author@markup.io', 'AuthorPass123!');
     assert.ok(loginResult.token);
 
     // Invalidate
@@ -52,7 +52,7 @@ describe('Secure User Authentication & Login System', () => {
   });
 
   it('handles password reset requests and token verification', async () => {
-    const resetReq = await createPasswordResetRequest('reviewer@headless.io', 'http://localhost:3001');
+    const resetReq = await createPasswordResetRequest('reviewer@markup.io', 'http://localhost:3001');
     assert.equal(resetReq.success, true);
     assert.ok(resetReq.demoResetUrl);
 
@@ -70,7 +70,7 @@ describe('Secure User Authentication & Login System', () => {
     assert.equal(validRes.success, true);
 
     // Can now log in with the new password
-    const loginWithNew = await authenticateUser('reviewer@headless.io', 'NewSecurePass2026!');
+    const loginWithNew = await authenticateUser('reviewer@markup.io', 'NewSecurePass2026!');
     assert.equal(loginWithNew.success, true);
   });
 

@@ -1,9 +1,9 @@
-# Complete Cloudflare Deployment Guide — Markup Headless CMS
+# Complete Cloudflare Deployment Guide — Markup CMS
 ### Frontend (`apps/web-demo`) & Full-Stack Backend CMS (`apps/admin`)
 
-This guide walks you through deploying the entire Markup Headless CMS platform on **Cloudflare**, including:
+This guide walks you through deploying the entire Markup CMS platform on **Cloudflare**, including:
 1. **Public Website Frontend** on Cloudflare Pages (`yourdomain.com`)
-2. **Headless CMS & Admin Backend** on Cloudflare Pages (`admin.yourdomain.com`)
+2. **Markup CMS & Admin Backend** on Cloudflare Pages (`admin.yourdomain.com`)
 3. **Cloudflare R2 Object Storage** for high-resolution media & assets (`media.yourdomain.com`)
 4. **Serverless PostgreSQL Database** (via Neon, Supabase, or Cloudflare Hyperdrive)
 
@@ -84,7 +84,7 @@ Before deploying, ensure you have:
    - **Root directory:** `apps/admin`
    - **Build command:**
      ```bash
-     pnpm --filter @headless/database generate && pnpm run build
+     pnpm --filter @markup/database generate && pnpm run build
      ```
    - **Build output directory:** `.next`
 4. Add **Environment Variables**:

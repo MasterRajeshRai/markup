@@ -1,4 +1,4 @@
-import { prisma, MenuItemType } from '@headless/database';
+import { prisma, MenuItemType } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';

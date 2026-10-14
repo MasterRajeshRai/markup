@@ -1,5 +1,5 @@
-import { prisma, EntryStatus, Prisma } from '@headless/database';
-import { validateEntryFields, computeRevisionDiff, verifyPreviewToken } from '@headless/core';
+import { prisma, EntryStatus, Prisma } from '@markup/database';
+import { validateEntryFields, computeRevisionDiff, verifyPreviewToken } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { authenticateApiRequest } from '@/lib/api-auth';
 import { resolveSiteContext } from '@/lib/site-context';

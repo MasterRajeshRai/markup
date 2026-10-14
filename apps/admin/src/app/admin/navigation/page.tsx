@@ -134,7 +134,7 @@ const DEFAULT_SAMPLE_ITEMS: MenuItem[] = [
         url: '/platform',
         children: [
           {
-            title: 'Headless CMS',
+            title: 'Markup CMS',
             url: '/platform/cms',
             description: 'Ultra-fast edge API content engine with GraphQL',
             icon: 'Layers',
@@ -214,7 +214,7 @@ const DEFAULT_SAMPLE_ITEMS: MenuItem[] = [
       {
         title: 'E-Commerce Storefronts',
         url: '/solutions/ecommerce',
-        description: 'Omnichannel commerce with headless checkouts',
+        description: 'Omnichannel commerce with markup checkouts',
         icon: 'ShoppingBag',
       },
       {
@@ -1632,7 +1632,7 @@ export default function NavigationPage() {
                 {/* Hero Body Placeholder */}
                 <div className="py-24 text-center space-y-4 max-w-2xl mx-auto px-4">
                   <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
-                    Next-Gen Headless Digital Experiences
+                    Next-Gen Markup Digital Experiences
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Delivering structured content through ultra-responsive multi-level and mega navigation systems.

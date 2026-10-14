@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
       title: 'Markup REST API',
       version: '1.0.0',
       description:
-        'Enterprise-grade, API-first headless content management system. Exposes high-performance read APIs for digital experiences and management APIs for editorial operations.',
+        'Enterprise-grade, API-first markup content management system. Exposes high-performance read APIs for digital experiences and management APIs for editorial operations.',
       contact: {
         name: 'CMS Architecture Support',
-        email: 'dev@headless.io',
+        email: 'dev@markup.io',
       },
     },
     servers: [

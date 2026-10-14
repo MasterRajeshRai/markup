@@ -163,7 +163,7 @@ export default function ImportExportPage() {
                 <span>Data Portability & Zero Lock-in</span>
               </CardTitle>
               <CardDescription className="text-xs leading-relaxed mt-2">
-                The exported JSON adheres strictly to OpenAPI 3.0 schemas and can be restored to any instance of the CMS or transformed for migration to other databases or headless platforms.
+                The exported JSON adheres strictly to OpenAPI 3.0 schemas and can be restored to any instance of the CMS or transformed for migration to other databases or markup platforms.
               </CardDescription>
             </CardHeader>
           </Card>

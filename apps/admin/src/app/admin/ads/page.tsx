@@ -1271,7 +1271,7 @@ export default function AdsPage() {
         </div>
       )}
 
-      {/* TAB 6: FRONTEND SNIPPETS & HEADLESS API */}
+      {/* TAB 6: FRONTEND SNIPPETS & MARKUP API */}
       {activeTab === 'snippets' && (
         <div className="space-y-6 max-w-4xl">
           {/* React Component Snippet */}
@@ -1404,12 +1404,12 @@ export function AdSenseUnit({ slotId, format = 'auto', className = '' }: { slotI
             </CardContent>
           </Card>
 
-          {/* Headless API Endpoint */}
+          {/* Markup API Endpoint */}
           <Card className="border shadow-2xs">
             <CardHeader className="p-5 pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <ExternalLink className="h-4 w-4 text-emerald-500" />
-                Headless REST API Endpoint
+                Markup REST API Endpoint
               </CardTitle>
               <CardDescription className="text-xs">
                 Fetch all active ad units and settings programmatically for decoupled Astro, Nuxt, iOS, or Android clients.

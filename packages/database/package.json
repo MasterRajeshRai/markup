@@ -1,5 +1,5 @@
 {
-  "name": "@headless/database",
+  "name": "@markup/database",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -13,7 +13,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@headless/core": "workspace:*",
+    "@markup/core": "workspace:*",
     "@prisma/client": "^6.4.1"
   },
   "devDependencies": {

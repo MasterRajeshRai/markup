@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,7 +25,7 @@ export async function GET(
 
     if (!entry) return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
 
-    const { canViewAllRevisions } = await import('@headless/core');
+    const { canViewAllRevisions } = await import('@markup/core');
     const canViewAll = canViewAllRevisions(adminSession.user);
     if (!canViewAll && entry.authorId !== adminSession.user.id) {
       return NextResponse.json(

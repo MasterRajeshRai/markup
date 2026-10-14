@@ -22,7 +22,7 @@ import {
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
-import type { BlockNode } from '@headless/core';
+import type { BlockNode } from '@markup/core';
 
 interface LivePreviewModalProps {
   isOpen: boolean;
@@ -386,7 +386,7 @@ export function LivePreviewModal({
 
             {/* Footer */}
             <footer className="border-t pt-8 text-center text-xs text-muted-foreground">
-              <p>© {new Date().getFullYear()} Headless CMS Live Frontend Preview • All rights reserved</p>
+              <p>© {new Date().getFullYear()} Markup CMS Live Frontend Preview • All rights reserved</p>
             </footer>
           </div>
         </div>

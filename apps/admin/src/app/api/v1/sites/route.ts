@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@headless/database';
+import { prisma, Prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { recordAuditLog } from '@/lib/audit';
 import { NextRequest, NextResponse } from 'next/server';

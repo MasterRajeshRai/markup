@@ -1,5 +1,5 @@
 import React from 'react';
-import { prisma, EntryStatus } from '@headless/database';
+import { prisma, EntryStatus } from '@markup/database';
 import { InteractiveDashboard } from '@/components/dashboard/interactive-dashboard';
 
 export const dynamic = 'force-dynamic';

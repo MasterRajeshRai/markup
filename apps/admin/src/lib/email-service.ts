@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 
 export interface EmailSettings {
   apiKey: string;
@@ -37,9 +37,9 @@ export interface EmailDeliveryLog {
 // In-memory fallback stores for offline database resilience
 let MOCK_EMAIL_SETTINGS: EmailSettings = {
   apiKey: process.env.RESEND_API_KEY || '',
-  fromEmail: process.env.RESEND_FROM_EMAIL || 'notifications@updates.headless-cms.io',
-  fromName: 'Headless CMS Platform',
-  replyTo: 'support@headless-cms.io',
+  fromEmail: process.env.RESEND_FROM_EMAIL || 'notifications@updates.markup-cms.io',
+  fromName: 'Markup CMS Platform',
+  replyTo: 'support@markup-cms.io',
   sandboxMode: !process.env.RESEND_API_KEY,
   webhookSecret: '',
 };
@@ -78,7 +78,7 @@ let MOCK_TEMPLATES: EmailTemplate[] = [
       <h2>Welcome aboard, {{subscriberName}}! 👋</h2>
       <p>Thank you for subscribing to our official newsletter. You are now first in line to receive our deep-dive engineering articles, product updates, and industry analysis.</p>
       <div class="button-wrap">
-        <a href="https://headless-cms.io" class="button">Explore Recent Articles</a>
+        <a href="https://markup-cms.io" class="button">Explore Recent Articles</a>
       </div>
       <p>If you have any questions or feedback, simply reply directly to this email—we read and respond to every note.</p>
       <p>Cheers,<br><strong>The {{siteName}} Editorial Team</strong></p>
@@ -164,7 +164,7 @@ let MOCK_TEMPLATES: EmailTemplate[] = [
     name: 'Resend Connection & Domain Test',
     slug: 'system-test-ping',
     subject: 'Resend Email Gateway Verification Ping',
-    previewText: 'Your Headless CMS email infrastructure is fully operational.',
+    previewText: 'Your Markup CMS email infrastructure is fully operational.',
     category: 'system',
     variables: ['timestamp', 'senderDomain', 'resendEnvironment'],
     htmlBody: `<!DOCTYPE html>
@@ -174,7 +174,7 @@ let MOCK_TEMPLATES: EmailTemplate[] = [
   <div style="max-width: 500px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; text-align: center;">
     <div style="width: 48px; height: 48px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 24px; line-height: 48px; margin: 0 auto 16px;">✓</div>
     <h2 style="margin: 0 0 8px;">Email Gateway Verified</h2>
-    <p style="font-size: 14px; color: #64748b; line-height: 1.5;">This message confirms that your Headless CMS Resend API integration and sender domain credentials are authenticated and active.</p>
+    <p style="font-size: 14px; color: #64748b; line-height: 1.5;">This message confirms that your Markup CMS Resend API integration and sender domain credentials are authenticated and active.</p>
     <div style="background: #f1f5f9; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #334155; margin-top: 20px; text-align: left;">
       <div><strong>Dispatched:</strong> {{timestamp}}</div>
       <div><strong>Domain:</strong> {{senderDomain}}</div>
@@ -190,8 +190,8 @@ let MOCK_DELIVERY_LOGS: EmailDeliveryLog[] = [
   {
     id: 'log_901',
     to: 'alex.dev@enterprise-example.com',
-    from: 'Headless CMS <notifications@updates.headless-cms.io>',
-    subject: 'Welcome to the Headless CMS Newsletter!',
+    from: 'Markup CMS <notifications@updates.markup-cms.io>',
+    subject: 'Welcome to the Markup CMS Newsletter!',
     status: 'DELIVERED',
     templateSlug: 'newsletter-welcome',
     resendId: 'msg_01JB37X8QZ9K24H93M01',
@@ -201,7 +201,7 @@ let MOCK_DELIVERY_LOGS: EmailDeliveryLog[] = [
   {
     id: 'log_902',
     to: 'lead.sarah@acme-corp.com',
-    from: 'Headless CMS <notifications@updates.headless-cms.io>',
+    from: 'Markup CMS <notifications@updates.markup-cms.io>',
     subject: 'New Lead Submission: Enterprise Inquiries (Sarah Jenkins)',
     status: 'DELIVERED',
     templateSlug: 'form-lead-notification',
@@ -212,8 +212,8 @@ let MOCK_DELIVERY_LOGS: EmailDeliveryLog[] = [
   {
     id: 'log_903',
     to: 'editorial-team@company.internal',
-    from: 'Headless CMS <notifications@updates.headless-cms.io>',
-    subject: 'New Post: Getting Started with Headless Architecture',
+    from: 'Markup CMS <notifications@updates.markup-cms.io>',
+    subject: 'New Post: Getting Started with Markup Architecture',
     status: 'SENT',
     templateSlug: 'content-published',
     resendId: 'msg_01JB35Z9RK3A12T88P03',

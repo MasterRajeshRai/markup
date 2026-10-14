@@ -852,7 +852,7 @@ await fetch('/api/v1/newsletter', {
                     required
                     value={campaignForm.subjectLine}
                     onChange={(e) => setCampaignForm({ ...campaignForm, subjectLine: e.target.value })}
-                    placeholder="What we shipped this month in Headless CMS"
+                    placeholder="What we shipped this month in Markup CMS"
                     className="text-xs"
                   />
                 </div>

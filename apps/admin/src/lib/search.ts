@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import { getMockContentEntries } from '@/lib/mock-content-store';
 
 export interface SearchResultItem {
@@ -18,10 +18,10 @@ function withTimeout<T>(promise: Promise<T>, ms = 2000): Promise<T> {
 }
 
 const fallbackUsers = [
-  { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io' },
-  { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@headless.io' },
-  { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@headless.io' },
-  { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@headless.io' },
+  { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
+  { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@markup.io' },
+  { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@markup.io' },
+  { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@markup.io' },
 ];
 
 /**

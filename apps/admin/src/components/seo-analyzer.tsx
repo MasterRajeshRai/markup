@@ -2340,12 +2340,12 @@ export function ArticleSEOSidebar({
 
 export function SEOAnalyzerWithEditor() {
   const [content, setContent] = useState(
-    `# Getting Started with Headless Architecture\n\nA modern headless architecture decouples content management from frontend presentation layer. Unlike traditional CMS platforms, a headless architecture delivers content as structured JSON data over ultra-fast edge APIs.\n\n## Why Modern Engineering Teams Go Headless\n\nTherefore, headless architecture enables teams to build faster digital experiences. Furthermore, it allows you to deliver content across mobile apps, web, and IoT screens.\n\n### Key Benefits\n\n- High performance with edge CDNs\n- Omnichannel distribution across platforms\n- Unmatched developer flexibility with Next.js\n\n## API-First Delivery\n\nFor more details, see the official guide at https://headlesscms.org and developer docs.`
+    `# Getting Started with Markup Architecture\n\nA modern markup architecture decouples content management from frontend presentation layer. Unlike traditional CMS platforms, a markup architecture delivers content as structured JSON data over ultra-fast edge APIs.\n\n## Why Modern Engineering Teams Go Markup\n\nTherefore, markup architecture enables teams to build faster digital experiences. Furthermore, it allows you to deliver content across mobile apps, web, and IoT screens.\n\n### Key Benefits\n\n- High performance with edge CDNs\n- Omnichannel distribution across platforms\n- Unmatched developer flexibility with Next.js\n\n## API-First Delivery\n\nFor more details, see the official guide at https://markupcms.org and developer docs.`
   );
-  const [title, setTitle] = useState('Getting Started with Modern Headless Architecture');
-  const [slug, setSlug] = useState('getting-started-with-headless-architecture');
+  const [title, setTitle] = useState('Getting Started with Modern Markup Architecture');
+  const [slug, setSlug] = useState('getting-started-with-markup-architecture');
   const [meta, setMeta] = useState('Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and velocity.');
-  const [keywords, setKeywords] = useState<string[]>(['headless architecture', 'jamstack cms']);
+  const [keywords, setKeywords] = useState<string[]>(['markup architecture', 'jamstack cms']);
   const [isPillar, setIsPillar] = useState(false);
   const [activeTab, setActiveTab] = useState<'write' | 'settings'>('write');
 

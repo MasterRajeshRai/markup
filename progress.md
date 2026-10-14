@@ -1,4 +1,4 @@
-# Markup — Enterprise Headless CMS Platform — Implementation Progress
+# Markup — Enterprise Markup CMS Platform — Implementation Progress
 
 Status Legend:
 - [DONE] Implemented, verified, and operational
@@ -10,7 +10,7 @@ Status Legend:
 
 ## 1. Foundation & Architecture
 * [DONE] Repository inspection & architecture assessment
-* [DONE] Database engine setup (PostgreSQL 18 initialized: `headless_cms`)
+* [DONE] Database engine setup (PostgreSQL 18 initialized: `markup_cms`)
 * [DONE] Monorepo & workspace configuration (Next.js 16, React 19, TypeScript, Tailwind CSS, Prisma ORM)
 * [DONE] Environment configuration (`.env.example`) & Docker Compose setup (`docker-compose.yml`)
 * [DONE] Base error handling, logging & event bus architecture (`bus.ts`)
@@ -110,7 +110,7 @@ Status Legend:
 * [DONE] Complete 23-Route Enterprise Sidebar with Section 11 Navigation + Import/Export
 * [DONE] High-density ergonomic navigation layout fitting all 23 routes seamlessly
 * [DONE] Modern Universal Search Modal Box across all modules (Content, Pages, Media, Taxonomies, Users, System) with Cmd+K / Ctrl+K and category filtering
-* [DONE] Removed sidebar top filter clutter; aligned Headless CMS brand header with top navbar at h-14
+* [DONE] Removed sidebar top filter clutter; aligned Markup CMS brand header with top navbar at h-14
 * [DONE] Dark/light theme synchronized scrollbars using official shadcn ScrollArea component (`@radix-ui/react-scroll-area`), eliminating OS-level native scrollbars entirely
 * [DONE] Operational Dashboard (metrics, charts, recent revisions, audit activity) (`/admin`)
 * [DONE] Content Management Views (data tables, filters, bulk operations) (`/admin/content`)
@@ -144,7 +144,7 @@ Status Legend:
 
 ## 13. Testing, Seed Data & Documentation
 * [DONE] Comprehensive development seed data (Admin, Editor, Pages, Posts, Media, Menus, Taxonomies in `seed.ts`)
-* [DONE] Unit & integration test suites (42/42 passing across `@headless/core` and `@headless/admin`)
+* [DONE] Unit & integration test suites (42/42 passing across `@markup/core` and `@markup/admin`)
 * [DONE] OpenAPI / Swagger documentation (`/api/v1/openapi.json` & `/api-docs`)
 * [DONE] Architecture guide & developer setup documentation (`README.md`, `docker-compose.yml`)
 
@@ -176,7 +176,7 @@ Status Legend:
 ---
 
 ## 15. AI Readiness & Autonomous Assistance Framework
-* [DONE] AI provider adapter interface & factory (`getAiProvider` in `@headless/core`)
+* [DONE] AI provider adapter interface & factory (`getAiProvider` in `@markup/core`)
 * [DONE] Multi-provider support (OpenAI GPT-4o, Google Gemini, Anthropic Claude, and Local/Mock provider)
 * [DONE] AI text & content generation (`/api/v1/ai` action: `generate`)
 * [DONE] AI editorial content rewriting for clarity, tone, and brevity (`/api/v1/ai` action: `rewrite`)

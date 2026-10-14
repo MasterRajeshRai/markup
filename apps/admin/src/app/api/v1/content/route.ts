@@ -1,5 +1,5 @@
-import { prisma, EntryStatus, Prisma } from '@headless/database';
-import { validateEntryFields, computeRevisionDiff, hashStringSha256, canViewAllContent } from '@headless/core';
+import { prisma, EntryStatus, Prisma } from '@markup/database';
+import { validateEntryFields, computeRevisionDiff, hashStringSha256, canViewAllContent } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { authenticateApiRequest } from '@/lib/api-auth';
 import { resolveSiteContext } from '@/lib/site-context';
@@ -327,7 +327,7 @@ export async function POST(req: NextRequest) {
         data,
         blocks,
         seo,
-        author: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io' },
+        author: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
       });
       return NextResponse.json({ success: true, entry: fallbackEntry }, { status: 201 });
     } catch {

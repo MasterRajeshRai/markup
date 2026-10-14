@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useMemo } from 'react';
-import type { BlockNode, BlockType } from '@headless/core';
+import type { BlockNode, BlockType } from '@markup/core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -911,7 +911,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                           onChange={(e) => handleUpdateBlockData(block.id, 'text', e.target.value)}
                           rows={3}
                           className="w-full rounded-lg border bg-background p-3 text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
-                          placeholder="Write body paragraph text. Wrap code in backticks like `npm install @headless/core`..."
+                          placeholder="Write body paragraph text. Wrap code in backticks like `npm install @markup/core`..."
                         />
 
                         {/* Live Typography Preview Showing Neat Inline Code */}

@@ -72,5 +72,5 @@ To achieve maximum real-world resilience, production operators should follow the
 ## 3. Reporting a Vulnerability
 
 If you discover a security vulnerability within Markup CMS, please report it privately:
-- **Email:** security@headless.io
+- **Email:** security@markup.io
 - Please include reproduction steps and environment details. We aim to acknowledge and address reports within 48 hours.

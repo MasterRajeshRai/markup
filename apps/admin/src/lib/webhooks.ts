@@ -1,5 +1,5 @@
-import { prisma, Prisma } from '@headless/database';
-import { signWebhookPayload } from '@headless/core';
+import { prisma, Prisma } from '@markup/database';
+import { signWebhookPayload } from '@markup/core';
 import { assertSafeOutboundUrl, UnsafeUrlError } from '@/lib/security/ssrf';
 
 export interface DispatchWebhookParams {

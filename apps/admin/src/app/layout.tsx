@@ -3,8 +3,8 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Markup — Enterprise Headless CMS Platform',
-  description: 'Enterprise decoupled headless content management platform powering modern digital experiences.',
+  title: 'Markup — Enterprise Markup CMS Platform',
+  description: 'Enterprise decoupled markup content management platform powering modern digital experiences.',
 };
 
 export const viewport: Viewport = {

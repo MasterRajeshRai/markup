@@ -1,5 +1,5 @@
-import { prisma, type User } from '@headless/database';
-import { hasPermission, hashToken, type PermissionAction, type UserAuthContext } from '@headless/core';
+import { prisma, type User } from '@markup/database';
+import { hasPermission, hashToken, type PermissionAction, type UserAuthContext } from '@markup/core';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 

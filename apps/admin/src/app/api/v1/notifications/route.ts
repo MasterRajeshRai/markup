@@ -32,7 +32,7 @@ let MOCK_NOTIFICATIONS: NotificationItem[] = [
     id: 'notif_2',
     category: 'comment',
     title: 'New Comment Awaiting Moderation',
-    message: 'Marcus Chen left a comment on "Getting Started with Modern Headless Architecture".',
+    message: 'Marcus Chen left a comment on "Getting Started with Modern Markup Architecture".',
     timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
     read: false,
     link: '/admin/comments',
@@ -43,7 +43,7 @@ let MOCK_NOTIFICATIONS: NotificationItem[] = [
     id: 'notif_3',
     category: 'publishing',
     title: 'Scheduled Article Published',
-    message: '"State of Headless CMS 2026 Report" was automatically published at 00:00 UTC.',
+    message: '"State of Markup CMS 2026 Report" was automatically published at 00:00 UTC.',
     timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
     read: false,
     link: '/admin/publishing',

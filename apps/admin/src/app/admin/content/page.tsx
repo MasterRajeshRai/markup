@@ -68,14 +68,14 @@ const DEFAULT_CONTENT_TYPES: ContentTypeSummary[] = [
 const MOCK_ENTRIES: EntryItem[] = [
   {
     id: 'art-1',
-    slug: 'getting-started-with-headless-architecture',
-    title: 'Getting Started with Modern Headless Architecture',
+    slug: 'getting-started-with-markup-architecture',
+    title: 'Getting Started with Modern Markup Architecture',
     status: 'PUBLISHED',
     locale: 'en-US',
     contentType: 'articles',
     currentVersion: 3,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@headless.io' },
+    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@markup.io' },
   },
   {
     id: 'art-2',
@@ -86,7 +86,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'articles',
     currentVersion: 1,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@headless.io' },
+    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@markup.io' },
   },
   {
     id: 'art-3',
@@ -97,7 +97,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'articles',
     currentVersion: 2,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@headless.io' },
+    author: { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@markup.io' },
   },
   {
     id: 'art-4',
@@ -108,7 +108,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'articles',
     currentVersion: 2,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@headless.io' },
+    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@markup.io' },
   },
   {
     id: 'art-5',
@@ -119,7 +119,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'articles',
     currentVersion: 1,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@headless.io' },
+    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@markup.io' },
   },
   {
     id: 'pg-1',
@@ -130,7 +130,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'pages',
     currentVersion: 4,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@headless.io' },
+    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@markup.io' },
   },
   {
     id: 'pg-2',
@@ -141,7 +141,7 @@ const MOCK_ENTRIES: EntryItem[] = [
     contentType: 'pages',
     currentVersion: 2,
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@headless.io' },
+    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@markup.io' },
   },
 ];
 

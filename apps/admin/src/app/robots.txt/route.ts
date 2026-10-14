@@ -1,4 +1,4 @@
-import { buildRobotsTxt } from '@headless/core';
+import { buildRobotsTxt } from '@markup/core';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
 

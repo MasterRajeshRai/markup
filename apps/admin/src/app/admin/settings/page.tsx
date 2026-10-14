@@ -76,14 +76,14 @@ export default function SettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
 
   // SEO & Analytics
-  const [metaDesc, setMetaDesc] = useState('Enterprise API-first headless content management system.');
+  const [metaDesc, setMetaDesc] = useState('Enterprise API-first markup content management system.');
   const [analyticsId, setAnalyticsId] = useState('G-MARKUP2026');
   const [robotsDirective, setRobotsDirective] = useState('index, follow');
 
   // Notifications
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [publishNotifs, setPublishNotifs] = useState(true);
-  const [notificationEmail, setNotificationEmail] = useState('admin@headless.io');
+  const [notificationEmail, setNotificationEmail] = useState('admin@markup.io');
   const [webhookUrl, setWebhookUrl] = useState('http://localhost:3000/api/v1/webhooks/mock-consumer');
 
   // Security
@@ -602,7 +602,7 @@ export default function SettingsPage() {
                       value={metaDesc}
                       onChange={(e) => setMetaDesc(e.target.value)}
                       className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                      placeholder="Enterprise-grade headless content management system."
+                      placeholder="Enterprise-grade markup content management system."
                     />
                     <p className="text-[10px] text-muted-foreground mt-1">{metaDesc.length}/160 characters</p>
                   </Field>
@@ -650,7 +650,7 @@ export default function SettingsPage() {
                       type="email"
                       value={notificationEmail}
                       onChange={(e) => setNotificationEmail(e.target.value)}
-                      placeholder="admin@headless.io"
+                      placeholder="admin@markup.io"
                       className="h-9 text-sm"
                     />
                   </Field>

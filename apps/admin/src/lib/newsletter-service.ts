@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import { sendEmail } from './email-service';
 
 export type SubscriberStatus = 'SUBSCRIBED' | 'UNSUBSCRIBED' | 'PENDING_CONFIRMATION' | 'BOUNCED';
@@ -91,7 +91,7 @@ let MOCK_SUBSCRIBERS: Subscriber[] = [
 let MOCK_CAMPAIGNS: NewsletterCampaign[] = [
   {
     id: 'camp_1',
-    title: 'September Engineering Round-Up: Next-Gen Headless Architecture',
+    title: 'September Engineering Round-Up: Next-Gen Markup Architecture',
     subjectLine: 'How we scaled our Content Delivery API to 50k req/sec',
     previewText: 'Deep-dive architectural insights, caching benchmarks, and new schema modeling features.',
     htmlContent: `<h2>September Tech Round-Up</h2><p>Here is what the team worked on this month across distributed microservices and dynamic Edge rendering...</p>`,
@@ -117,7 +117,7 @@ let MOCK_CAMPAIGNS: NewsletterCampaign[] = [
 let MOCK_NEWSLETTER_SETTINGS: NewsletterSettings = {
   doubleOptInEnabled: false,
   welcomeEmailEnabled: true,
-  defaultSenderEmail: 'newsletter@updates.headless-cms.io',
+  defaultSenderEmail: 'newsletter@updates.markup-cms.io',
   defaultTags: ['general-newsletter'],
   confirmationRedirectUrl: '/newsletter/confirmed',
   unsubscribeRedirectUrl: '/newsletter/unsubscribed',
@@ -215,8 +215,8 @@ export async function subscribePublic(data: {
         templateSlug: 'newsletter-welcome',
         variables: {
           subscriberName: targetSubscriber.name || 'Friend',
-          siteName: 'Headless CMS',
-          unsubscribeUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://headless-cms.io'}/api/v1/newsletter/unsubscribe?email=${encodeURIComponent(cleanEmail)}`,
+          siteName: 'Markup CMS',
+          unsubscribeUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://markup-cms.io'}/api/v1/newsletter/unsubscribe?email=${encodeURIComponent(cleanEmail)}`,
           currentYear: new Date().getFullYear().toString(),
         },
         siteId: data.siteId,

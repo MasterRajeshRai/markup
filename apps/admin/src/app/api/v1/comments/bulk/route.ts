@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bulkUpdateStatus } from '@/lib/comments-store';
-import { CommentStatus } from '@headless/core';
+import { CommentStatus } from '@markup/core';
 import { guard } from '@/lib/security/guard';
 
 export const dynamic = 'force-dynamic';

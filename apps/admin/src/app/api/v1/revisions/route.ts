@@ -1,6 +1,6 @@
-import { prisma, Prisma } from '@headless/database';
+import { prisma, Prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
-import { canViewAllRevisions } from '@headless/core';
+import { canViewAllRevisions } from '@markup/core';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -23,7 +23,7 @@ const FALLBACK_REVISIONS: RevisionDto[] = [
   {
     id: 'rev_01',
     version: 3,
-    entryTitle: 'Getting Started with Modern Headless Architecture',
+    entryTitle: 'Getting Started with Modern Markup Architecture',
     entryId: 'art-1',
     contentType: 'articles',
     authorName: 'Sarah Connor (Super Admin)',

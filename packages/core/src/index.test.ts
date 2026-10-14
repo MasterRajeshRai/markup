@@ -18,7 +18,7 @@ describe('Security & Hash Utilities', () => {
   test('hashes password and verifies successfully', async () => {
     const raw = 'EnterprisePassword123!';
     const hash = await hashPassword(raw);
-    assert.ok(hash.includes(':'), 'Hash should contain salt:key delimiter');
+    assert.ok(hash.startsWith('pbkdf2-sha512$'), 'Hash should use modern PBKDF2 crypt format');
 
     const isValid = await verifyPassword(raw, hash);
     assert.equal(isValid, true, 'Valid password must verify to true');

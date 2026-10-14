@@ -7,7 +7,7 @@ export const fallbackRedirects: any[] = [
     hitCount: 342,
     notes: 'Legacy directory permanent migration',
     createdAt: '2026-01-15T10:00:00.000Z',
-    creator: { id: 'usr_admin', name: 'Super Administrator', email: 'admin@headless.io' },
+    creator: { id: 'usr_admin', name: 'Super Administrator', email: 'admin@markup.io' },
   },
   {
     id: 'redir_2',
@@ -17,6 +17,6 @@ export const fallbackRedirects: any[] = [
     hitCount: 88,
     notes: 'Temporary redirect to DAM media kit',
     createdAt: '2026-02-01T12:00:00.000Z',
-    creator: { id: 'usr_admin', name: 'Super Administrator', email: 'admin@headless.io' },
+    creator: { id: 'usr_admin', name: 'Super Administrator', email: 'admin@markup.io' },
   },
 ];

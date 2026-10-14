@@ -1,5 +1,5 @@
-import { prisma } from '@headless/database';
-import { hashPassword } from '@headless/core';
+import { prisma } from '@markup/database';
+import { hashPassword } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { recordAuditLog } from '@/lib/audit';
 import { NextRequest, NextResponse } from 'next/server';

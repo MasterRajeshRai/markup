@@ -68,7 +68,7 @@ You can host **everything** (Frontend, Backend CMS, APIs, and PostgreSQL Databas
 7. Run migrations:
    - In your local project terminal (with the Vercel `DATABASE_URL` in your `.env`), run:
      ```bash
-     pnpm --filter @headless/database push
+     pnpm --filter @markup/database push
      ```
 
 ---
@@ -126,7 +126,7 @@ Vercel will give you the DNS records (A and CNAME) to add to your domain registr
 | Item | Provider | Monthly Cost |
 |---|---|---|
 | Frontend Website | Vercel (Hobby) | **$0.00** |
-| Backend & Headless CMS | Vercel (Hobby) | **$0.00** |
+| Backend & Markup CMS | Vercel (Hobby) | **$0.00** |
 | PostgreSQL Database | Vercel Postgres (Neon) | **$0.00** |
 | Media & Assets | Cloudflare R2 (10 GB free) | **$0.00** |
 | SSL & DDoS Protection | Vercel & Cloudflare | **$0.00** |

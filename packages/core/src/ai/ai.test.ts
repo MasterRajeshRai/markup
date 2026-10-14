@@ -7,7 +7,7 @@ describe('AI Extension Framework & Provider Adapters', () => {
 
   test('generates content with specified prompt and structure', async () => {
     const text = await provider.generateText({
-      prompt: 'Headless CMS Architecture',
+      prompt: 'Markup CMS Architecture',
       type: 'outline',
     });
     assert.match(text, /Comprehensive Guide/);
@@ -25,7 +25,7 @@ describe('AI Extension Framework & Provider Adapters', () => {
   test('suggests SEO meta tags and focus keywords', async () => {
     const suggestion = await provider.suggestSeo({
       title: 'Next.js 16 Web Development',
-      content: 'Building headless web applications...',
+      content: 'Building markup web applications...',
       focusKeyword: 'Next.js',
     });
     assert.ok(suggestion.metaTitle.length > 0);

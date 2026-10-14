@@ -40,9 +40,9 @@ describe('Restored Decoupled Frontend Client & Contract', () => {
   });
 
   it('fetches single article by slug with blocks', async () => {
-    const res = await cmsClient.getEntry('building-enterprise-headless-cms-with-nextjs');
+    const res = await cmsClient.getEntry('building-enterprise-markup-cms-with-nextjs');
     assert.ok(res.data);
-    assert.strictEqual(res.data.slug, 'building-enterprise-headless-cms-with-nextjs');
+    assert.strictEqual(res.data.slug, 'building-enterprise-markup-cms-with-nextjs');
     assert.ok(Array.isArray(res.data.blocks));
   });
 });

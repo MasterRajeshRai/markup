@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@headless/database';
+import { prisma, Prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,7 +20,7 @@ const fallbackAuditLogs = [
     entityId: 'site_default_01',
     metadata: { field: 'logoUrl', source: 'settings' },
     createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    actor: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io', avatarUrl: null },
+    actor: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io', avatarUrl: null },
   },
   {
     id: 'audit_2',
@@ -29,7 +29,7 @@ const fallbackAuditLogs = [
     entityId: 'home_page_entry',
     metadata: { title: 'Markup — Decoupled Digital Experience', slug: 'home' },
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    actor: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io', avatarUrl: null },
+    actor: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io', avatarUrl: null },
   },
   {
     id: 'audit_3',
@@ -38,7 +38,7 @@ const fallbackAuditLogs = [
     entityId: 'med_banner_01',
     metadata: { filename: 'markup-logo.webp', size: 48200 },
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-    actor: { id: 'user_editor_01', name: 'Marcus Vance', email: 'editor@headless.io', avatarUrl: null },
+    actor: { id: 'user_editor_01', name: 'Marcus Vance', email: 'editor@markup.io', avatarUrl: null },
   },
 ];
 

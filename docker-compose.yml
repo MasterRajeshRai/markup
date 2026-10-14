@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: headless_cms
+      POSTGRES_DB: markup_cms
     ports:
       - "5432:5432"
     volumes:
@@ -36,8 +36,8 @@ services:
     container_name: markup-admin
     restart: always
     environment:
-      DATABASE_URL: "postgresql://postgres:password@postgres:5432/headless_cms?schema=public"
-      JWT_SECRET: "enterprise-headless-cms-secret-jwt-key-minimum-32-chars"
+      DATABASE_URL: "postgresql://postgres:password@postgres:5432/markup_cms?schema=public"
+      JWT_SECRET: "enterprise-markup-cms-secret-jwt-key-minimum-32-chars"
       REDIS_URL: "redis://redis:6379"
       PORT: 3000
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"

@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const prismaBuildDir = path.resolve('G:/headless/node_modules/.pnpm/prisma@6.19.3_typescript@5.9.3/node_modules/prisma/build');
-const clientRuntimeDir = path.resolve('G:/headless/node_modules/.pnpm/@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e/node_modules/@prisma/client/runtime');
+const rootDir = path.resolve(__dirname, '../..');
+const prismaBuildDir = path.resolve(rootDir, 'node_modules/.pnpm/prisma@6.19.3_typescript@5.9.3/node_modules/prisma/build');
+const clientRuntimeDir = path.resolve(rootDir, 'node_modules/.pnpm/@prisma+client@6.19.3_prism_1d040ab5215f59f0e27ddee7f0cf082e/node_modules/@prisma/client/runtime');
 
 if (!fs.existsSync(clientRuntimeDir)) {
   fs.mkdirSync(clientRuntimeDir, { recursive: true });

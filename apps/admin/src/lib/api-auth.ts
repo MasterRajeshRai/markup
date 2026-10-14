@@ -1,5 +1,5 @@
-import { prisma } from '@headless/database';
-import { hashStringSha256 } from '@headless/core';
+import { prisma } from '@markup/database';
+import { hashStringSha256 } from '@markup/core';
 import { NextRequest, NextResponse } from 'next/server';
 
 export interface ApiAuthResult {

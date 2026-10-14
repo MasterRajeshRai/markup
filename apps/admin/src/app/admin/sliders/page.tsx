@@ -371,7 +371,7 @@ function SlidersDashboard() {
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl font-semibold text-slate-100">Hero Section Sliders & Carousels</h1>
                 <span className="px-2.5 py-0.5 text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
-                  Headless Ready
+                  Markup Ready
                 </span>
               </div>
               <p className="text-sm text-slate-400">
@@ -1608,7 +1608,7 @@ function SlidersDashboard() {
           <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
             <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
               <Code2 className="w-5 h-5 text-amber-400" />
-              <span>Headless Frontend Slider Code & Motion Architecture</span>
+              <span>Markup Frontend Slider Code & Motion Architecture</span>
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed">
               Every client has unique design requirements. Choose your preferred frontend stack below for ready-to-copy code featuring 60 FPS smooth animations, Ken Burns zoom, and staggered typography reveals.

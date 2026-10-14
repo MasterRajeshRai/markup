@@ -23,8 +23,8 @@ COPY . .
 
 ENV NODE_ENV=production
 RUN pnpm db:generate
-RUN pnpm --filter @headless/database build
-RUN pnpm --filter @headless/admin build
+RUN pnpm --filter @markup/database build
+RUN pnpm --filter @markup/admin build
 
 # Production Runner Stage
 FROM base AS runner
@@ -42,4 +42,4 @@ COPY --from=builder /app ./
 USER nextjs
 EXPOSE 3000
 
-CMD ["pnpm", "--filter", "@headless/admin", "start"]
+CMD ["pnpm", "--filter", "@markup/admin", "start"]

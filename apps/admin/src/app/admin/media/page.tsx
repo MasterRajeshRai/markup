@@ -50,7 +50,7 @@ import {
   X,
   Download,
 } from 'lucide-react';
-import { DEFAULT_CROP_PRESETS, toSeoFriendlyName, type CropPresetDefinition } from '@headless/core';
+import { DEFAULT_CROP_PRESETS, toSeoFriendlyName, type CropPresetDefinition } from '@markup/core';
 import { ModuleGuard } from '@/components/module-guard';
 import { useAuth } from '@/components/auth-context';
 import { cn } from '@/lib/utils';

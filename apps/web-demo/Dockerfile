@@ -18,7 +18,7 @@ COPY --from=dependencies /app/apps/web-demo/node_modules ./apps/web-demo/node_mo
 COPY . .
 
 ENV NODE_ENV=production
-RUN pnpm --filter @headless/web-demo build
+RUN pnpm --filter @markup/web-demo build
 
 # Production Runner Stage
 FROM base AS runner
@@ -36,4 +36,4 @@ COPY --from=builder /app ./
 USER nextjs
 EXPOSE 3001
 
-CMD ["pnpm", "--filter", "@headless/web-demo", "start"]
+CMD ["pnpm", "--filter", "@markup/web-demo", "start"]

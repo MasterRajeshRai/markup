@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BLOCK_DEFINITIONS, type BlockType, type BlockDefinition } from '@headless/core';
+import { BLOCK_DEFINITIONS, type BlockType, type BlockDefinition } from '@markup/core';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

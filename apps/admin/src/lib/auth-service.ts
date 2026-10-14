@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 import {
   hashPassword,
   verifyPassword,
@@ -6,7 +6,7 @@ import {
   hashToken,
   dummyPasswordVerify,
   passwordNeedsRehash,
-} from '@headless/core';
+} from '@markup/core';
 import { sendEmail } from '@/lib/email-service';
 import { checkPasswordStrength } from '@/lib/security/password-policy';
 import { signShortToken, verifyShortToken, encryptSecret, decryptSecret } from '@/lib/security/crypto-box';
@@ -79,7 +79,7 @@ interface MockUserStore {
 let MOCK_USERS: MockUserStore[] = [
   {
     id: 'user_admin_01',
-    email: 'admin@headless.io',
+    email: 'admin@markup.io',
     name: 'Sarah Connor (Super Admin)',
     // Default pass: AdminPass123!
     passwordHash: 'e3b0c44298fc1c149afbf4c8996fb924:8df0d68f23f85885e35327e53f1f72535041a792461ec4cf326ef6530a08e1a1c3bb203029eb10a30b3a436df7a0d4c82c3c129e31d8c117d7b38d3505c28ad6',
@@ -92,7 +92,7 @@ let MOCK_USERS: MockUserStore[] = [
   },
   {
     id: 'user_editor_01',
-    email: 'editor@headless.io',
+    email: 'editor@markup.io',
     name: 'Marcus Vance (Lead Editor)',
     // Default pass: EditorPass123!
     passwordHash: 'd41d8cd98f00b204e9800998ecf8427e:b81d89b1424d1a5860e0a5e8ff7a915acb151e3f890c29f8c6ebae0c6b124806a88b56627f12e1a3d93b39d1b098198f394801e0a81741e9389b09183891001a',
@@ -121,7 +121,7 @@ let MOCK_USERS: MockUserStore[] = [
   },
   {
     id: 'user_author_01',
-    email: 'author@headless.io',
+    email: 'author@markup.io',
     name: 'Elena Rostova (Staff Author)',
     // Default pass: AuthorPass123!
     passwordHash: '8b1a9953c4611296a827abf8c47804d7:c8b417e239f1c790184b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b',
@@ -144,7 +144,7 @@ let MOCK_USERS: MockUserStore[] = [
   },
   {
     id: 'user_reviewer_01',
-    email: 'reviewer@headless.io',
+    email: 'reviewer@markup.io',
     name: 'David Kim (Fact Checker)',
     // Default pass: ReviewerPass123!
     passwordHash: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d:d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6',
@@ -166,7 +166,7 @@ let MOCK_USERS: MockUserStore[] = [
   },
   {
     id: 'user_developer_01',
-    email: 'developer@headless.io',
+    email: 'developer@markup.io',
     name: 'Kenji Sato (Platform Engineer)',
     passwordHash: '8b1a9953c4611296a827abf8c47804d7:c8b417e239f1c790184b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
@@ -190,7 +190,7 @@ let MOCK_USERS: MockUserStore[] = [
   },
   {
     id: 'user_contributor_01',
-    email: 'contributor@headless.io',
+    email: 'contributor@markup.io',
     name: 'Maya Lin (Guest Contributor)',
     passwordHash: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d:d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6',
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80',
@@ -448,12 +448,12 @@ export async function authenticateUser(
   // Check known demo passwords or hash verification (development only)
   let isPasswordValid = false;
   if (
-    (email === 'admin@headless.io' && passwordInput === 'AdminPass123!') ||
-    (email === 'editor@headless.io' && passwordInput === 'EditorPass123!') ||
-    (email === 'author@headless.io' && passwordInput === 'AuthorPass123!') ||
-    (email === 'reviewer@headless.io' && passwordInput === 'ReviewerPass123!') ||
-    (email === 'developer@headless.io' && passwordInput === 'DeveloperPass123!') ||
-    (email === 'contributor@headless.io' && passwordInput === 'ContributorPass123!')
+    (email === 'admin@markup.io' && passwordInput === 'AdminPass123!') ||
+    (email === 'editor@markup.io' && passwordInput === 'EditorPass123!') ||
+    (email === 'author@markup.io' && passwordInput === 'AuthorPass123!') ||
+    (email === 'reviewer@markup.io' && passwordInput === 'ReviewerPass123!') ||
+    (email === 'developer@markup.io' && passwordInput === 'DeveloperPass123!') ||
+    (email === 'contributor@markup.io' && passwordInput === 'ContributorPass123!')
   ) {
     isPasswordValid = true;
   } else {
@@ -725,7 +725,7 @@ export async function createPasswordResetRequest(
   try {
     await sendEmail({
       to: email,
-      subject: 'Reset Your Headless CMS Account Password',
+      subject: 'Reset Your Markup CMS Account Password',
       templateSlug: 'tpl_welcome_newsletter',
       variables: {
         recipientName: email.split('@')[0],
@@ -1110,7 +1110,7 @@ export async function verifyMfaChallenge(
 export async function setupUserMfa(
   userId: string
 ): Promise<{ secret: string; otpauthUri: string } | null> {
-  let email = 'admin@headless.io';
+  let email = 'admin@markup.io';
 
   if (canAttemptDb()) {
     try {

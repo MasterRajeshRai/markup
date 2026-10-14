@@ -1,4 +1,4 @@
-import { prisma } from '@headless/database';
+import { prisma } from '@markup/database';
 
 export interface SlideCta {
   label: string;
@@ -88,7 +88,7 @@ let MOCK_SLIDERS: Slider[] = [
         id: 'slide_1',
         title: 'Building Modern Digital Experiences',
         subtitle: 'WELCOME TO MARKUP CMS',
-        description: 'Deliver omnichannel content velocity with headless architecture, real-time collaboration, and global edge publishing.',
+        description: 'Deliver omnichannel content velocity with markup architecture, real-time collaboration, and global edge publishing.',
         badgeText: 'Next-Gen Platform',
         badgeVariant: 'amber',
         imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1600&auto=format&fit=crop&q=80',
@@ -185,7 +185,7 @@ let MOCK_SLIDERS: Slider[] = [
         id: 'slide_promo_1',
         title: 'Spring Innovation Summit 2026',
         subtitle: 'Keynote & Hands-On Workshops',
-        description: 'Join thousands of technical leaders discussing headless web architecture, AI-driven content pipelines, and edge compute.',
+        description: 'Join thousands of technical leaders discussing markup web architecture, AI-driven content pipelines, and edge compute.',
         badgeText: 'Registration Open',
         badgeVariant: 'purple',
         imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=2000&q=80',

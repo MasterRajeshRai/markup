@@ -44,7 +44,7 @@ let MOCK_ALBUMS: GalleryAlbum[] = [
     category: 'Events',
     subtitle: 'Showcasing innovations in digital media and software architecture',
     description:
-      'Keynotes, workshop sessions, and collaborative breakout meetings from our annual industry summit. Exploring next-generation headless architectures and omnichannel content delivery.',
+      'Keynotes, workshop sessions, and collaborative breakout meetings from our annual industry summit. Exploring next-generation markup architectures and omnichannel content delivery.',
     coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
     eventDate: '2026-09-15',
     isFeatured: true,
@@ -59,7 +59,7 @@ let MOCK_ALBUMS: GalleryAlbum[] = [
       {
         id: 'photo_conf_1',
         title: 'Keynote Presentation',
-        caption: 'Opening keynote discussing headless architecture and content velocity.',
+        caption: 'Opening keynote discussing markup architecture and content velocity.',
         imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
         altText: 'Keynote speaker on stage during conference',
         order: 1,

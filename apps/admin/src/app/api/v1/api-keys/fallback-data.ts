@@ -24,7 +24,7 @@ export const fallbackApiKeys: FallbackApiKey[] = [
     lastUsedAt: new Date().toISOString(),
     revokedAt: null,
     createdAt: new Date('2025-01-01').toISOString(),
-    creator: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io' },
+    creator: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
   },
   {
     id: 'key_read_only',
@@ -37,6 +37,6 @@ export const fallbackApiKeys: FallbackApiKey[] = [
     lastUsedAt: new Date().toISOString(),
     revokedAt: null,
     createdAt: new Date('2025-01-02').toISOString(),
-    creator: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io' },
+    creator: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
   },
 ];

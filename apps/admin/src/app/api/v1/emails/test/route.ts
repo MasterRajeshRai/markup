@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       templateSlug: 'system-test-ping',
       variables: {
         timestamp: new Date().toLocaleString(),
-        senderDomain: settings.fromEmail.split('@')[1] || 'updates.headless-cms.io',
+        senderDomain: settings.fromEmail.split('@')[1] || 'updates.markup-cms.io',
         resendEnvironment: settings.sandboxMode ? 'Sandbox / Simulator Mode' : 'Live Production API',
       },
     });

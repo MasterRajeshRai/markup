@@ -156,14 +156,14 @@ export const initialMockContentEntries: MockContentEntry[] = [
     seo: {
       metaTitle: 'Markup — Decoupled Digital Experience',
       description: 'Universal Content Operating System powering web apps and omnichannel digital platforms.',
-      keywords: 'headless cms, nextjs, decoupled, markup',
+      keywords: 'markup cms, nextjs, decoupled, markup',
     },
     blocks: [
       {
         id: 'blk_hero_1',
         type: 'hero',
         data: {
-          badge: 'Enterprise Headless Platform',
+          badge: 'Enterprise Markup Platform',
           title: 'Universal Content Operating System',
           subtitle: 'Powering web apps, mobile apps, digital kiosks, and commerce with unparalleled API performance and visual block editing.',
           primaryCta: { label: 'Explore Articles', url: '/articles' },
@@ -177,7 +177,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
           columns: 3,
           items: [
             {
-              title: 'API-First & Headless',
+              title: 'API-First & Markup',
               description: 'Ultra-fast REST & GraphQL-ready delivery with deep population controls, ETags, and edge caching.',
               icon: 'Zap',
             },
@@ -233,7 +233,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     createdAt: new Date('2025-01-01').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@headless.io' },
+    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@markup.io' },
     taxonomies: [{ id: 't2', name: 'Architecture', slug: 'architecture' }],
   },
   {
@@ -245,12 +245,12 @@ export const initialMockContentEntries: MockContentEntry[] = [
     contentType: 'pages',
     currentVersion: 2,
     data: {
-      excerpt: 'Learn about our journey in building an enterprise-grade open-source headless CMS.',
+      excerpt: 'Learn about our journey in building an enterprise-grade open-source markup CMS.',
       template: 'default',
     },
     seo: {
       metaTitle: 'About Us — Markup Enterprise Platform',
-      description: 'Learn about our journey in building an enterprise-grade open-source headless CMS.',
+      description: 'Learn about our journey in building an enterprise-grade open-source markup CMS.',
     },
     blocks: [
       {
@@ -273,13 +273,13 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
     createdAt: new Date('2025-01-05').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@headless.io' },
+    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@markup.io' },
     taxonomies: [{ id: 't2', name: 'Architecture', slug: 'architecture' }],
   },
   {
     id: 'art-1',
-    slug: 'building-enterprise-headless-cms-with-nextjs',
-    title: 'Architecting Enterprise Headless CMS with Next.js & Edge Caching',
+    slug: 'building-enterprise-markup-cms-with-nextjs',
+    title: 'Architecting Enterprise Markup CMS with Next.js & Edge Caching',
     status: 'PUBLISHED',
     locale: 'en-US',
     contentType: 'articles',
@@ -291,7 +291,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
       is_featured: true,
     },
     seo: {
-      metaTitle: 'Architecting Enterprise Headless CMS with Next.js & Edge Caching',
+      metaTitle: 'Architecting Enterprise Markup CMS with Next.js & Edge Caching',
       description: 'Explore how decoupled content architecture eliminates database hotspots, scales across distributed CDN edges, and accelerates time-to-market.',
     },
     taxonomies: [
@@ -305,7 +305,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
         data: {
           badge: 'Technical Deep Dive',
           title: 'Decoupled Content at Global Scale',
-          subtitle: 'Why modern engineering organizations are moving away from monolithic CMS stacks towards headless API backbones.',
+          subtitle: 'Why modern engineering organizations are moving away from monolithic CMS stacks towards markup API backbones.',
         },
       },
       {
@@ -319,7 +319,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
         id: 'b3',
         type: 'quote',
         data: {
-          quote: 'Headless CMS gives developers the freedom of modern JavaScript frameworks while giving content creators the power of visual, structured authoring without compromises.',
+          quote: 'Markup CMS gives developers the freedom of modern JavaScript frameworks while giving content creators the power of visual, structured authoring without compromises.',
           author: 'Sarah Chen',
           role: 'VP of Platform Engineering',
         },
@@ -328,7 +328,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
     createdAt: new Date('2025-01-10').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@headless.io' },
+    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@markup.io' },
   },
   {
     id: 'art-2',
@@ -364,12 +364,12 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
     createdAt: new Date('2025-01-12').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@headless.io' },
+    author: { id: 'user_author_01', name: 'Elena Rostova (Staff Author)', email: 'author@markup.io' },
   },
   {
     id: 'art-3',
-    slug: 'getting-started-with-headless-architecture',
-    title: 'Getting Started with Modern Headless Architecture',
+    slug: 'getting-started-with-markup-architecture',
+    title: 'Getting Started with Modern Markup Architecture',
     status: 'PUBLISHED',
     locale: 'en-US',
     contentType: 'articles',
@@ -381,7 +381,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
       is_featured: true,
     },
     seo: {
-      metaTitle: 'Getting Started with Modern Headless Architecture',
+      metaTitle: 'Getting Started with Modern Markup Architecture',
       description: 'A comprehensive beginner guide to decoupling your CMS from your presentation tier.',
     },
     taxonomies: [
@@ -400,7 +400,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
     createdAt: new Date('2025-01-15').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@headless.io' },
+    author: { id: 'user_admin_01', name: 'Sarah Connor (Super Admin)', email: 'admin@markup.io' },
   },
   {
     id: 'art-4',
@@ -425,7 +425,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: null,
     createdAt: new Date('2025-01-18').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@headless.io' },
+    author: { id: 'user_editor_01', name: 'Marcus Vance (Lead Editor)', email: 'editor@markup.io' },
   },
   {
     id: 'art-5',
@@ -450,7 +450,7 @@ export const initialMockContentEntries: MockContentEntry[] = [
     publishedAt: null,
     createdAt: new Date('2025-01-20').toISOString(),
     updatedAt: new Date().toISOString(),
-    author: { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@headless.io' },
+    author: { id: 'user_reviewer_01', name: 'David Kim (Fact Checker)', email: 'reviewer@markup.io' },
   },
 ];
 
@@ -615,7 +615,7 @@ export function createMockContentEntry(entry: Partial<MockContentEntry> & { titl
     scheduledPublishAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    author: entry.author || { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@headless.io' },
+    author: entry.author || { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
     taxonomies: entry.taxonomies || [],
   };
 

@@ -1,18 +1,18 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { hasPermission, hasRole, PERMISSIONS, DEFAULT_ROLES } from '@headless/core';
+import { hasPermission, hasRole, PERMISSIONS, DEFAULT_ROLES } from '@markup/core';
 import { ROUTE_PERMISSION_MAP } from './components/auth-context';
 
 describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
   const superAdminUser = {
     id: 'user_01',
-    email: 'admin@headless.io',
+    email: 'admin@markup.io',
     roles: [{ slug: 'super_admin', permissions: ['*'] }],
   };
 
   const editorUser = {
     id: 'user_02',
-    email: 'editor@headless.io',
+    email: 'editor@markup.io',
     roles: [
       {
         slug: 'editor',
@@ -39,7 +39,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
 
   const authorUser = {
     id: 'user_03',
-    email: 'author@headless.io',
+    email: 'author@markup.io',
     roles: [
       {
         slug: 'author',
@@ -60,7 +60,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
 
   const reviewerUser = {
     id: 'user_04',
-    email: 'reviewer@headless.io',
+    email: 'reviewer@markup.io',
     roles: [
       {
         slug: 'reviewer',
@@ -194,7 +194,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
   describe('Authorship Scoping & Ownership Isolation', () => {
     const contributorUser = {
       id: 'user_05',
-      email: 'contributor@headless.io',
+      email: 'contributor@markup.io',
       roles: [
         {
           slug: 'contributor',
@@ -205,7 +205,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
 
     const customAuditorUser = {
       id: 'user_06',
-      email: 'auditor@headless.io',
+      email: 'auditor@markup.io',
       roles: [
         {
           slug: 'compliance_officer',
@@ -215,7 +215,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
     };
 
     it('correctly calculates canViewAllContent, canViewAllMedia, and canViewAllRevisions', async () => {
-      const { canViewAllContent, canViewAllMedia, canViewAllRevisions } = await import('@headless/core');
+      const { canViewAllContent, canViewAllMedia, canViewAllRevisions } = await import('@markup/core');
 
       // Super Admin and Editor can view all
       assert.strictEqual(canViewAllContent(superAdminUser), true);
@@ -247,7 +247,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
     });
 
     it('isolates content entries so limited users only see their own authored posts', async () => {
-      const { canViewAllContent } = await import('@headless/core');
+      const { canViewAllContent } = await import('@markup/core');
 
       const mockEntries = [
         { id: 'entry-1', title: 'Admin System Post', authorId: 'user_01' },
@@ -281,7 +281,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
     });
 
     it('isolates media files so limited users only see assets they uploaded', async () => {
-      const { canViewAllMedia } = await import('@headless/core');
+      const { canViewAllMedia } = await import('@markup/core');
 
       const mockMediaAssets = [
         { id: 'med-1', filename: 'brand-hero.webp', createdById: 'user_01' },
@@ -308,7 +308,7 @@ describe('Role-Based Access Control (RBAC) & Limited User Visibility', () => {
     });
 
     it('isolates revisions so authors only see revision history for content they worked on', async () => {
-      const { canViewAllRevisions } = await import('@headless/core');
+      const { canViewAllRevisions } = await import('@markup/core');
 
       const mockRevisions = [
         { id: 'rev-1', entryId: 'entry-1', entryAuthorId: 'user_01', revisionAuthorId: 'user_01' },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma, EntryStatus } from '@headless/database';
+import { prisma, EntryStatus } from '@markup/database';
 import { resolveSiteContext } from '@/lib/site-context';
 import { loadComments } from '@/lib/comments-store';
 import { getNewsletterStats } from '@/lib/newsletter-service';

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@headless/core', '@headless/database'],
+  transpilePackages: ['@markup/core', '@markup/database'],
   turbopack: {},
   serverExternalPackages: ['@prisma/client'],
   typescript: {

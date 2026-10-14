@@ -1,4 +1,4 @@
-import { SettingCategory } from '@headless/database';
+import { SettingCategory } from '@markup/database';
 
 export interface SiteBranding {
   logoUrl?: string;
@@ -55,12 +55,12 @@ const globalSiteStore: InMemoSiteState = {
     site_tagline: 'Enterprise Universal Content Operating System',
     site_logo: '',
     site_favicon: '',
-    meta_description: 'Enterprise API-first headless content management system.',
+    meta_description: 'Enterprise API-first markup content management system.',
     analytics_id: 'G-MARKUP2026',
     robots: 'index, follow',
     email_notifications: true,
     publish_alerts: true,
-    notification_email: 'admin@headless.io',
+    notification_email: 'admin@markup.io',
     webhook_url: 'http://localhost:3000/api/v1/webhooks/mock-consumer',
     two_factor_required: false,
     session_timeout: '60',

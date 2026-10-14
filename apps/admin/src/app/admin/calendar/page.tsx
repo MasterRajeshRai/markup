@@ -49,8 +49,8 @@ interface CalendarEvent {
 const INITIAL_EVENTS: CalendarEvent[] = [
   {
     id: 'art_1',
-    title: 'Getting Started with Modern Headless Architecture',
-    slug: 'getting-started-with-headless-architecture',
+    title: 'Getting Started with Modern Markup Architecture',
+    slug: 'getting-started-with-markup-architecture',
     typeSlug: 'articles',
     typeName: 'Articles',
     status: 'PUBLISHED',

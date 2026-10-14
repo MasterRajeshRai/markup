@@ -81,7 +81,7 @@ export default function SitesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Multi-Site Management</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage multiple independent brand sites, portals, and domains from a single headless cluster.
+            Manage multiple independent brand sites, portals, and domains from a single markup cluster.
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1.5 shadow-sm">

@@ -1,7 +1,7 @@
 import { runScheduledTasks } from '@/lib/scheduler';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession, requirePermission } from '@/lib/auth';
-import { safeEqual } from '@headless/core';
+import { safeEqual } from '@markup/core';
 import { rateLimit } from '@/lib/security/rate-limit';
 import { getClientIp } from '@/lib/security/client-ip';
 

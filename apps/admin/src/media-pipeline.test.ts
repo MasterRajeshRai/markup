@@ -1,11 +1,10 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import sharp from 'sharp';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { prisma } from '@headless/database';
-import { executeMediaPipeline } from '@headless/core/server';
+import { prisma } from '@markup/database';
+import { executeMediaPipeline, sharp } from '@markup/core/server';
 
 describe('Media Library — Auto-Crop → JPEG → WebP → Cloudflare R2 Pipeline', () => {
   let siteId: string;
@@ -19,7 +18,7 @@ describe('Media Library — Auto-Crop → JPEG → WebP → Cloudflare R2 Pipeli
     assert.ok(site, 'Seeded site "acme-portal" must exist');
     siteId = site.id;
 
-    const user = await prisma.user.findFirst({ where: { email: 'admin@headless.io' } });
+    const user = await prisma.user.findFirst({ where: { email: 'admin@markup.io' } });
     assert.ok(user, 'Seeded admin user must exist');
     adminUserId = user.id;
 

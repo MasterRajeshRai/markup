@@ -1,4 +1,4 @@
-import { prisma, EntryStatus } from '@headless/database';
+import { prisma, EntryStatus } from '@markup/database';
 import { dispatchWebhooks } from './webhooks';
 
 /**

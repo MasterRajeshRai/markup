@@ -1,4 +1,4 @@
-import { cleanStaleTempFiles } from '@headless/core/server';
+import { cleanStaleTempFiles } from '@markup/core/server';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 

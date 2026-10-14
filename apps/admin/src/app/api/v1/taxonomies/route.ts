@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@headless/database';
+import { prisma, Prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
@@ -26,7 +26,7 @@ const fallbackTaxonomies = [
     terms: [
       { id: 'term_5', name: 'Next.js', slug: 'nextjs', order: 0, _count: { entries: 14 } },
       { id: 'term_6', name: 'TypeScript', slug: 'typescript', order: 1, _count: { entries: 16 } },
-      { id: 'term_7', name: 'Headless CMS', slug: 'headless-cms', order: 2, _count: { entries: 22 } },
+      { id: 'term_7', name: 'Markup CMS', slug: 'markup-cms', order: 2, _count: { entries: 22 } },
       { id: 'term_8', name: 'Cloudflare R2', slug: 'cloudflare-r2', order: 3, _count: { entries: 8 } },
     ],
   },

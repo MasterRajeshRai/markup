@@ -23,7 +23,7 @@ export default async function ArticlesPage() {
           Articles & Insights
         </h1>
         <p className="text-sm text-slate-400 mt-2 max-w-xl">
-          Content dynamically retrieved from the Markup Headless CMS articles content model.
+          Content dynamically retrieved from the Markup CMS articles content model.
         </p>
       </div>
 

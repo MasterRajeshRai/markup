@@ -37,7 +37,7 @@ export class CloudflareR2Storage {
     const accountId = config.accountId || process.env.R2_ACCOUNT_ID;
     const accessKeyId = config.accessKeyId || process.env.R2_ACCESS_KEY_ID;
     const secretAccessKey = config.secretAccessKey || process.env.R2_SECRET_ACCESS_KEY;
-    this.bucketName = config.bucketName || process.env.R2_BUCKET_NAME || 'headless-cms-media';
+    this.bucketName = config.bucketName || process.env.R2_BUCKET_NAME || 'markup-cms-media';
     this.publicUrl = (config.publicUrl || process.env.R2_PUBLIC_URL || '').replace(/\/+$/, '');
     this.mockDir = config.mockDir || path.resolve(process.cwd(), 'uploads/r2-mock');
 

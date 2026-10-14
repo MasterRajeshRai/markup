@@ -2,19 +2,19 @@
   "name": "markup",
   "version": "1.0.0",
   "private": true,
-  "description": "Markup — Enterprise Headless CMS Platform",
+  "description": "Markup — Enterprise CMS Platform",
   "type": "module",
   "scripts": {
-    "dev:admin": "pnpm --filter @headless/admin dev",
-    "dev:web": "pnpm --filter @headless/web-demo dev",
-    "dev": "pnpm --filter @headless/admin dev",
-    "build": "pnpm --filter @headless/database generate && pnpm --filter @headless/admin build",
-    "build:admin": "pnpm --filter @headless/database generate && pnpm --filter @headless/admin build",
-    "build:web": "pnpm --filter @headless/web-demo build",
-    "db:generate": "pnpm --filter @headless/database generate",
-    "db:push": "pnpm --filter @headless/database push",
-    "db:seed": "pnpm --filter @headless/database seed",
-    "test": "pnpm --filter @headless/core test && pnpm --filter @headless/admin test"
+    "dev:admin": "pnpm --filter @markup/admin dev",
+    "dev:web": "pnpm --filter @markup/web-demo dev",
+    "dev": "pnpm --filter @markup/admin dev",
+    "build": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
+    "build:admin": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
+    "build:web": "pnpm --filter @markup/web-demo build",
+    "db:generate": "pnpm --filter @markup/database generate",
+    "db:push": "pnpm --filter @markup/database push",
+    "db:seed": "pnpm --filter @markup/database seed",
+    "test": "pnpm --filter @markup/core test && pnpm --filter @markup/admin test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

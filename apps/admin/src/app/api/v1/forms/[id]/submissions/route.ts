@@ -23,12 +23,12 @@ let MOCK_SUBMISSIONS: Record<string, FormSubmission[]> = {
         workEmail: 'dvance@cloudscale.net',
         company: 'CloudScale Infrastructure',
         planInterest: 'Self-Hosted Enterprise',
-        message: 'Looking to migrate 45,000 articles from WordPress to Headless CMS with custom block components and Cloudflare R2 image pipeline.',
+        message: 'Looking to migrate 45,000 articles from WordPress to Markup CMS with custom block components and Cloudflare R2 image pipeline.',
       },
       status: 'NEW',
       ipAddress: '192.0.2.45',
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-      referrer: 'https://google.com/search?q=best+headless+cms',
+      referrer: 'https://google.com/search?q=best+markup+cms',
       createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(), // 35 mins ago
     },
     {

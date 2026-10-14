@@ -35,7 +35,7 @@ function LoginPage() {
   // Mode: 'login' | 'forgot' | 'reset' | 'mfa'
   const initialMode = searchParams.get('mode') === 'reset' ? 'reset' : 'login';
   const initialToken = searchParams.get('token') || '';
-  const initialEmail = searchParams.get('email') || 'admin@headless.io';
+  const initialEmail = searchParams.get('email') || 'admin@markup.io';
   const redirectPath = searchParams.get('redirect') || '/admin';
 
   const [mode, setMode] = useState<'login' | 'forgot' | 'reset' | 'mfa'>(initialMode);
@@ -224,10 +224,10 @@ function LoginPage() {
   // Quick Seed Role Switcher
   const setPresetUser = (presetEmail: string) => {
     setEmail(presetEmail);
-    if (presetEmail === 'admin@headless.io') setPassword('AdminPass123!');
-    if (presetEmail === 'editor@headless.io') setPassword('EditorPass123!');
-    if (presetEmail === 'author@headless.io') setPassword('AuthorPass123!');
-    if (presetEmail === 'reviewer@headless.io') setPassword('ReviewerPass123!');
+    if (presetEmail === 'admin@markup.io') setPassword('AdminPass123!');
+    if (presetEmail === 'editor@markup.io') setPassword('EditorPass123!');
+    if (presetEmail === 'author@markup.io') setPassword('AuthorPass123!');
+    if (presetEmail === 'reviewer@markup.io') setPassword('ReviewerPass123!');
   };
 
   // Password strength calculation
@@ -289,7 +289,7 @@ function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@headless.io"
+                  placeholder="admin@markup.io"
                   className="w-full px-3.5 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
                 />
               </div>
@@ -385,28 +385,28 @@ function LoginPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <button
                     type="button"
-                    onClick={() => setPresetUser('admin@headless.io')}
+                    onClick={() => setPresetUser('admin@markup.io')}
                     className="flex items-center gap-1.5 p-2 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded-lg text-left transition-colors"
                   >
                     <span className="text-amber-400 font-semibold">Super Admin</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPresetUser('editor@headless.io')}
+                    onClick={() => setPresetUser('editor@markup.io')}
                     className="flex items-center gap-1.5 p-2 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded-lg text-left transition-colors"
                   >
                     <span className="text-blue-400 font-semibold">Chief Editor</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPresetUser('author@headless.io')}
+                    onClick={() => setPresetUser('author@markup.io')}
                     className="flex items-center gap-1.5 p-2 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded-lg text-left transition-colors"
                   >
                     <span className="text-purple-400 font-semibold">Staff Author</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPresetUser('reviewer@headless.io')}
+                    onClick={() => setPresetUser('reviewer@markup.io')}
                     className="flex items-center gap-1.5 p-2 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded-lg text-left transition-colors"
                   >
                     <span className="text-emerald-400 font-semibold">Fact Checker</span>
@@ -495,7 +495,7 @@ function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@headless.io"
+                  placeholder="admin@markup.io"
                   className="w-full px-3.5 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
                 />
               </div>

@@ -61,7 +61,7 @@ const DEFAULT_CATEGORIES = [
 const POPULAR_TAGS = [
   'Next.js',
   'TypeScript',
-  'Headless CMS',
+  'Markup CMS',
   'API-First',
   'Tailwind CSS',
   'Prisma',
@@ -217,7 +217,7 @@ export function ArticleDetailsSidebar({
   // Tags State
   const tagsList: string[] = Array.isArray(fieldsData.tags)
     ? fieldsData.tags
-    : ['Next.js', 'Headless CMS', 'Architecture'];
+    : ['Next.js', 'Markup CMS', 'Architecture'];
 
   const [tagInput, setTagInput] = useState('');
 

@@ -38,7 +38,7 @@ const PRESET_QUERIES = [
   {
     name: 'Single Entry Details',
     query: `query GetEntryBySlug {
-  entry(slug: "getting-started-with-headless-architecture") {
+  entry(slug: "getting-started-with-markup-architecture") {
     id
     title
     slug

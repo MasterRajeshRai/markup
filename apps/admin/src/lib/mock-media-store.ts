@@ -98,7 +98,7 @@ let MOCK_MEDIA: MockMediaItem[] = [
     originalWidth: 1920,
     originalHeight: 1080,
     originalSize: 148500,
-    altText: 'Modern Headless CMS Architecture',
+    altText: 'Modern Markup CMS Architecture',
     caption: 'Decoupled content mesh diagram',
     description: 'High resolution vector diagram illustrating edge delivery architecture.',
     publicUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=630&fit=crop',

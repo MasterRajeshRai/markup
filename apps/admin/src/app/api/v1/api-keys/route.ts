@@ -1,5 +1,5 @@
-import { prisma, ApiKeyRole, ApiKeyEnvironment, Prisma } from '@headless/database';
-import { generateApiKey } from '@headless/core';
+import { prisma, ApiKeyRole, ApiKeyEnvironment, Prisma } from '@markup/database';
+import { generateApiKey } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         lastUsedAt: null,
         revokedAt: null,
         createdAt: new Date().toISOString(),
-        creator: { id: adminSession?.user.id || 'user_admin_01', name: adminSession?.user.name || 'Admin', email: adminSession?.user.email || 'admin@headless.io' },
+        creator: { id: adminSession?.user.id || 'user_admin_01', name: adminSession?.user.name || 'Admin', email: adminSession?.user.email || 'admin@markup.io' },
       };
       fallbackApiKeys.unshift(createdKey);
     }

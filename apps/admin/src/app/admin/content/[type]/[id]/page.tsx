@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { BlockNode } from '@headless/core';
+import type { BlockNode } from '@markup/core';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,7 +137,7 @@ const MOCK_ARTICLE_BLOCKS: BlockNode[] = [
     type: 'hero',
     data: {
       badge: 'Architecture Guide',
-      title: 'Getting Started with Modern Headless Architecture',
+      title: 'Getting Started with Modern Markup Architecture',
       subtitle: 'Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and developer velocity.',
       primaryCta: { label: 'Read Documentation', url: '#guide' },
     },
@@ -146,7 +146,7 @@ const MOCK_ARTICLE_BLOCKS: BlockNode[] = [
     id: 'blk_p1',
     type: 'paragraph',
     data: {
-      text: 'Headless CMS platforms represent a foundational shift in how digital experiences are constructed. By decoupling the presentation layer from content authoring, engineering teams gain absolute freedom to select optimal frontend technologies like Next.js, Remix, or mobile native apps.',
+      text: 'Markup CMS platforms represent a foundational shift in how digital experiences are constructed. By decoupling the presentation layer from content authoring, engineering teams gain absolute freedom to select optimal frontend technologies like Next.js, Remix, or mobile native apps.',
     },
   },
   {
@@ -185,14 +185,14 @@ const MOCK_ARTICLE_BLOCKS: BlockNode[] = [
     id: 'blk_p2',
     type: 'paragraph',
     data: {
-      text: 'Because headless architecture delivers structured JSON payloads rather than monolithic HTML templates, developers have complete freedom over the presentation layer. For more details on best practices, inspect our official API documentation and integration guides.',
+      text: 'Because markup architecture delivers structured JSON payloads rather than monolithic HTML templates, developers have complete freedom over the presentation layer. For more details on best practices, inspect our official API documentation and integration guides.',
     },
   },
   {
     id: 'blk_cta_1',
     type: 'cta',
     data: {
-      title: 'Ready to build with modern headless architecture?',
+      title: 'Ready to build with modern markup architecture?',
       description: 'Connect your favorite frontend framework and begin publishing structured content today.',
       buttonText: 'Get Started with API',
       buttonUrl: '/api-docs',
@@ -247,8 +247,8 @@ export default function EntryEditorPage() {
   const [revisions, setRevisions] = useState<RevisionItem[]>(MOCK_REVISIONS);
 
   // Form State
-  const [title, setTitle] = useState('Getting Started with Modern Headless Architecture');
-  const [slug, setSlug] = useState('getting-started-with-headless-architecture');
+  const [title, setTitle] = useState('Getting Started with Modern Markup Architecture');
+  const [slug, setSlug] = useState('getting-started-with-markup-architecture');
   const [status, setStatus] = useState('PUBLISHED');
   const [fieldsData, setFieldsData] = useState<Record<string, any>>({
     summary: 'Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and developer velocity.',
@@ -259,11 +259,11 @@ export default function EntryEditorPage() {
   });
   const [blocks, setBlocks] = useState<BlockNode[]>(MOCK_ARTICLE_BLOCKS);
   const [seo, setSeo] = useState<Record<string, any>>({
-    keywords: ['headless architecture', 'decoupled cms', 'api-first content'],
-    focusKeyword: 'headless architecture',
-    title: 'Getting Started with Modern Headless Architecture | Acme CMS',
+    keywords: ['markup architecture', 'decoupled cms', 'api-first content'],
+    focusKeyword: 'markup architecture',
+    title: 'Getting Started with Modern Markup Architecture | Acme CMS',
     description: 'Learn why modern engineering teams are decoupling content management from rendering layers to achieve unmatched scalability and developer velocity.',
-    canonical: 'https://yoursite.com/articles/getting-started-with-headless-architecture',
+    canonical: 'https://yoursite.com/articles/getting-started-with-markup-architecture',
     robots: 'index, follow',
     ogImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=630&fit=crop',
     isPillarContent: false,
@@ -348,7 +348,7 @@ export default function EntryEditorPage() {
           setFieldsData(e.data || {});
           setBlocks(Array.isArray(e.blocks) && e.blocks.length > 0 ? e.blocks : MOCK_ARTICLE_BLOCKS);
           setSeo(e.seo && Object.keys(e.seo).length > 0 ? e.seo : {
-            focusKeyword: 'headless architecture',
+            focusKeyword: 'markup architecture',
             title: e.title,
             description: e.data?.summary || '',
           });
@@ -397,7 +397,7 @@ export default function EntryEditorPage() {
       ? seo.keywords
       : seo.focusKeyword
       ? [seo.focusKeyword]
-      : ['headless architecture'];
+      : ['markup architecture'];
 
     return analyzeSEO({
       keywords: kws,

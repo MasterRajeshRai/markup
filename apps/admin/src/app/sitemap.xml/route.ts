@@ -1,5 +1,5 @@
-import { prisma, EntryStatus } from '@headless/database';
-import { buildXmlSitemap } from '@headless/core';
+import { prisma, EntryStatus } from '@markup/database';
+import { buildXmlSitemap } from '@markup/core';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';
 

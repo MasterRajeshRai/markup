@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   UserCheck,
 } from 'lucide-react';
-import { CommentItem } from '@headless/core';
+import { CommentItem } from '@markup/core';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -96,9 +96,9 @@ export function CommentSection({
   // Load saved guest details from localStorage if available
   useEffect(() => {
     try {
-      const savedName = localStorage.getItem('headless_comment_name');
-      const savedEmail = localStorage.getItem('headless_comment_email');
-      const savedWebsite = localStorage.getItem('headless_comment_website');
+      const savedName = localStorage.getItem('markup_comment_name');
+      const savedEmail = localStorage.getItem('markup_comment_email');
+      const savedWebsite = localStorage.getItem('markup_comment_website');
       if (savedName) setAuthorName(savedName);
       if (savedEmail) setAuthorEmail(savedEmail);
       if (savedWebsite) setAuthorWebsite(savedWebsite);
@@ -159,9 +159,9 @@ export function CommentSection({
 
       // Save to localStorage
       try {
-        localStorage.setItem('headless_comment_name', authorName);
-        localStorage.setItem('headless_comment_email', authorEmail);
-        if (authorWebsite) localStorage.setItem('headless_comment_website', authorWebsite);
+        localStorage.setItem('markup_comment_name', authorName);
+        localStorage.setItem('markup_comment_email', authorEmail);
+        if (authorWebsite) localStorage.setItem('markup_comment_website', authorWebsite);
       } catch {}
 
       const res = await fetch('/api/v1/comments', {

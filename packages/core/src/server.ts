@@ -6,3 +6,4 @@ export * from './media/processor';
 export * from './media/pipeline';
 export * from './media/cleanup';
 export * from './media/naming';
+export { default as sharp } from 'sharp';

@@ -5,7 +5,7 @@ import { cmsClient } from '@/lib/cms-client';
 
 export const metadata: Metadata = {
   title: 'Markup Digital Experience — Reference Frontend',
-  description: 'Pure decoupled Next.js frontend consuming the Markup Headless CMS API.',
+  description: 'Pure decoupled Next.js frontend consuming the Markup CMS API.',
 };
 
 export default async function RootLayout({
@@ -84,7 +84,7 @@ export default async function RootLayout({
               )}
               <span className="font-bold text-sm tracking-tight text-white uppercase">{siteTitle}</span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Headless Client
+                Markup Client
               </span>
             </Link>
 

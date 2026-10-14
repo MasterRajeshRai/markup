@@ -1,5 +1,5 @@
-import { prisma, Prisma } from '@headless/database';
-import { LocalStorageDriver, CloudflareR2Storage } from '@headless/core/server';
+import { prisma, Prisma } from '@markup/database';
+import { LocalStorageDriver, CloudflareR2Storage } from '@markup/core/server';
 import { resolveSiteContext } from '@/lib/site-context';
 import { getMockMediaById, updateMockMedia, deleteMockMedia } from '@/lib/mock-media-store';
 import { NextRequest, NextResponse } from 'next/server';

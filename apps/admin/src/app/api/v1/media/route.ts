@@ -1,8 +1,8 @@
-import { prisma, Prisma } from '@headless/database';
+import { prisma, Prisma } from '@markup/database';
 import { resolveSiteContext } from '@/lib/site-context';
 import { getMockMedia } from '@/lib/mock-media-store';
 import { getAdminSession } from '@/lib/auth';
-import { canViewAllMedia } from '@headless/core';
+import { canViewAllMedia } from '@markup/core';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

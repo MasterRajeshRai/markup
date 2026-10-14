@@ -6,7 +6,7 @@ import {
   CommentSettings,
   CommentStats,
   runAutomod,
-} from '@headless/core';
+} from '@markup/core';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const COMMENTS_FILE = path.join(DATA_DIR, 'comments.json');
@@ -174,8 +174,8 @@ const INITIAL_SEED_COMMENTS: CommentItem[] = [
     id: 'comm-6',
     siteId: 'site-default',
     contentEntryId: 'entry-article-2',
-    contentEntryTitle: 'Modern Headless CMS Architecture & Edge Caching',
-    contentEntrySlug: 'modern-headless-cms-architecture',
+    contentEntryTitle: 'Modern Markup CMS Architecture & Edge Caching',
+    contentEntrySlug: 'modern-markup-cms-architecture',
     parentId: null,
     author: {
       name: 'Karthik Subramanian',
@@ -201,8 +201,8 @@ const INITIAL_SEED_COMMENTS: CommentItem[] = [
     id: 'comm-7',
     siteId: 'site-default',
     contentEntryId: 'entry-article-2',
-    contentEntryTitle: 'Modern Headless CMS Architecture & Edge Caching',
-    contentEntrySlug: 'modern-headless-cms-architecture',
+    contentEntryTitle: 'Modern Markup CMS Architecture & Edge Caching',
+    contentEntrySlug: 'modern-markup-cms-architecture',
     parentId: null,
     author: {
       name: 'Amara Okafor',

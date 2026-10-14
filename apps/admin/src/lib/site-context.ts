@@ -1,9 +1,9 @@
-import { prisma, type Site } from '@headless/database';
+import { prisma, type Site } from '@markup/database';
 import { NextRequest } from 'next/server';
 
 export const DEFAULT_SITE: Site = {
   id: 'site_default_01',
-  name: 'Headless CMS Default Site',
+  name: 'Markup CMS Default Site',
   slug: 'default',
   domain: 'localhost',
   defaultLocale: 'en-US',

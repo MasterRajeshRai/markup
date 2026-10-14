@@ -1,4 +1,4 @@
-import { prisma, SettingCategory, Prisma } from '@headless/database';
+import { prisma, SettingCategory, Prisma } from '@markup/database';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { recordAuditLog } from '@/lib/audit';

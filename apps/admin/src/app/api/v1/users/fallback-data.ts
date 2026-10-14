@@ -14,7 +14,7 @@ export interface FallbackUser {
 export const fallbackUsers: FallbackUser[] = [
   {
     id: 'user_admin_01',
-    email: 'admin@headless.io',
+    email: 'admin@markup.io',
     name: 'Super Administrator',
     avatarUrl: null,
     isActive: true,
@@ -26,7 +26,7 @@ export const fallbackUsers: FallbackUser[] = [
   },
   {
     id: 'user_editor_01',
-    email: 'editor@headless.io',
+    email: 'editor@markup.io',
     name: 'Content Editor',
     avatarUrl: null,
     isActive: true,
@@ -38,7 +38,7 @@ export const fallbackUsers: FallbackUser[] = [
   },
   {
     id: 'user_author_01',
-    email: 'author@headless.io',
+    email: 'author@markup.io',
     name: 'Staff Author',
     avatarUrl: null,
     isActive: true,
@@ -50,7 +50,7 @@ export const fallbackUsers: FallbackUser[] = [
   },
   {
     id: 'user_reviewer_01',
-    email: 'reviewer@headless.io',
+    email: 'reviewer@markup.io',
     name: 'Chief Reviewer',
     avatarUrl: null,
     isActive: true,

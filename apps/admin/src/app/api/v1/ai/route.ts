@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAiProvider } from '@headless/core';
+import { getAiProvider } from '@markup/core';
 import { guard } from '@/lib/security/guard';
 import { RATE_LIMITS } from '@/lib/security/rate-limit';
 

@@ -100,8 +100,8 @@ const schema = buildSchema(`
 const MOCK_ENTRIES = [
   {
     id: 'art_1',
-    title: 'Getting Started with Modern Headless Architecture',
-    slug: 'getting-started-with-headless-architecture',
+    title: 'Getting Started with Modern Markup Architecture',
+    slug: 'getting-started-with-markup-architecture',
     typeSlug: 'articles',
     status: 'PUBLISHED',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
@@ -118,7 +118,7 @@ const MOCK_ENTRIES = [
     status: 'SCHEDULED',
     publishedAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
     locale: 'en-US',
-    summary: 'Deep dive into Next.js 15 app router caching patterns, React Server Components, and zero-downtime headless CMS webhooks.',
+    summary: 'Deep dive into Next.js 15 app router caching patterns, React Server Components, and zero-downtime markup CMS webhooks.',
     data: JSON.stringify({ author: 'Sarah Jenkins', readTime: 8, featured: true }),
     seoScore: 88,
   },
@@ -130,7 +130,7 @@ const MOCK_ENTRIES = [
     status: 'IN_REVIEW',
     publishedAt: null,
     locale: 'en-US',
-    summary: 'SOC2 Type II, ISO 27001, and HIPAA compliance guide for headless decoupled content repositories.',
+    summary: 'SOC2 Type II, ISO 27001, and HIPAA compliance guide for markup decoupled content repositories.',
     data: JSON.stringify({ author: 'Elena Rostova', department: 'Security' }),
     seoScore: 78,
   },
@@ -307,7 +307,7 @@ export async function GET(req: NextRequest) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Headless CMS • GraphiQL Playground</title>
+  <title>Markup CMS • GraphiQL Playground</title>
   <link rel="stylesheet" href="https://unpkg.com/graphiql/graphiql.min.css" />
   <style>
     body { height: 100vh; margin: 0; overflow: hidden; background: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -315,7 +315,7 @@ export async function GET(req: NextRequest) {
   </style>
 </head>
 <body>
-  <div id="graphiql">Loading Headless CMS GraphQL Playground...</div>
+  <div id="graphiql">Loading Markup CMS GraphQL Playground...</div>
   <script crossorigin src="https://unpkg.com/react/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/graphiql/graphiql.min.js"></script>

@@ -14,10 +14,10 @@ importers:
 
   apps/admin:
     dependencies:
-      '@headless/core':
+      '@markup/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@headless/database':
+      '@markup/database':
         specifier: workspace:*
         version: link:../../packages/database
       '@radix-ui/react-checkbox':
@@ -87,7 +87,7 @@ importers:
 
   apps/web-demo:
     dependencies:
-      '@headless/core':
+      '@markup/core':
         specifier: workspace:*
         version: link:../../packages/core
       clsx:
@@ -158,7 +158,7 @@ importers:
 
   packages/database:
     dependencies:
-      '@headless/core':
+      '@markup/core':
         specifier: workspace:*
         version: link:../core
       '@prisma/client':

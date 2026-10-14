@@ -43,7 +43,7 @@ export const FALLBACK_HOME = {
       id: 'blk_hero_1',
       type: 'hero',
       data: {
-        badge: 'Enterprise Headless Platform',
+        badge: 'Enterprise Markup Platform',
         title: 'Universal Content Operating System',
         subtitle: 'Powering web apps, mobile apps, digital kiosks, and commerce with unparalleled API performance and visual block editing.',
         primaryCta: { label: 'Explore Articles', url: '/articles' },
@@ -57,7 +57,7 @@ export const FALLBACK_HOME = {
         columns: 3,
         items: [
           {
-            title: 'API-First & Headless',
+            title: 'API-First & Markup CMS',
             description: 'Ultra-fast REST & GraphQL-ready delivery with deep population controls, ETags, and edge caching.',
             icon: 'Zap',
           },
@@ -115,8 +115,8 @@ export const FALLBACK_HOME = {
 export const FALLBACK_ARTICLES = [
   {
     id: 'art-1',
-    slug: 'building-enterprise-headless-cms-with-nextjs',
-    title: 'Architecting Enterprise Headless CMS with Next.js & Edge Caching',
+    slug: 'building-enterprise-markup-cms-with-nextjs',
+    title: 'Architecting Enterprise Markup CMS with Next.js & Edge Caching',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
     data: {
       summary: 'Explore how decoupled content architecture eliminates database hotspots, scales across distributed CDN edges, and accelerates time-to-market.',
@@ -134,7 +134,7 @@ export const FALLBACK_ARTICLES = [
         data: {
           badge: 'Technical Deep Dive',
           title: 'Decoupled Content at Global Scale',
-          subtitle: 'Why modern engineering organizations are moving away from monolithic CMS stacks towards headless API backbones.',
+          subtitle: 'Why modern engineering organizations are moving away from monolithic CMS stacks towards markup API backbones.',
         },
       },
       {
@@ -148,7 +148,7 @@ export const FALLBACK_ARTICLES = [
         id: 'b3',
         type: 'quote',
         data: {
-          quote: 'Headless CMS gives developers the freedom of modern JavaScript frameworks while giving content creators the power of visual, structured authoring without compromises.',
+          quote: 'Markup CMS gives developers the freedom of modern JavaScript frameworks while giving content creators the power of visual, structured authoring without compromises.',
           author: 'Sarah Chen',
           role: 'VP of Platform Engineering',
         },

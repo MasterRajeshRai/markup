@@ -1,5 +1,5 @@
-import { prisma } from '@headless/database';
-import { createPreviewToken } from '@headless/core';
+import { prisma } from '@markup/database';
+import { createPreviewToken } from '@markup/core';
 import { getAdminSession, requirePermission } from '@/lib/auth';
 import { resolveSiteContext } from '@/lib/site-context';
 import { NextRequest, NextResponse } from 'next/server';

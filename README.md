@@ -1,6 +1,6 @@
-# Markup — Enterprise Headless CMS Platform
+# Markup — Enterprise Markup CMS Platform
 
-> A production-ready, extensible, API-first **Markup Headless CMS** built on Next.js 16, TypeScript, PostgreSQL, and Prisma. Capable of powering modern websites, mobile applications, PWAs, digital kiosks, or omnichannel digital experiences.
+> A production-ready, extensible, API-first **Markup CMS** built on Next.js 16, TypeScript, PostgreSQL, and Prisma. Capable of powering modern websites, mobile applications, PWAs, digital kiosks, or omnichannel digital experiences.
 
 ---
 
@@ -24,7 +24,7 @@ flowchart TD
         OpenAPI["/api/v1/openapi.json & /api-docs"]
     end
 
-    subgraph CMS_Core["@headless/core"]
+    subgraph CMS_Core["@markup/core"]
         BlockEngine["Visual Block Engine (25+ Blocks)"]
         Validator["Dynamic Schema & Field Validator"]
         RBAC["RBAC Permission Evaluator"]
@@ -110,7 +110,7 @@ cp .env.example .env
 ```
 Ensure `DATABASE_URL` points to your PostgreSQL instance:
 ```env
-DATABASE_URL="postgresql://postgres@localhost:5432/headless_cms?schema=public"
+DATABASE_URL="postgresql://postgres@localhost:5432/markup_cms?schema=public"
 ```
 
 ### 3. Install Dependencies & Build
@@ -148,10 +148,10 @@ The seed script creates initial users for all primary editorial roles with passw
 
 | Email | Role | Capabilities |
 | :--- | :--- | :--- |
-| `admin@headless.io` | Super Administrator | Full access to all sites, users, roles, settings |
-| `editor@headless.io` | Content Editor | Create, edit, approve, schedule, and publish content |
-| `author@headless.io` | Staff Author | Create and edit own content drafts, upload media |
-| `reviewer@headless.io` | Chief Reviewer | Review and approve content submissions |
+| `admin@markup.io` | Super Administrator | Full access to all sites, users, roles, settings |
+| `editor@markup.io` | Content Editor | Create, edit, approve, schedule, and publish content |
+| `author@markup.io` | Staff Author | Create and edit own content drafts, upload media |
+| `reviewer@markup.io` | Chief Reviewer | Review and approve content submissions |
 
 *(The login screen also includes convenient 1-click role preset fill buttons for development).*
 
@@ -197,8 +197,8 @@ DELETE /api/v1/media/:id    # Protected against deletion if actively referenced
 Run the complete test suite across packages:
 ```bash
 # Run Core unit tests (Security, RBAC, Validation, Block engine, Diffs)
-pnpm --filter @headless/core test
+pnpm --filter @markup/core test
 
 # Run Admin Integration & API tests (Database, Workflows, Publishing, Revisions)
-pnpm --filter @headless/admin test
+pnpm --filter @markup/admin test
 ```

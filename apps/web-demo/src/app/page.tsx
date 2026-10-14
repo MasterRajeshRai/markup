@@ -43,7 +43,7 @@ export default async function HomePage() {
         }}
       />
 
-      {/* Render Dynamic Visual Blocks from Headless CMS */}
+      {/* Render Dynamic Visual Blocks from Markup CMS */}
       {blocks.map((block: any) => (
         <BlockRenderer key={block.id} block={block} />
       ))}

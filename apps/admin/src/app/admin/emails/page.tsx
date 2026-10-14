@@ -46,9 +46,9 @@ export default function EmailsAdminPage() {
   // Email Data
   const [settings, setSettings] = useState<EmailSettings>({
     apiKey: '',
-    fromEmail: 'notifications@updates.headless-cms.io',
-    fromName: 'Headless CMS Platform',
-    replyTo: 'support@headless-cms.io',
+    fromEmail: 'notifications@updates.markup-cms.io',
+    fromName: 'Markup CMS Platform',
+    replyTo: 'support@markup-cms.io',
     sandboxMode: true,
   });
   const [hasApiKey, setHasApiKey] = useState(false);

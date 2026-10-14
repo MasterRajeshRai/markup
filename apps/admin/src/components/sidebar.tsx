@@ -389,11 +389,11 @@ const SECTIONS: NavSection[] = [
 ];
 
 const DEMO_ACCOUNTS = [
-  { role: 'Administrator', email: 'admin@headless.io', pass: 'AdminPass123!', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  { role: 'Lead Editor', email: 'editor@headless.io', pass: 'EditorPass123!', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  { role: 'Staff Author', email: 'author@headless.io', pass: 'AuthorPass123!', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-  { role: 'Reviewer', email: 'reviewer@headless.io', pass: 'ReviewerPass123!', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  { role: 'Developer', email: 'developer@headless.io', pass: 'DeveloperPass123!', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  { role: 'Administrator', email: 'admin@markup.io', pass: 'AdminPass123!', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  { role: 'Lead Editor', email: 'editor@markup.io', pass: 'EditorPass123!', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  { role: 'Staff Author', email: 'author@markup.io', pass: 'AuthorPass123!', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  { role: 'Reviewer', email: 'reviewer@markup.io', pass: 'ReviewerPass123!', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  { role: 'Developer', email: 'developer@markup.io', pass: 'DeveloperPass123!', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
 ];
 
 export function Sidebar() {
@@ -574,7 +574,7 @@ export function Sidebar() {
             href="/admin"
             onClick={() => setIsMobileOpen(false)}
             className="flex items-center gap-3 min-w-0 group cursor-pointer"
-            title="Markup Headless CMS"
+            title="Markup CMS"
           >
             <div className="h-8.5 w-8.5 rounded-lg bg-foreground/5 border border-border flex items-center justify-center overflow-hidden shadow-2xs shrink-0">
               {siteBranding.logoUrl ? (
@@ -597,7 +597,7 @@ export function Sidebar() {
                   {siteBranding.name}
                 </span>
                 <span className="text-[12px] text-muted-foreground/80 font-normal leading-tight truncate mt-0.5">
-                  Headless CMS
+                  Markup CMS
                 </span>
               </div>
             )}
@@ -714,7 +714,7 @@ export function Sidebar() {
                     {user?.name || 'User'}
                   </span>
                   <span className="text-[12px] text-muted-foreground truncate">
-                    {user?.email || 'user@headless.io'}
+                    {user?.email || 'user@markup.io'}
                   </span>
                   <span
                     className={cn(
