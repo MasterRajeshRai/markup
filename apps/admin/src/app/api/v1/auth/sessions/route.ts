@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const currentToken = req.cookies.get('cms_session')?.value;
-    const sessions = await getUserSessions(sec.user.id, currentToken);
+    const sessions = await getUserSessions(sec.session!.user.id, currentToken);
 
     return NextResponse.json({
       success: true,
@@ -36,7 +36,7 @@ export async function DELETE(req: NextRequest) {
     const revokeAllOthers = searchParams.get('allOthers') === 'true';
 
     if (revokeAllOthers) {
-      const revokedCount = await revokeAllOtherSessions(sec.user.id, currentToken);
+      const revokedCount = await revokeAllOtherSessions(sec.session!.user.id, currentToken || '');
       return NextResponse.json({
         success: true,
         message: 'All other active sessions have been terminated.',
@@ -45,7 +45,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     if (targetSessionId) {
-      const success = await revokeSessionById(sec.user.id, targetSessionId);
+      const success = await revokeSessionById(sec.session!.user.id, targetSessionId);
       if (!success) {
         return NextResponse.json(
           { error: 'Session not found or cannot revoke active session' },

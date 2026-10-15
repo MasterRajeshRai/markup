@@ -10,6 +10,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    enabled: Boolean(sec.user.twoFactorEnabled),
+    enabled: Boolean(sec.session?.user && (sec.session.user as any).twoFactorEnabled),
   });
 }

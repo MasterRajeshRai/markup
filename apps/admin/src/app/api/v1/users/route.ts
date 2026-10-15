@@ -13,7 +13,7 @@ function withTimeout<T>(promise: Promise<T>, ms = 2000): Promise<T> {
   ]);
 }
 
-import { fallbackUsers } from './fallback-data';
+import { fallbackUsers, type FallbackUser } from './fallback-data';
 
 export async function GET(req: NextRequest) {
   try {

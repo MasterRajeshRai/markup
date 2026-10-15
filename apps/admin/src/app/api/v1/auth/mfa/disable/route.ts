@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await disableUserMfa(sec.user.id, String(currentPassword));
+    const userId = sec.session!.user.id;
+    const result = await disableUserMfa(userId, String(currentPassword));
     if (!result.success) {
       return NextResponse.json(
         { error: result.error || 'Failed to disable two-factor authentication' },
@@ -31,10 +32,10 @@ export async function POST(req: NextRequest) {
 
     try {
       await recordAuditLog({
-        actorId: sec.user.id,
+        actorId: userId,
         action: 'auth.mfa_disabled',
         entityType: 'User',
-        entityId: sec.user.id,
+        entityId: userId,
         req,
       });
     } catch {

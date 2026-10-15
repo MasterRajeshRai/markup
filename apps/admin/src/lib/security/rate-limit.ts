@@ -125,6 +125,8 @@ export const RATE_LIMITS = {
   upload: { name: 'upload', limit: 60, windowMs: 60_000 },
   /** AI generation calls, per user */
   ai: { name: 'ai', limit: 30, windowMs: 60_000 },
+  /** Strict limiter for sensitive actions, e.g. MFA toggle, sessions revoke, password reset */
+  strict: { name: 'strict', limit: 10, windowMs: 15 * 60_000 },
 } satisfies Record<string, RateLimitRule>;
 
 export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {

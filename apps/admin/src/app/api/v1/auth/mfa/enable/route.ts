@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await enableUserMfa(sec.user.id, String(secret).trim(), String(code).trim());
+    const userId = sec.session!.user.id;
+    const result = await enableUserMfa(userId, String(secret).trim(), String(code).trim());
     if (!result.success) {
       return NextResponse.json(
         { error: result.error || 'Failed to verify and activate MFA' },
@@ -31,10 +32,10 @@ export async function POST(req: NextRequest) {
 
     try {
       await recordAuditLog({
-        actorId: sec.user.id,
+        actorId: userId,
         action: 'auth.mfa_enabled',
         entityType: 'User',
-        entityId: sec.user.id,
+        entityId: userId,
         req,
       });
     } catch {

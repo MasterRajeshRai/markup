@@ -69,6 +69,9 @@ interface MockUserStore {
   isActive: boolean;
   failedAttempts: number;
   lockedUntil: Date | null;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string | null;
+  backupCodes?: string[] | null;
 }
 
 // Pre-hashed PBKDF2 SHA-512 passwords for fallback demo accounts:
@@ -1061,11 +1064,11 @@ export async function verifyMfaChallenge(
 
   const cleanCode = code.trim();
   let valid = false;
-  if (verifyTotp(mockUser.twoFactorSecret, cleanCode) !== null) {
+  if (mockUser.twoFactorSecret && verifyTotp(mockUser.twoFactorSecret, cleanCode) !== null) {
     valid = true;
   } else if (mockUser.backupCodes && mockUser.backupCodes.includes(cleanCode)) {
     valid = true;
-    mockUser.backupCodes = mockUser.backupCodes.filter((c) => c !== cleanCode);
+    mockUser.backupCodes = mockUser.backupCodes.filter((c: string) => c !== cleanCode);
   }
 
   if (!valid) {

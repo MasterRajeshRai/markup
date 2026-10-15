@@ -663,7 +663,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
               {block.type === 'quote' && (
                 <blockquote className="border-l-4 border-primary pl-4 py-2 italic text-foreground/80 bg-muted/20 rounded-r-lg">
                   <p className="text-base sm:text-lg">“{String(block.data.quote || '')}”</p>
-                  {(block.data.author || block.data.role) && (
+                  {Boolean(block.data.author || block.data.role) && (
                     <footer className="text-xs font-semibold not-italic text-muted-foreground mt-1.5">
                       — {String(block.data.author || '')} {block.data.role ? `(${block.data.role})` : ''}
                     </footer>
@@ -683,14 +683,14 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
               )}
 
               {/* Image */}
-              {block.type === 'image' && block.data.url && (
+              {block.type === 'image' && Boolean(block.data.url) && (
                 <figure className="space-y-2 my-4">
                   <img
                     src={String(block.data.url)}
                     alt={String(block.data.alt || 'Visual')}
                     className="w-full rounded-xl object-cover shadow-sm border border-border"
                   />
-                  {block.data.caption && (
+                  {Boolean(block.data.caption) && (
                     <figcaption className="text-xs text-center text-muted-foreground italic">
                       {String(block.data.caption)}
                     </figcaption>
@@ -701,7 +701,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
               {/* Hero */}
               {block.type === 'hero' && (
                 <div className="p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border text-center space-y-4">
-                  {block.data.badge && (
+                  {Boolean(block.data.badge) && (
                     <Badge variant="secondary" className="px-3 py-1 font-semibold text-xs">
                       {String(block.data.badge)}
                     </Badge>
@@ -709,7 +709,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                   <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground">
                     {String(block.data.title || '')}
                   </h1>
-                  {block.data.subtitle && (
+                  {Boolean(block.data.subtitle) && (
                     <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
                       {String(block.data.subtitle)}
                     </p>
@@ -959,7 +959,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                             className="h-8.5 text-xs font-semibold flex-1 min-w-[200px]"
                           />
                         </div>
-                        {block.data.text && (
+                        {Boolean(block.data.text) && (
                           <div className="p-2 rounded bg-muted/20 border border-dashed text-muted-foreground">
                             <span className="text-[10px] font-mono text-muted-foreground/70 uppercase mr-2">Preview:</span>
                             <span className="font-bold text-foreground">
@@ -1003,7 +1003,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                         />
 
                         {/* Live Typography Preview Showing Neat Inline Code */}
-                        {block.data.text && (
+                        {Boolean(block.data.text) && (
                           <div className="p-3 rounded-lg bg-muted/20 border text-xs leading-relaxed">
                             <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1">
                               <Sparkle className="h-3 w-3 text-primary" />
@@ -1275,6 +1275,8 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                           </div>
                         ))}
                       </div>
+                    )}
+
                     {/* 10. HTML / RICH CONTENT BLOCK */}
                     {block.type === 'html' && (
                       <HtmlBlockEditor

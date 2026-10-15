@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   if (!sec.ok) return sec.response;
 
   try {
-    const setup = await setupUserMfa(sec.user.id);
+    const setup = await setupUserMfa(sec.session!.user.id);
     if (!setup) {
       return NextResponse.json(
         { error: 'Failed to initialize MFA setup' },

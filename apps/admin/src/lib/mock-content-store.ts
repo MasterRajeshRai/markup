@@ -579,7 +579,7 @@ function getMediabirdArticles(): MockContentEntry[] {
       mediabirdSnapshotArticles = [];
     }
   }
-  return mediabirdSnapshotArticles;
+  return mediabirdSnapshotArticles || [];
 }
 
 export interface GetEntriesFilter {
