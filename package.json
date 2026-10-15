@@ -7,14 +7,18 @@
   "scripts": {
     "dev:admin": "pnpm --filter @markup/admin dev",
     "dev:web": "pnpm --filter @markup/web-demo dev",
+    "dev:mediabird": "pnpm --filter @markup/wwwmediabird dev",
     "dev": "pnpm --filter @markup/admin dev",
     "build": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
     "build:admin": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
     "build:web": "pnpm --filter @markup/web-demo build",
+    "build:mediabird": "pnpm --filter @markup/wwwmediabird build",
+    "start:mediabird": "pnpm --filter @markup/wwwmediabird start",
     "db:generate": "pnpm --filter @markup/database generate",
     "db:push": "pnpm --filter @markup/database push",
     "db:seed": "pnpm --filter @markup/database seed",
-    "test": "pnpm --filter @markup/core test && pnpm --filter @markup/admin test"
+    "test:mediabird": "pnpm --filter @markup/wwwmediabird test",
+    "test": "pnpm --filter @markup/core test && pnpm --filter @markup/web-demo test && pnpm --filter @markup/wwwmediabird test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -43,9 +43,40 @@ const fallbackTaxonomies = [
   },
 ];
 
+const mediabirdTaxonomies = [
+  {
+    id: 'tax_mediabird_cat',
+    name: 'Categories',
+    slug: 'categories',
+    isHierarchical: true,
+    terms: [
+      { id: 'mb_term_1', name: 'Culture', slug: 'culture', order: 0, _count: { entries: 120 } },
+      { id: 'mb_term_2', name: 'Leisure', slug: 'leisure', order: 1, _count: { entries: 95 } },
+      { id: 'mb_term_3', name: 'Newscast', slug: 'newscast', order: 2, _count: { entries: 150 } },
+      { id: 'mb_term_4', name: 'Odyssey', slug: 'odyssey', order: 3, _count: { entries: 110 } },
+      { id: 'mb_term_5', name: 'Rendezvous', slug: 'rendezvous', order: 4, _count: { entries: 80 } },
+    ],
+  },
+  {
+    id: 'tax_mediabird_tags',
+    name: 'Tags',
+    slug: 'tags',
+    isHierarchical: false,
+    terms: [
+      { id: 'mb_tag_1', name: 'Featured', slug: 'featured', order: 0, _count: { entries: 40 } },
+      { id: 'mb_tag_2', name: 'Opinion', slug: 'opinion', order: 1, _count: { entries: 25 } },
+      { id: 'mb_tag_3', name: 'Trending', slug: 'trending', order: 2, _count: { entries: 50 } },
+    ],
+  },
+];
+
 export async function GET(req: NextRequest) {
   try {
     const site = await resolveSiteContext(req);
+
+    if (site?.slug === 'mediabird') {
+      return NextResponse.json({ data: mediabirdTaxonomies });
+    }
 
     try {
       const dbPromise = prisma.taxonomy.findMany({
@@ -64,7 +95,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({ data: taxonomies.length > 0 ? taxonomies : fallbackTaxonomies });
     } catch {
-      return NextResponse.json({ data: fallbackTaxonomies });
+      return NextResponse.json({ data: site?.slug === 'mediabird' ? mediabirdTaxonomies : fallbackTaxonomies });
     }
   } catch (err) {
     console.error('[TaxonomiesGET] Error:', err);

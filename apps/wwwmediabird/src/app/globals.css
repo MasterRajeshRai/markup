@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --brand-red: #931b1c;
+
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 20% 96.5%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 20% 96.5%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 20% 94.5%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 20% 92%;
+  --input: 214 20% 92%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+  --chart-1: 221.2 83.2% 53.3%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+.dark {
+  --background: 240 14% 6%;
+  --foreground: 210 40% 98%;
+  --card: 240 12% 9.5%;
+  --card-foreground: 210 40% 98%;
+  --popover: 240 12% 9.5%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 10% 14%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 240 10% 13.5%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 10% 14.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 10% 16%;
+  --input: 240 10% 16%;
+  --ring: 224 76% 48%;
+  --chart-1: 217 91% 60%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+html,
+body,
+*,
+*::before,
+*::after {
+  font-family: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji' !important;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+}
+
+html,
+body {
+  background-color: #ffffff !important;
+}
+
+body {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ensure all headings, text, and prose strictly use Sans Serif */
+h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label, figcaption, blockquote {
+  font-family: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif !important;
+}
+
+.prose,
+.prose * {
+  font-family: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif !important;
+}
+
+/* Custom editorial selection */
+::selection {
+  background-color: #931b1c;
+  color: #ffffff;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ad styling resets to prevent layout shifts */
+ins.adsbygoogle {
+  background: transparent;
+}

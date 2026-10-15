@@ -719,6 +719,65 @@ async function main() {
     });
   }
 
+  // 14. Seed Media Bird Magazine Site (Client Project)
+  console.log('  -> Seeding Media Bird Magazine client project...');
+  const mediabirdSite = await prisma.site.upsert({
+    where: { slug: 'mediabird' },
+    update: {
+      name: 'Media Bird Magazine',
+      domain: 'www.mediabirdmag.com',
+      defaultLocale: 'en-US',
+      isDefault: false,
+      branding: {
+        logoText: 'Media Bird',
+        primaryColor: '#ef4444',
+      },
+    },
+    create: {
+      name: 'Media Bird Magazine',
+      slug: 'mediabird',
+      domain: 'www.mediabirdmag.com',
+      defaultLocale: 'en-US',
+      isDefault: false,
+      branding: {
+        logoText: 'Media Bird',
+        primaryColor: '#ef4444',
+      },
+      settings: {
+        site_title: 'Media Bird Magazine',
+        tagline: 'Telling It Slow, Saying It Right!',
+      },
+    },
+  });
+
+  const mbCatTax = await prisma.taxonomy.upsert({
+    where: { siteId_slug: { siteId: mediabirdSite.id, slug: 'categories' } },
+    update: { name: 'Categories' },
+    create: {
+      siteId: mediabirdSite.id,
+      name: 'Categories',
+      slug: 'categories',
+      isHierarchical: true,
+      appliesTo: ['articles'],
+    },
+  });
+
+  const mbCategories = [
+    { name: 'Culture', slug: 'culture', order: 0 },
+    { name: 'Leisure', slug: 'leisure', order: 1 },
+    { name: 'Newscast', slug: 'newscast', order: 2 },
+    { name: 'Odyssey', slug: 'odyssey', order: 3 },
+    { name: 'Rendezvous', slug: 'rendezvous', order: 4 },
+  ];
+
+  for (const c of mbCategories) {
+    await prisma.taxonomyTerm.upsert({
+      where: { taxonomyId_slug: { taxonomyId: mbCatTax.id, slug: c.slug } },
+      update: c,
+      create: { taxonomyId: mbCatTax.id, ...c },
+    });
+  }
+
   console.log('✅ Enterprise Markup CMS database successfully seeded!');
 }
 

@@ -14,6 +14,19 @@ export const DEFAULT_SITE: Site = {
   updatedAt: new Date('2025-01-01'),
 };
 
+export const MEDIABIRD_SITE: Site = {
+  id: 'site_mediabird_03',
+  name: 'Media Bird Magazine',
+  slug: 'mediabird',
+  domain: 'https://www.mediabirdmag.com',
+  defaultLocale: 'en-US',
+  isDefault: false,
+  branding: { primaryColor: '#ef4444' },
+  settings: { site_title: 'Media Bird Magazine' },
+  createdAt: new Date('2025-01-01'),
+  updatedAt: new Date('2025-01-01'),
+};
+
 /**
  * Resolves the active Site context based on:
  * 1. X-Site-Slug or X-Site-Id header
@@ -76,6 +89,9 @@ export async function resolveSiteContext(req?: NextRequest | Request): Promise<S
     return await Promise.race([resolvePromise(), timeoutPromise]);
   } catch (err: any) {
     // Graceful offline fallback: allows local execution without requiring a live Postgres daemon
+    if (siteSlug === 'mediabird' || siteSlug === 'site_mediabird_03' || host?.includes('mediabirdmag.com')) {
+      return MEDIABIRD_SITE;
+    }
     return DEFAULT_SITE;
   }
 }

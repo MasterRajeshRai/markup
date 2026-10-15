@@ -36,9 +36,10 @@ export async function GET(req: NextRequest) {
 
   let adminSession: any = null;
   let canViewAll = false;
+  let site: any = null;
 
   try {
-    const site = await resolveSiteContext(req);
+    site = await resolveSiteContext(req);
     if (!site) {
       return NextResponse.json({ error: 'Site context not found' }, { status: 404 });
     }
@@ -175,6 +176,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     // Graceful fallback to mock store when database is offline or unreachable
     const mockResult = getMockContentEntries({
+      siteSlug: site?.slug,
       typeSlug,
       locale,
       status: statusParam,

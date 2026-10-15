@@ -499,7 +499,37 @@ export function saveMockContentType(ct: Partial<MockContentType> & { name: strin
   }
 }
 
+let mediabirdSnapshotArticles: MockContentEntry[] | null = null;
+function getMediabirdArticles(): MockContentEntry[] {
+  if (!mediabirdSnapshotArticles) {
+    try {
+      const snap = require('../../../wwwmediabird/src/data/articles-snapshot.json');
+      mediabirdSnapshotArticles = (snap.articles || []).map((a: any) => ({
+        id: a.id || a.slug,
+        slug: a.slug,
+        title: a.title,
+        status: a.status || 'PUBLISHED',
+        locale: 'en-US',
+        contentType: 'articles',
+        currentVersion: 1,
+        data: a.data || {},
+        blocks: a.blocks || [],
+        seo: a.seo || {},
+        publishedAt: a.publishedAt || a.createdAt,
+        createdAt: a.createdAt || new Date('2025-01-01').toISOString(),
+        updatedAt: a.updatedAt || new Date('2025-01-01').toISOString(),
+        author: a.author || { id: 'user_editor_01', name: 'Media Bird Editorial', email: 'editor@mediabirdmag.com' },
+        taxonomies: a.taxonomies || [{ id: 'mb_term_1', name: a.data?.category || 'Culture', slug: a.data?.category_slug || 'culture' }],
+      }));
+    } catch {
+      mediabirdSnapshotArticles = [];
+    }
+  }
+  return mediabirdSnapshotArticles;
+}
+
 export interface GetEntriesFilter {
+  siteSlug?: string | null;
   typeSlug?: string | null;
   locale?: string | null;
   status?: string | null;
@@ -516,6 +546,7 @@ export interface GetEntriesFilter {
 
 export function getMockContentEntries(filter: GetEntriesFilter = {}) {
   const {
+    siteSlug,
     typeSlug,
     locale,
     search,
@@ -529,7 +560,7 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
     statusFilter,
   } = filter;
 
-  let filtered = [...contentEntriesStore];
+  let filtered = siteSlug === 'mediabird' ? [...getMediabirdArticles()] : [...contentEntriesStore];
 
   if (typeSlug) {
     const norm = typeSlug === 'page' ? 'pages' : typeSlug === 'article' ? 'articles' : typeSlug;
@@ -593,9 +624,9 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
 }
 
 export function getMockContentEntryByIdOrSlug(idOrSlug: string): MockContentEntry | null {
-  return (
-    contentEntriesStore.find((e) => e.id === idOrSlug || e.slug === idOrSlug) || null
-  );
+  const found = contentEntriesStore.find((e) => e.id === idOrSlug || e.slug === idOrSlug);
+  if (found) return found;
+  return getMediabirdArticles().find((e) => e.id === idOrSlug || e.slug === idOrSlug) || null;
 }
 
 export function createMockContentEntry(entry: Partial<MockContentEntry> & { title: string; slug: string; contentType: string }): MockContentEntry {

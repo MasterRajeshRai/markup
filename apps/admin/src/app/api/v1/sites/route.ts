@@ -55,6 +55,22 @@ const inMemorySites: MockSiteItem[] = [
       media: 6,
     },
   },
+  {
+    id: 'site_mediabird_03',
+    name: 'Media Bird Magazine',
+    slug: 'mediabird',
+    domain: 'https://www.mediabirdmag.com',
+    defaultLocale: 'en-US',
+    isDefault: false,
+    branding: { logoUrl: '', faviconUrl: '', primaryColor: '#ef4444' },
+    settings: { site_title: 'Media Bird Magazine' },
+    locales: [{ id: 'loc_3', code: 'en-US', name: 'English (US)', isDefault: true }],
+    _count: {
+      contentEntries: 642,
+      contentTypes: 4,
+      media: 140,
+    },
+  },
 ];
 
 export async function GET(req: NextRequest) {
