@@ -49,8 +49,9 @@ export function SiteSwitcher() {
 
       {isOpen && (
         <div className="absolute left-0 mt-1.5 w-72 rounded-xl border bg-popover/95 p-1.5 text-popover-foreground shadow-xl backdrop-blur-md z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b mb-1">
-            Managed Client Sites
+          <div className="px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b mb-1 flex items-center justify-between">
+            <span>{sites.length > 1 ? 'Managed Client Sites' : 'Connected Client Site'}</span>
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live Frontend Connected" />
           </div>
           <div className="space-y-1">
             {sites.map((site) => {

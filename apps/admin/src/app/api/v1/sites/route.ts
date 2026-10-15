@@ -24,49 +24,17 @@ interface MockSiteItem {
 
 const inMemorySites: MockSiteItem[] = [
   {
-    id: 'site_default_01',
-    name: 'Markup Digital Portal',
-    slug: 'default',
-    domain: 'http://localhost:3000',
-    defaultLocale: 'en-US',
-    isDefault: true,
-    branding: { logoUrl: '', faviconUrl: '', primaryColor: '#3b82f6' },
-    settings: { site_title: 'Markup Digital Portal' },
-    locales: [{ id: 'loc_1', code: 'en-US', name: 'English (US)', isDefault: true }],
-    _count: {
-      contentEntries: 18,
-      contentTypes: 4,
-      media: 12,
-    },
-  },
-  {
-    id: 'site_school_02',
-    name: 'Markup Academy & School',
-    slug: 'school',
-    domain: 'http://localhost:3002',
-    defaultLocale: 'en-US',
-    isDefault: false,
-    branding: { logoUrl: '', faviconUrl: '', primaryColor: '#10b981' },
-    settings: { site_title: 'Markup Academy & School' },
-    locales: [{ id: 'loc_2', code: 'en-US', name: 'English (US)', isDefault: true }],
-    _count: {
-      contentEntries: 8,
-      contentTypes: 4,
-      media: 6,
-    },
-  },
-  {
     id: 'site_mediabird_03',
     name: 'Media Bird Magazine',
     slug: 'mediabird',
     domain: 'https://www.mediabirdmag.com',
     defaultLocale: 'en-US',
-    isDefault: false,
+    isDefault: true,
     branding: { logoUrl: '', faviconUrl: '', primaryColor: '#ef4444' },
-    settings: { site_title: 'Media Bird Magazine' },
+    settings: { site_title: 'Media Bird Magazine', tagline: 'Telling It Slow, Saying It Right!' },
     locales: [{ id: 'loc_3', code: 'en-US', name: 'English (US)', isDefault: true }],
     _count: {
-      contentEntries: 642,
+      contentEntries: 611,
       contentTypes: 4,
       media: 140,
     },
@@ -200,8 +168,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Site id is required' }, { status: 400 });
     }
 
-    if (id === 'site_default_01' || id === 'default') {
-      return NextResponse.json({ error: 'The primary default hub site cannot be deleted' }, { status: 400 });
+    if (id === 'site_mediabird_03' || id === 'mediabird' || id === 'site_default_01' || id === 'default') {
+      return NextResponse.json({ error: 'The primary client site (Media Bird Magazine) cannot be deleted' }, { status: 400 });
     }
 
     try {

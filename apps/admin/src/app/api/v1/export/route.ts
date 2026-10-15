@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   try {
     const site = await resolveSiteContext(req);
     const siteSlug = site?.slug || 'markup-site';
-    const siteName = site?.name || 'Markup Digital Portal';
+    const siteName = site?.name || 'Media Bird Magazine';
 
     const adminSession = await getAdminSession(req);
     const guard = requirePermission(adminSession, 'settings.manage');
@@ -87,8 +87,8 @@ export async function GET(req: NextRequest) {
           { id: 'menu_header', name: 'Main Header Navigation', slug: 'main-navigation', items: [{ title: 'Home', url: '/' }, { title: 'Articles', url: '/articles' }] },
         ],
         settings: [
-          { key: 'site_title', value: 'Markup Digital Portal' },
-          { key: 'primary_color', value: '#3b82f6' },
+          { key: 'site_title', value: 'Media Bird Magazine' },
+          { key: 'primary_color', value: '#ef4444' },
         ],
       };
 

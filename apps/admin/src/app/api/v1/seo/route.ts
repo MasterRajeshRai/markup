@@ -13,10 +13,10 @@ function withTimeout<T>(promise: Promise<T>, ms = 2000): Promise<T> {
 }
 
 let fallbackSeoSettings = {
-  metaTitleTemplate: '%s | Markup Digital Platform',
-  defaultMetaTitle: 'Markup Digital Portal',
-  defaultMetaDescription: 'Enterprise Markup CMS powered by Next.js and high-performance edge delivery.',
-  canonicalDomain: 'http://localhost:3000',
+  metaTitleTemplate: '%s | Media Bird Magazine',
+  defaultMetaTitle: 'Media Bird Magazine',
+  defaultMetaDescription: 'Media Bird Magazine — In-depth cultural journalism, features, trends, and analytical deep dives.',
+  canonicalDomain: 'http://localhost:3001',
   defaultOgImage: '',
   twitterCardType: 'summary_large_image',
   robotsIndexing: 'index, follow',
@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
     const site = await withTimeout(prisma.site.findFirst());
     if (!site) {
       return NextResponse.json({
-        siteId: 'site_default_01',
-        siteName: 'Markup Digital Portal',
-        domain: 'http://localhost:3000',
+        siteId: 'site_mediabird_03',
+        siteName: 'Media Bird Magazine',
+        domain: 'http://localhost:3001',
         seo: fallbackSeoSettings,
       });
     }
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest) {
       if (body.seo) fallbackSeoSettings = { ...fallbackSeoSettings, ...body.seo };
       return NextResponse.json({
         success: true,
-        site: { id: 'site_default_01', name: 'Markup Digital Portal', settings: { seo: fallbackSeoSettings } },
+        site: { id: 'site_mediabird_03', name: 'Media Bird Magazine', settings: { seo: fallbackSeoSettings } },
       });
     }
 
@@ -92,7 +92,7 @@ export async function PATCH(req: NextRequest) {
     if (body.seo) fallbackSeoSettings = { ...fallbackSeoSettings, ...body.seo };
     return NextResponse.json({
       success: true,
-      site: { id: 'site_default_01', name: 'Markup Digital Portal', settings: { seo: fallbackSeoSettings } },
+      site: { id: 'site_mediabird_03', name: 'Media Bird Magazine', settings: { seo: fallbackSeoSettings } },
     });
   }
 }

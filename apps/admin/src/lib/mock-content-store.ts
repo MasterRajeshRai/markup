@@ -615,7 +615,7 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
     statusFilter,
   } = filter;
 
-  let filtered = siteSlug === 'mediabird' ? [...getMediabirdArticles()] : [...contentEntriesStore];
+  let filtered = (siteSlug === 'dummy_isolated') ? [...contentEntriesStore] : [...getMediabirdArticles()];
 
   if (typeSlug) {
     const norm = typeSlug === 'page' ? 'pages' : typeSlug === 'article' ? 'articles' : typeSlug;

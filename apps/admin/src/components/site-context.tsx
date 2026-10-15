@@ -22,31 +22,9 @@ export const REGISTERED_SITES: SiteConfig[] = [
     domain: 'https://www.mediabirdmag.com',
     frontendUrl: 'http://localhost:3001',
     defaultLocale: 'en-US',
-    isDefault: false,
-    tagline: 'Telling It Slow, Saying It Right!',
-    badge: 'Live Magazine (Port 3001)',
-  },
-  {
-    id: 'site_default_01',
-    name: 'Markup Digital Portal',
-    slug: 'default',
-    domain: 'http://localhost:3000',
-    frontendUrl: 'http://localhost:3000',
-    defaultLocale: 'en-US',
     isDefault: true,
-    tagline: 'Enterprise Decoupled CMS Demo',
-    badge: 'Default Core Portal',
-  },
-  {
-    id: 'site_school_02',
-    name: 'Markup Academy & School',
-    slug: 'school',
-    domain: 'http://localhost:3002',
-    frontendUrl: 'http://localhost:3002',
-    defaultLocale: 'en-US',
-    isDefault: false,
-    tagline: 'Educational LMS & Academy',
-    badge: 'Academy Portal',
+    tagline: 'Telling It Slow, Saying It Right!',
+    badge: 'Connected Frontend (Port 3001)',
   },
 ];
 
@@ -70,13 +48,14 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedSlug = localStorage.getItem('markup_site_slug');
-      if (savedSlug) {
-        const found = REGISTERED_SITES.find((s) => s.slug === savedSlug);
-        if (found) setCurrentSite(found);
+      const found = savedSlug ? REGISTERED_SITES.find((s) => s.slug === savedSlug) : null;
+      if (found) {
+        setCurrentSite(found);
       } else {
-        // Default to Media Bird
-        localStorage.setItem('markup_site_slug', 'mediabird');
-        document.cookie = 'markup_site_slug=mediabird; path=/; max-age=31536000';
+        // Default to Media Bird Magazine
+        setCurrentSite(REGISTERED_SITES[0]);
+        localStorage.setItem('markup_site_slug', REGISTERED_SITES[0].slug);
+        document.cookie = `markup_site_slug=${REGISTERED_SITES[0].slug}; path=/; max-age=31536000`;
       }
     }
   }, []);

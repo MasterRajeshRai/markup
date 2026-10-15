@@ -1,31 +1,20 @@
 import { prisma, type Site } from '@markup/database';
 import { NextRequest } from 'next/server';
 
-export const DEFAULT_SITE: Site = {
-  id: 'site_default_01',
-  name: 'Markup CMS Default Site',
-  slug: 'default',
-  domain: 'localhost',
-  defaultLocale: 'en-US',
-  isDefault: true,
-  branding: {},
-  settings: {},
-  createdAt: new Date('2025-01-01'),
-  updatedAt: new Date('2025-01-01'),
-};
-
 export const MEDIABIRD_SITE: Site = {
   id: 'site_mediabird_03',
   name: 'Media Bird Magazine',
   slug: 'mediabird',
   domain: 'https://www.mediabirdmag.com',
   defaultLocale: 'en-US',
-  isDefault: false,
+  isDefault: true,
   branding: { primaryColor: '#ef4444' },
-  settings: { site_title: 'Media Bird Magazine' },
+  settings: { site_title: 'Media Bird Magazine', tagline: 'Telling It Slow, Saying It Right!' },
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
+
+export const DEFAULT_SITE: Site = MEDIABIRD_SITE;
 
 /**
  * Resolves the active Site context based on:
@@ -109,15 +98,7 @@ export async function resolveSiteContext(req?: NextRequest | Request): Promise<S
 
     return await Promise.race([resolvePromise(), timeoutPromise]);
   } catch (err: any) {
-    // Graceful offline fallback: allows local execution without requiring a live Postgres daemon
-    if (
-      siteSlug === 'mediabird' ||
-      siteSlug === 'site_mediabird_03' ||
-      host?.includes('3001') ||
-      host?.includes('mediabirdmag.com')
-    ) {
-      return MEDIABIRD_SITE;
-    }
-    return DEFAULT_SITE;
+    // Graceful offline fallback: Media Bird Magazine is the connected client site
+    return MEDIABIRD_SITE;
   }
 }

@@ -2,14 +2,14 @@ import { prisma, type Site } from '@markup/database';
 import { NextRequest } from 'next/server';
 
 export const DEFAULT_SITE: Site = {
-  id: 'site_default_01',
-  name: 'Markup CMS Default Site',
-  slug: 'default',
-  domain: 'localhost',
+  id: 'site_mediabird_03',
+  name: 'Media Bird Magazine',
+  slug: 'mediabird',
+  domain: 'https://www.mediabirdmag.com',
   defaultLocale: 'en-US',
   isDefault: true,
-  branding: {},
-  settings: {},
+  branding: { primaryColor: '#ef4444' },
+  settings: { site_title: 'Media Bird Magazine', tagline: 'Telling It Slow, Saying It Right!' },
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };

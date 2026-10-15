@@ -61,12 +61,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
 
   // General & Branding
-  const [siteName, setSiteName] = useState('Markup Digital Portal');
-  const [domain, setDomain] = useState('http://localhost:3000');
-  const [siteTagline, setSiteTagline] = useState('Enterprise Universal Content Operating System');
+  const [siteName, setSiteName] = useState('Media Bird Magazine');
+  const [domain, setDomain] = useState('http://localhost:3001');
+  const [siteTagline, setSiteTagline] = useState('Telling It Slow, Saying It Right!');
   const [logoUrl, setLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#3b82f6');
+  const [primaryColor, setPrimaryColor] = useState('#ef4444');
 
   // Logo upload state
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -421,7 +421,7 @@ export default function SettingsPage() {
                     <Input
                       value={siteName}
                       onChange={(e) => setSiteName(e.target.value)}
-                      placeholder="Markup Digital Portal"
+                      placeholder="Media Bird Magazine"
                       className="h-9 text-sm"
                     />
                   </Field>
@@ -430,7 +430,7 @@ export default function SettingsPage() {
                     <Input
                       value={domain}
                       onChange={(e) => setDomain(e.target.value)}
-                      placeholder="http://localhost:3000"
+                      placeholder="http://localhost:3001"
                       className="h-9 text-sm font-mono"
                     />
                   </Field>
