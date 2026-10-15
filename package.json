@@ -8,6 +8,7 @@
     "dev:admin": "pnpm --filter @markup/admin dev",
     "dev:web": "pnpm --filter @markup/web-demo dev",
     "dev:mediabird": "pnpm --filter @markup/wwwmediabird dev",
+    "dev:all": "pnpm --parallel --filter @markup/admin --filter @markup/wwwmediabird dev",
     "dev": "pnpm --filter @markup/admin dev",
     "build": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
     "build:admin": "pnpm --filter @markup/database generate && pnpm --filter @markup/admin build",
