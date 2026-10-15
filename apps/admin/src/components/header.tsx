@@ -19,6 +19,7 @@ import {
   Command,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
+import { SiteSwitcher } from '@/components/site-switcher';
 import { cn } from '@/lib/utils';
 
 export function Header() {
@@ -110,6 +111,12 @@ export function Header() {
         <div className="flex items-center gap-2 text-[14px] sm:text-[15px] font-semibold text-foreground truncate">
           <LineChart className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-blue-500 shrink-0" />
           <span className="truncate max-w-[140px] sm:max-w-none">{getPageTitle()}</span>
+        </div>
+
+        <div className="hidden sm:block h-5 w-px bg-border/60 shrink-0" />
+
+        <div className="hidden sm:block">
+          <SiteSwitcher />
         </div>
       </div>
 

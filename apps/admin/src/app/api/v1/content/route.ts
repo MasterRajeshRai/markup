@@ -229,10 +229,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Fetch content type and fields
-    const contentType = await prisma.contentType.findUnique({
-      where: { siteId_slug: { siteId: site.id, slug: contentTypeSlug } },
-      include: { fields: true },
-    });
+    const contentType = await withTimeout(
+      prisma.contentType.findUnique({
+        where: { siteId_slug: { siteId: site.id, slug: contentTypeSlug } },
+        include: { fields: true },
+      }),
+      500
+    );
 
     if (!contentType) {
       return NextResponse.json({ error: `Content type "${contentTypeSlug}" not found` }, { status: 404 });
@@ -320,17 +323,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A content entry with this slug and locale already exists.' }, { status: 409 });
     }
     try {
+      const site = await resolveSiteContext(req).catch(() => null);
       const { contentTypeSlug = 'articles', title = 'Untitled Entry', slug = `entry-${Date.now()}`, locale = 'en-US', data = {}, blocks = [], seo = {} } = body || {};
-      const fallbackEntry = createMockContentEntry({
-        title,
-        slug: slug.toLowerCase().trim(),
-        locale,
-        contentType: contentTypeSlug,
-        data,
-        blocks,
-        seo,
-        author: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
-      });
+      const fallbackEntry = createMockContentEntry(
+        {
+          title,
+          slug: slug.toLowerCase().trim(),
+          locale,
+          contentType: contentTypeSlug,
+          data,
+          blocks,
+          seo,
+          author: { id: 'user_admin_01', name: 'Super Administrator', email: 'admin@markup.io' },
+        },
+        site?.slug
+      );
       return NextResponse.json({ success: true, entry: fallbackEntry }, { status: 201 });
     } catch {
       console.error('[ContentPOST] Error:', err);

@@ -40,20 +40,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { SiteProvider } from '@/components/site-context';
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <SidebarProvider>
-        <ModulesProvider>
-          <SearchModalProvider>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
-          </SearchModalProvider>
-        </ModulesProvider>
-      </SidebarProvider>
-    </AuthProvider>
+    <SiteProvider>
+      <AuthProvider>
+        <SidebarProvider>
+          <ModulesProvider>
+            <SearchModalProvider>
+              <AdminLayoutContent>{children}</AdminLayoutContent>
+            </SearchModalProvider>
+          </ModulesProvider>
+        </SidebarProvider>
+      </AuthProvider>
+    </SiteProvider>
   );
 }

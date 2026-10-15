@@ -4,6 +4,9 @@
  * Ensures admin UI and frontend delivery APIs function reliably even when Postgres is offline or timing out.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 export interface MockContentType {
   id: string;
   name: string;
@@ -500,28 +503,79 @@ export function saveMockContentType(ct: Partial<MockContentType> & { name: strin
 }
 
 let mediabirdSnapshotArticles: MockContentEntry[] | null = null;
+
+function getMediabirdSnapshotPath(): string {
+  // Check common monorepo locations
+  const p1 = path.resolve(process.cwd(), 'apps/wwwmediabird/src/data/articles-snapshot.json');
+  if (fs.existsSync(p1)) return p1;
+  const p2 = path.resolve(process.cwd(), '../wwwmediabird/src/data/articles-snapshot.json');
+  if (fs.existsSync(p2)) return p2;
+  const p3 = path.resolve(__dirname, '../../../../apps/wwwmediabird/src/data/articles-snapshot.json');
+  if (fs.existsSync(p3)) return p3;
+  return p1;
+}
+
+export function persistMediabirdSnapshot(): void {
+  if (!mediabirdSnapshotArticles) return;
+  try {
+    const snapPath = getMediabirdSnapshotPath();
+    const payload = {
+      total: mediabirdSnapshotArticles.length,
+      exportedAt: new Date().toISOString(),
+      articles: mediabirdSnapshotArticles,
+    };
+    fs.writeFileSync(snapPath, JSON.stringify(payload, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[MockContentStore] Failed to persist mediabird snapshot to disk:', err);
+  }
+}
+
 function getMediabirdArticles(): MockContentEntry[] {
   if (!mediabirdSnapshotArticles) {
     try {
-      const snap = require('../../../wwwmediabird/src/data/articles-snapshot.json');
-      mediabirdSnapshotArticles = (snap.articles || []).map((a: any) => ({
-        id: a.id || a.slug,
-        slug: a.slug,
-        title: a.title,
-        status: a.status || 'PUBLISHED',
-        locale: 'en-US',
-        contentType: 'articles',
-        currentVersion: 1,
-        data: a.data || {},
-        blocks: a.blocks || [],
-        seo: a.seo || {},
-        publishedAt: a.publishedAt || a.createdAt,
-        createdAt: a.createdAt || new Date('2025-01-01').toISOString(),
-        updatedAt: a.updatedAt || new Date('2025-01-01').toISOString(),
-        author: a.author || { id: 'user_editor_01', name: 'Media Bird Editorial', email: 'editor@mediabirdmag.com' },
-        taxonomies: a.taxonomies || [{ id: 'mb_term_1', name: a.data?.category || 'Culture', slug: a.data?.category_slug || 'culture' }],
-      }));
-    } catch {
+      const snapPath = getMediabirdSnapshotPath();
+      if (fs.existsSync(snapPath)) {
+        const raw = fs.readFileSync(snapPath, 'utf-8');
+        const snap = JSON.parse(raw);
+        mediabirdSnapshotArticles = (snap.articles || []).map((a: any) => ({
+          id: a.id || a.slug,
+          slug: a.slug,
+          title: a.title,
+          status: a.status || 'PUBLISHED',
+          locale: a.locale || 'en-US',
+          contentType: a.contentType || 'articles',
+          currentVersion: a.currentVersion || 1,
+          data: a.data || {},
+          blocks: a.blocks || [],
+          seo: a.seo || {},
+          publishedAt: a.publishedAt || a.createdAt,
+          createdAt: a.createdAt || new Date('2025-01-01').toISOString(),
+          updatedAt: a.updatedAt || new Date('2025-01-01').toISOString(),
+          author: a.author || { id: 'user_editor_01', name: 'Media Bird Editorial', email: 'editor@mediabirdmag.com' },
+          taxonomies: a.taxonomies || [{ id: 'mb_term_1', name: a.data?.category || 'Culture', slug: a.data?.category_slug || 'culture' }],
+        }));
+      } else {
+        const snap = require('../../../wwwmediabird/src/data/articles-snapshot.json');
+        mediabirdSnapshotArticles = (snap.articles || []).map((a: any) => ({
+          id: a.id || a.slug,
+          slug: a.slug,
+          title: a.title,
+          status: a.status || 'PUBLISHED',
+          locale: 'en-US',
+          contentType: 'articles',
+          currentVersion: 1,
+          data: a.data || {},
+          blocks: a.blocks || [],
+          seo: a.seo || {},
+          publishedAt: a.publishedAt || a.createdAt,
+          createdAt: a.createdAt || new Date('2025-01-01').toISOString(),
+          updatedAt: a.updatedAt || new Date('2025-01-01').toISOString(),
+          author: a.author || { id: 'user_editor_01', name: 'Media Bird Editorial', email: 'editor@mediabirdmag.com' },
+          taxonomies: a.taxonomies || [{ id: 'mb_term_1', name: a.data?.category || 'Culture', slug: a.data?.category_slug || 'culture' }],
+        }));
+      }
+    } catch (e) {
+      console.error('[MockContentStore] Error loading snapshot:', e);
       mediabirdSnapshotArticles = [];
     }
   }
@@ -549,6 +603,7 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
     siteSlug,
     typeSlug,
     locale,
+    status,
     search,
     category,
     tag,
@@ -571,7 +626,9 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
     filtered = filtered.filter((e) => e.locale === locale);
   }
 
-  if (statusFilter && statusFilter.length > 0) {
+  if (status) {
+    filtered = filtered.filter((e) => e.status.toUpperCase() === status.toUpperCase());
+  } else if (statusFilter && statusFilter.length > 0) {
     filtered = filtered.filter((e) => statusFilter.includes(e.status));
   }
 
@@ -591,8 +648,11 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
 
   const term = category || tag;
   if (term) {
+    const termLower = term.toLowerCase();
     filtered = filtered.filter((e) =>
-      e.taxonomies?.some((t) => t.slug === term || t.id === term || t.name.toLowerCase() === term.toLowerCase())
+      e.data?.category_slug?.toLowerCase() === termLower ||
+      e.data?.category?.toLowerCase() === termLower ||
+      e.taxonomies?.some((t) => t.slug?.toLowerCase() === termLower || t.id === term || t.name?.toLowerCase() === termLower)
     );
   }
 
@@ -623,13 +683,24 @@ export function getMockContentEntries(filter: GetEntriesFilter = {}) {
   };
 }
 
-export function getMockContentEntryByIdOrSlug(idOrSlug: string): MockContentEntry | null {
-  const found = contentEntriesStore.find((e) => e.id === idOrSlug || e.slug === idOrSlug);
-  if (found) return found;
-  return getMediabirdArticles().find((e) => e.id === idOrSlug || e.slug === idOrSlug) || null;
+export function getMockContentEntryByIdOrSlug(idOrSlug: string, siteSlug?: string | null): MockContentEntry | null {
+  const clean = (idOrSlug || '').trim().toLowerCase();
+  if (siteSlug === 'mediabird') {
+    const mbList = getMediabirdArticles();
+    const foundMb = mbList.find((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean);
+    if (foundMb) return foundMb;
+  }
+
+  const foundDefault = contentEntriesStore.find((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean);
+  if (foundDefault) return foundDefault;
+
+  return getMediabirdArticles().find((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean) || null;
 }
 
-export function createMockContentEntry(entry: Partial<MockContentEntry> & { title: string; slug: string; contentType: string }): MockContentEntry {
+export function createMockContentEntry(
+  entry: Partial<MockContentEntry> & { title: string; slug: string; contentType: string },
+  siteSlug?: string | null
+): MockContentEntry {
   const normType = entry.contentType === 'page' ? 'pages' : entry.contentType === 'article' ? 'articles' : entry.contentType;
   const newEntry: MockContentEntry = {
     id: entry.id || `ent_${Date.now()}`,
@@ -650,18 +721,70 @@ export function createMockContentEntry(entry: Partial<MockContentEntry> & { titl
     taxonomies: entry.taxonomies || [],
   };
 
+  if (siteSlug === 'mediabird') {
+    const mbList = getMediabirdArticles();
+    mbList.unshift(newEntry);
+    persistMediabirdSnapshot();
+    return newEntry;
+  }
+
   contentEntriesStore.unshift(newEntry);
   return newEntry;
 }
 
-export function updateMockContentEntry(idOrSlug: string, updates: Partial<MockContentEntry>): MockContentEntry | null {
-  const idx = contentEntriesStore.findIndex((e) => e.id === idOrSlug || e.slug === idOrSlug);
+export function updateMockContentEntry(
+  idOrSlug: string,
+  updates: Partial<MockContentEntry>,
+  siteSlug?: string | null
+): MockContentEntry | null {
+  const clean = (idOrSlug || '').trim().toLowerCase();
+
+  // Try Media Bird store first if site is mediabird or if not in default store
+  if (siteSlug === 'mediabird' || !contentEntriesStore.some((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean)) {
+    const mbList = getMediabirdArticles();
+    const mbIdx = mbList.findIndex((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean);
+    if (mbIdx !== -1) {
+      const current = mbList[mbIdx];
+      const updated: MockContentEntry = {
+        ...current,
+        ...updates,
+        data: {
+          ...(current.data || {}),
+          ...(updates.data || {}),
+        },
+        seo: {
+          ...(current.seo || {}),
+          ...(updates.seo || {}),
+        },
+        currentVersion: (current.currentVersion || 1) + 1,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (updates.status === 'PUBLISHED' && !current.publishedAt) {
+        updated.publishedAt = new Date().toISOString();
+      }
+
+      mbList[mbIdx] = updated;
+      persistMediabirdSnapshot();
+      return updated;
+    }
+  }
+
+  const idx = contentEntriesStore.findIndex((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean);
   if (idx === -1) return null;
 
   const current = contentEntriesStore[idx];
   const updated: MockContentEntry = {
     ...current,
     ...updates,
+    data: {
+      ...(current.data || {}),
+      ...(updates.data || {}),
+    },
+    seo: {
+      ...(current.seo || {}),
+      ...(updates.seo || {}),
+    },
     currentVersion: (current.currentVersion || 1) + 1,
     updatedAt: new Date().toISOString(),
   };
@@ -674,8 +797,21 @@ export function updateMockContentEntry(idOrSlug: string, updates: Partial<MockCo
   return updated;
 }
 
-export function deleteMockContentEntry(idOrSlug: string): boolean {
+export function deleteMockContentEntry(idOrSlug: string, siteSlug?: string | null): boolean {
+  const clean = (idOrSlug || '').trim().toLowerCase();
+
+  if (siteSlug === 'mediabird' || !contentEntriesStore.some((e) => e.id.toLowerCase() === clean || e.slug.toLowerCase() === clean)) {
+    const mbList = getMediabirdArticles();
+    const initialLen = mbList.length;
+    const filtered = mbList.filter((e) => e.id.toLowerCase() !== clean && e.slug.toLowerCase() !== clean);
+    if (filtered.length < initialLen) {
+      mediabirdSnapshotArticles = filtered;
+      persistMediabirdSnapshot();
+      return true;
+    }
+  }
+
   const initialLength = contentEntriesStore.length;
-  contentEntriesStore = contentEntriesStore.filter((e) => e.id !== idOrSlug && e.slug !== idOrSlug);
+  contentEntriesStore = contentEntriesStore.filter((e) => e.id.toLowerCase() !== clean && e.slug.toLowerCase() !== clean);
   return contentEntriesStore.length < initialLength;
 }

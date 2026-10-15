@@ -30,11 +30,14 @@ async function fetchFromCms<T>(endpoint: string, options: RequestInit = {}): Pro
   const timeoutId = setTimeout(() => controller.abort(), 3500);
 
   try {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const cacheSetting = isDev ? { cache: 'no-store' as RequestCache } : { next: { revalidate: 60 } };
+
     const res = await fetch(url, {
+      ...cacheSetting,
       ...options,
       headers,
       signal: controller.signal,
-      next: { revalidate: 60 },
     });
     clearTimeout(timeoutId);
 
@@ -252,7 +255,18 @@ export async function getPageBySlug(slug: string): Promise<CmsPage | null> {
  * Get Editor's Picks / Most-read stories (derived from curated engagement/published features)
  */
 export async function getEditorsPicks(limit = 4): Promise<CmsArticle[]> {
-  // Select top stories with high word count and rich featured imagery
+  try {
+    const { data: liveArticles } = await getArticles({ limit: Math.max(limit * 2, 12) });
+    if (liveArticles && liveArticles.length > 0) {
+      const candidates = liveArticles.filter(
+        (art) => Boolean(art.data?.featured_image) || Boolean(art.data?.is_featured) || (art.data?.word_count || 0) > 300
+      );
+      if (candidates.length >= limit) return candidates.slice(0, limit);
+      return liveArticles.slice(0, limit);
+    }
+  } catch {}
+
+  // Resilient fallback to snapshot
   const candidates = snapshotArticles.filter(
     (art) => Boolean(art.data?.featured_image) && (art.data?.word_count || 0) > 400
   );

@@ -297,6 +297,94 @@ function renderInlineMarkdown(content: string): React.ReactNode {
   });
 }
 
+function HtmlBlockEditor({ block, onChange }: { block: BlockNode; onChange: (html: string) => void }) {
+  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const htmlContent = String(block.data?.html || block.data?.content || '');
+
+  const wordCount = htmlContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b pb-2 flex-wrap gap-2">
+        <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border text-xs">
+          <button
+            type="button"
+            onClick={() => setTab('edit')}
+            className={cn('px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer', tab === 'edit' ? 'bg-background shadow-2xs text-foreground' : 'text-muted-foreground hover:text-foreground')}
+          >
+            HTML / Source
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('preview')}
+            className={cn('px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer', tab === 'preview' ? 'bg-background shadow-2xs text-foreground' : 'text-muted-foreground hover:text-foreground')}
+          >
+            Visual Preview
+          </button>
+        </div>
+        <span className="text-[11px] font-mono text-muted-foreground">
+          {wordCount} words • {htmlContent.length} chars
+        </span>
+      </div>
+
+      {tab === 'edit' ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px] font-mono"
+              onClick={() => onChange(htmlContent + '\n<p>New paragraph text...</p>')}
+            >
+              + &lt;p&gt;
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px] font-mono"
+              onClick={() => onChange(htmlContent + '\n<h2>Section Heading</h2>')}
+            >
+              + &lt;h2&gt;
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px] font-mono"
+              onClick={() => onChange(htmlContent + ' <strong>Bold text</strong> ')}
+            >
+              + &lt;strong&gt;
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px] font-mono"
+              onClick={() => onChange(htmlContent + '\n<blockquote>Quote text...</blockquote>')}
+            >
+              + &lt;blockquote&gt;
+            </Button>
+          </div>
+          <textarea
+            value={htmlContent}
+            onChange={(e) => onChange(e.target.value)}
+            rows={14}
+            className="w-full rounded-lg border bg-background p-3 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="<p>Write your article content or HTML here...</p>"
+          />
+        </div>
+      ) : (
+        <div
+          className="p-4 rounded-lg border bg-card/40 prose prose-stone dark:prose-invert max-w-none text-sm leading-relaxed min-h-[160px] max-h-[450px] overflow-y-auto"
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
+      )}
+    </div>
+  );
+}
+
 interface BlockEditorProps {
   blocks: BlockNode[];
   onChange: (blocks: BlockNode[]) => void;
@@ -1187,10 +1275,16 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
                           </div>
                         ))}
                       </div>
+                    {/* 10. HTML / RICH CONTENT BLOCK */}
+                    {block.type === 'html' && (
+                      <HtmlBlockEditor
+                        block={block}
+                        onChange={(newHtml) => handleUpdateBlockData(block.id, 'html', newHtml)}
+                      />
                     )}
 
                     {/* Fallback for other block types */}
-                    {!['hero', 'heading', 'paragraph', 'code', 'image', 'quote', 'cards', 'cta', 'accordion'].includes(
+                    {!['hero', 'heading', 'paragraph', 'code', 'image', 'quote', 'cards', 'cta', 'accordion', 'html'].includes(
                       block.type
                     ) && (
                       <div>

@@ -42,6 +42,27 @@ export async function resolveSiteContext(req?: NextRequest | Request): Promise<S
     if (req.headers instanceof Headers) {
       siteSlug = req.headers.get('x-site-slug') || req.headers.get('x-site-id');
       host = req.headers.get('host');
+
+      // Check cookie header if siteSlug not present in header
+      if (!siteSlug) {
+        const cookieHeader = req.headers.get('cookie') || '';
+        const match = cookieHeader.match(/markup_site_slug=([^;]+)/);
+        if (match) {
+          siteSlug = decodeURIComponent(match[1]);
+        }
+      }
+    }
+
+    // Check NextRequest searchParams or URL query params
+    if (!siteSlug && 'nextUrl' in req && (req as NextRequest).nextUrl) {
+      siteSlug = (req as NextRequest).nextUrl.searchParams.get('site') ||
+                 (req as NextRequest).nextUrl.searchParams.get('siteSlug') ||
+                 (req as NextRequest).nextUrl.searchParams.get('site_slug');
+    }
+
+    // Check NextRequest cookies
+    if (!siteSlug && 'cookies' in req && (req as any).cookies?.get) {
+      siteSlug = (req as any).cookies.get('markup_site_slug')?.value || null;
     }
   }
 
@@ -79,17 +100,22 @@ export async function resolveSiteContext(req?: NextRequest | Request): Promise<S
         });
       }
 
-      return defaultSite || DEFAULT_SITE;
+      return defaultSite || (siteSlug === 'mediabird' ? MEDIABIRD_SITE : DEFAULT_SITE);
     };
 
     const timeoutPromise = new Promise<Site>((_, reject) =>
-      setTimeout(() => reject(new Error('Site Context DB Timeout')), 800)
+      setTimeout(() => reject(new Error('Site Context DB Timeout')), 600)
     );
 
     return await Promise.race([resolvePromise(), timeoutPromise]);
   } catch (err: any) {
     // Graceful offline fallback: allows local execution without requiring a live Postgres daemon
-    if (siteSlug === 'mediabird' || siteSlug === 'site_mediabird_03' || host?.includes('mediabirdmag.com')) {
+    if (
+      siteSlug === 'mediabird' ||
+      siteSlug === 'site_mediabird_03' ||
+      host?.includes('3001') ||
+      host?.includes('mediabirdmag.com')
+    ) {
       return MEDIABIRD_SITE;
     }
     return DEFAULT_SITE;

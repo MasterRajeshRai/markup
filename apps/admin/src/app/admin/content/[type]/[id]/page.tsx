@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { CommentSection } from '@/components/comments/comment-section';
 import { LivePreviewModal } from '@/components/live-preview-modal';
+import { useSite } from '@/components/site-context';
 
 interface EntryDetail {
   id: string;
@@ -232,6 +233,7 @@ export default function EntryEditorPage() {
   const router = useRouter();
   const entryId = (params?.id as string) || 'art-1';
   const typeSlug = (params?.type as string) || 'articles';
+  const { currentSite, fetchWithSite } = useSite();
 
   // Canvas & Sidebar Tab State
   const [activeCanvasTab, setActiveCanvasTab] = useState<'blocks' | 'fields' | 'revisions' | 'comments'>('blocks');
@@ -332,9 +334,9 @@ export default function EntryEditorPage() {
   const loadData = async () => {
     try {
       const [entryRes, typeRes, revRes] = await Promise.all([
-        fetch(`/api/v1/content/${entryId}`).catch(() => null),
-        fetch(`/api/v1/content-types/${typeSlug}`).catch(() => null),
-        fetch(`/api/v1/content/${entryId}/revisions`).catch(() => null),
+        fetchWithSite(`/api/v1/content/${entryId}`).catch(() => null),
+        fetchWithSite(`/api/v1/content-types/${typeSlug}`).catch(() => null),
+        fetchWithSite(`/api/v1/content/${entryId}/revisions`).catch(() => null),
       ]);
 
       if (entryRes && entryRes.ok) {
@@ -346,9 +348,9 @@ export default function EntryEditorPage() {
           setSlug(e.slug || '');
           setStatus(e.status || 'DRAFT');
           setFieldsData(e.data || {});
-          setBlocks(Array.isArray(e.blocks) && e.blocks.length > 0 ? e.blocks : MOCK_ARTICLE_BLOCKS);
+          setBlocks(Array.isArray(e.blocks) && e.blocks.length > 0 ? e.blocks : (e.data?.content ? [{ id: 'blk_1', type: 'paragraph', data: { text: e.data.content } }] : MOCK_ARTICLE_BLOCKS));
           setSeo(e.seo && Object.keys(e.seo).length > 0 ? e.seo : {
-            focusKeyword: 'markup architecture',
+            focusKeyword: e.data?.category_slug || 'magazine',
             title: e.title,
             description: e.data?.summary || '',
           });
@@ -376,7 +378,7 @@ export default function EntryEditorPage() {
 
   useEffect(() => {
     loadData();
-  }, [entryId, typeSlug]);
+  }, [entryId, typeSlug, currentSite.slug]);
 
   // Combined text extracted for SEO Analysis
   const combinedContent = useMemo(() => {
@@ -422,7 +424,7 @@ export default function EntryEditorPage() {
     const payloadStatus = customStatus || status;
 
     try {
-      const res = await fetch(`/api/v1/content/${entryId}`, {
+      const res = await fetchWithSite(`/api/v1/content/${entryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -443,7 +445,7 @@ export default function EntryEditorPage() {
         if (customStatus) setStatus(customStatus);
         setFeedback({
           type: 'success',
-          message: 'Article saved successfully with synchronized SEO directives and version revision!',
+          message: 'Article saved successfully and synchronized live via Markup API!',
         });
       } else {
         // Mock fallback feedback if local db is offline
@@ -468,7 +470,7 @@ export default function EntryEditorPage() {
   const handlePublishNow = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/v1/content/${entryId}/publish`, { method: 'POST' });
+      await fetchWithSite(`/api/v1/content/${entryId}/publish`, { method: 'POST' });
     } catch {}
     setStatus('PUBLISHED');
     setFeedback({
@@ -592,6 +594,20 @@ export default function EntryEditorPage() {
             >
               <span>Save draft</span>
             </Button>
+          )}
+
+          {/* Live Frontend Link */}
+          {currentSite.frontendUrl && (
+            <a
+              href={`${currentSite.frontendUrl}/${slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs h-8 px-2.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition-colors"
+              title={`View on live frontend (${currentSite.name})`}
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-red-500 shrink-0" />
+              <span className="hidden lg:inline">View on Live Site</span>
+            </a>
           )}
 
           {/* Preview Button */}

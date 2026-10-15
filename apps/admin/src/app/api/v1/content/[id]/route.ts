@@ -63,7 +63,7 @@ export async function GET(
     );
 
     if (!entry) {
-      const mockEntry = getMockContentEntryByIdOrSlug(id);
+      const mockEntry = getMockContentEntryByIdOrSlug(id, site?.slug);
       if (mockEntry) {
         return NextResponse.json({ data: mockEntry });
       }
@@ -98,7 +98,8 @@ export async function GET(
   } catch (err) {
     try {
       const { id } = await params;
-      const mockEntry = getMockContentEntryByIdOrSlug(id);
+      const site = await resolveSiteContext(req).catch(() => null);
+      const mockEntry = getMockContentEntryByIdOrSlug(id, site?.slug);
       if (mockEntry) {
         return NextResponse.json({ data: mockEntry });
       }
@@ -135,15 +136,18 @@ export async function PATCH(
 
     body = await req.json();
 
-    const existing = await prisma.contentEntry.findFirst({
-      where: { siteId: site.id, id },
-      include: {
-        contentType: { include: { fields: true } },
-      },
-    });
+    const existing = await withTimeout(
+      prisma.contentEntry.findFirst({
+        where: { siteId: site.id, OR: [{ id }, { slug: id }] },
+        include: {
+          contentType: { include: { fields: true } },
+        },
+      }),
+      500
+    );
 
     if (!existing) {
-      const mockUpdated = updateMockContentEntry(id, body);
+      const mockUpdated = updateMockContentEntry(id, body, site?.slug);
       if (mockUpdated) {
         return NextResponse.json({ success: true, entry: mockUpdated });
       }
@@ -247,7 +251,8 @@ export async function PATCH(
     }
     try {
       const { id } = await params;
-      const mockUpdated = updateMockContentEntry(id, body);
+      const site = await resolveSiteContext(req).catch(() => null);
+      const mockUpdated = updateMockContentEntry(id, body, site?.slug);
       if (mockUpdated) {
         return NextResponse.json({ success: true, entry: mockUpdated });
       }
@@ -283,12 +288,15 @@ export async function DELETE(
     }
 
     try {
-      const existing = await prisma.contentEntry.findFirst({
-        where: { siteId: site.id, id },
-      });
+      const existing = await withTimeout(
+        prisma.contentEntry.findFirst({
+          where: { siteId: site.id, OR: [{ id }, { slug: id }] },
+        }),
+        500
+      );
 
       if (existing) {
-        await prisma.contentEntry.delete({ where: { id } });
+        await prisma.contentEntry.delete({ where: { id: existing.id } });
 
         await recordAuditLog({
           siteId: site.id,
@@ -311,7 +319,7 @@ export async function DELETE(
     } catch {}
 
     // Fallback delete in mock store
-    deleteMockContentEntry(id);
+    deleteMockContentEntry(id, site?.slug);
     return NextResponse.json({ success: true, message: 'Content entry deleted successfully' });
   } catch (err) {
     console.error('[ContentItemDELETE] Error:', err);

@@ -11,8 +11,10 @@ import {
   FileText, Plus, Search, Edit, Trash2, Send,
   ChevronDown, Globe, Clock, CheckCircle2, X,
   LayoutGrid, List, Filter, SlidersHorizontal, Lock, UserCheck,
+  ExternalLink, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
+import { useSite } from '@/components/site-context';
 
 interface EntryItem {
   id: string; slug: string; title: string; status: string;
@@ -148,10 +150,11 @@ const MOCK_ENTRIES: EntryItem[] = [
 export default function ContentListPage() {
   const router = useRouter();
   const { user, canViewAllContent } = useAuth();
+  const { currentSite, fetchWithSite } = useSite();
   const [scopeFilter, setScopeFilter] = useState<'all' | 'mine'>('all');
-  const [entries, setEntries] = useState<EntryItem[]>(MOCK_ENTRIES);
+  const [entries, setEntries] = useState<EntryItem[]>([]);
   const [contentTypes, setContentTypes] = useState<ContentTypeSummary[]>(DEFAULT_CONTENT_TYPES);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [search, setSearch] = useState('');
@@ -194,6 +197,7 @@ export default function ContentListPage() {
   };
 
   const fetchEntries = () => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (!canViewAllContent || scopeFilter === 'mine') {
       params.set('author', 'me');
@@ -201,28 +205,35 @@ export default function ContentListPage() {
     if (selectedType) params.set('type', selectedType);
     if (selectedStatus) params.set('status', selectedStatus);
     if (search) params.set('q', search);
+    params.set('limit', '100');
 
-    fetch(`/api/v1/content?${params}`)
+    fetchWithSite(`/api/v1/content?${params}`)
       .then(r => r.json()).then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           let list = res.data;
           if (!canViewAllContent || scopeFilter === 'mine') {
             list = list.filter(isOwnEntry);
           }
           setEntries(list);
+        } else if (currentSite.slug === 'mediabird') {
+          setEntries([]);
         } else {
           setEntries(getFilteredMockEntries());
         }
         setLoading(false);
       })
       .catch(() => {
-        setEntries(getFilteredMockEntries());
+        if (currentSite.slug === 'mediabird') {
+          setEntries([]);
+        } else {
+          setEntries(getFilteredMockEntries());
+        }
         setLoading(false);
       });
   };
 
   useEffect(() => {
-    fetch('/api/v1/content-types').then(r => r.json()).then(res => {
+    fetchWithSite('/api/v1/content-types').then(r => r.json()).then(res => {
       if (Array.isArray(res.data) && res.data.length > 0) {
         setContentTypes(res.data);
         if (res.data[0] && !selectedType) setNewType(res.data[0].slug);
@@ -232,13 +243,15 @@ export default function ContentListPage() {
     }).catch(() => {
       setContentTypes(DEFAULT_CONTENT_TYPES);
     });
-  }, []);
+  }, [currentSite.slug]);
 
-  useEffect(() => { fetchEntries(); }, [selectedType, selectedStatus]);
+  useEffect(() => {
+    fetchEntries();
+  }, [selectedType, selectedStatus, currentSite.slug, scopeFilter]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setCreateError(null);
-    const res = await fetch('/api/v1/content', {
+    const res = await fetchWithSite('/api/v1/content', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contentTypeSlug: newType, title: newTitle, slug: newSlug }),
     });
@@ -250,11 +263,13 @@ export default function ContentListPage() {
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"?`)) return;
-    await fetch(`/api/v1/content/${id}`, { method: 'DELETE' }); fetchEntries();
+    await fetchWithSite(`/api/v1/content/${id}`, { method: 'DELETE' });
+    fetchEntries();
   };
 
   const handlePublish = async (id: string) => {
-    await fetch(`/api/v1/content/${id}/publish`, { method: 'POST' }); fetchEntries();
+    await fetchWithSite(`/api/v1/content/${id}/publish`, { method: 'POST' });
+    fetchEntries();
   };
 
   const statusCounts = Object.keys(STATUS_CONFIG).reduce((acc, s) => {
@@ -327,6 +342,34 @@ export default function ContentListPage() {
           </span>
         </div>
       )}
+
+      {/* Active Site Context Pill Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border bg-card/60 shadow-2xs backdrop-blur-xs">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs text-muted-foreground font-medium">Active Site:</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-muted border border-border/80 text-foreground">
+            {currentSite.name}
+          </span>
+          <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+            slug: {currentSite.slug}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            • {loading ? 'Loading...' : `${entries.length} items`} synced via API
+          </span>
+        </div>
+        {currentSite.frontendUrl && (
+          <a
+            href={currentSite.frontendUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline hover:text-primary/80 transition-colors"
+          >
+            <span>Preview Frontend ({currentSite.frontendUrl})</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        )}
+      </div>
 
       {/* Status tab strip with horizontal scroll on mobile */}
       <div className="flex items-center gap-1 border-b pb-1 overflow-x-auto thin-scrollbar flex-nowrap">
